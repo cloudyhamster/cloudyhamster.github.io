@@ -20,9 +20,9 @@ export default function HomePage() {
             </div>
           </div>
           <nav className="hidden md:flex items-center gap-6 text-sm text-white/70">
-            <a href="#projects" className="hover:text-white transition">Projects</a>
-            <a href="#about" className="hover:text-white transition">About</a>
-            <a href="#contact" className="hover:text-white transition">Contact</a>
+            <a href="#projects" className="hover:text-white transition">projects</a>
+            <a href="#about" className="hover:text-white transition">about</a>
+            <a href="#contact" className="hover:text-white transition">contact</a>
             <a href="#" className="ml-4 px-3 py-2 bg-white/20 rounded-full border border-white/30 hover:bg-white/30 transition">special button</a>
           </nav>
         </header>
@@ -43,7 +43,7 @@ export default function HomePage() {
             <motion.div initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.7 }} className="w-full">
               <div className="relative">
                 <div className="rounded-2xl overflow-hidden border border-white/6">
-                  <img src="https://media.discordapp.net/attachments/1402200391256637460/1403439848051708005/image.png?ex=68978eb6&is=68963d36&hm=04cc8a922573390feab8870e3cf7cf15d0c34623f799f4a89be1f85fe30069bc&=&format=webp&quality=lossless" alt="scenic" className="w-full h-64 object-cover" />
+                  <img src="https://media.discordapp.net/attachments/1306727563389046805/1403579588856254556/image.png?ex=689810db&is=6896bf5b&hm=711bcc595e1be398d1e7b7df102b4104eddb86bf047ae2d12bfba922e57236e1&=&format=webp&quality=lossless" alt="scenic" className="w-full h-64 object-cover" />
                 </div>
               </div>
             </motion.div>
