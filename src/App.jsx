@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import ReactGA from 'react-ga4';
+import HomePage from './pages/HomePage';
 
 const GA_TRACKING_ID = import.meta.env.VITE_GA_TRACKING_ID;
 
