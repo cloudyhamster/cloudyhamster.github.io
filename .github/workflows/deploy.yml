@@ -10,20 +10,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-
       - run: npm install
       - run: npm run build
-
       - name: deploy to root
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
+          ls -R dist
           rm -rf ./*
-          cp -r dist/* ./
+          cp -r dist/* ./  # copy build output to root
           git add .
-          git commit -m "Deploy site" || echo "nothing to commit"
+          git commit -m "deploy site" || echo "mothing to commit"
           git push origin main
