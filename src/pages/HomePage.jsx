@@ -6,6 +6,7 @@ import { projects } from '../data/projects';
 
 import Background from '../components/Background';
 import Header from '../components/Header';
+import ProjectCard from '../components/ProjectCard';
 
 export default function HomePage() {
   return (
@@ -42,22 +43,7 @@ export default function HomePage() {
             </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {projects.map((p) => (
-                <motion.a key={p.id} href={p.link} whileHover={{ translateY: -6 }} className="block">
-                  <GlassCard className="h-full">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="font-semibold text-lg">{p.title}</div>
-                        <div className="mt-2 text-sm text-slate-300">{p.desc}</div>
-                      </div>
-                      <div className="text-sm text-slate-400">#{p.id}</div>
-                    </div>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {p.tags.map((t) => (
-                        <span key={t} className="text-xs px-2 py-1 rounded-md border border-white/6">{t}</span>
-                      ))}
-                    </div>
-                  </GlassCard>
-                </motion.a>
+                <ProjectCard key={p.id} project={p} />
               ))}
             </div>
           </section>
