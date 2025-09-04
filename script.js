@@ -46,3 +46,25 @@ const themetogglecontrol = L.Control.extend({
 });
 
 new themetogglecontrol({ position: 'topright' }).addTo(map);
+
+map.on('click', function(e) {
+    const lat = e.latlng.lat;
+    const lng = e.latlng.lng;
+
+    const times = SunCalc.getTimes(new Date(), lat, lng);
+
+    const sunrisestr = times.sunrise.toLocaleTimeString('en-us', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
+    const sunsetstr = times.sunset.toLocaleTimeString('en-us', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
+
+    const popupcontent = `
+        <strong>Location Information</strong><br>
+        Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}<br><br>
+        <strong>Sunrise:</strong> ${sunrisestr}<br>
+        <strong>Sunset:</strong> ${sunsetstr}
+    `;
+
+    L.popup()
+        .setLatLng(e.latlng)
+        .setContent(popupcontent)
+        .openOn(map);
+});
