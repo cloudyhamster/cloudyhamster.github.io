@@ -1,14 +1,15 @@
 const map = L.map('map', {
-    zoomControl: false
+    zoomControl: false,
+    minZoom: 2
 }).setView([20, 0], 2);
 
 L.control.zoom({
     position: 'topleft'
 }).addTo(map);
 
-const lightlayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+const lightlayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     maxZoom: 19,
-    attribution: '© OpenStreetMap contributors'
+    attribution: '© OpenStreetMap contributors & © CartoDB'
 });
 
 const darklayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
