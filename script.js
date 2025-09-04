@@ -1,10 +1,47 @@
-const map = L.map('map').setView([20, 0], 2);
+const map = L.map('map', {
+    zoomControl: false
+}).setView([20, 0], 2);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '© OpenStreetMap contributors'
+L.control.zoom({
+    position: 'topleft'
 }).addTo(map);
 
-L.marker([51.5, -0.09]).addTo(map)
-    .bindPopup('A sample marker.')
-    .openPopup();
+const lightlayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap contributors'
+});
+
+const darklayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap contributors & © CartoDB'
+});
+
+let isdarkmode = true;
+darklayer.addTo(map);
+document.body.classList.add('dark-mode');
+
+const themetogglecontrol = L.Control.extend({
+    onAdd: function(map) {
+        const button = L.DomUtil.create('button', 'theme-toggle-button');
+        button.innerHTML = 'Light Mode';
+        
+        button.onclick = function(){
+            isdarkmode = !isdarkmode;
+
+            if (isdarkmode) {
+                map.removeLayer(lightlayer);
+                darklayer.addTo(map);
+                document.body.classList.add('dark-mode');
+                button.innerHTML = 'Light Mode';
+            } else {
+                map.removeLayer(darklayer);
+                lightlayer.addTo(map);
+                document.body.classList.remove('dark-mode');
+                button.innerHTML = 'Night Mode';
+            }
+        }
+        return button;
+    }
+});
+
+new themetogglecontrol({ position: 'topright' }).addTo(map);
