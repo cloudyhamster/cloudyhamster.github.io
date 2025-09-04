@@ -7,11 +7,11 @@ body {
 #map {
     height: 100vh;
     width: 100%;
-    background-color: #191919;
+    background-color: #262626;
 }
 
 body:not(.dark-mode) #map {
-    background-color: #b4d1de;
+    background-color: #d5dadc;
 }
 
 .theme-toggle-button {
