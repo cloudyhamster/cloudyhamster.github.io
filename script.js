@@ -160,8 +160,6 @@ map.on('click', function(e) {
     L.popup().setLatLng(e.latlng).setContent(popupcontent).openOn(map);
 });
 
-const datebutton = document.getElementById('date-display-button');
-const timebutton = document.getElementById('time-display-button');
 const selecteddate = new Date();
 let currentslidermode = 'time';
 
@@ -169,7 +167,7 @@ function getcurrentdate() {
     return selecteddate;
 }
 
-function updatedisplay() {
+function updatedisplay(datebutton, timebutton) {
     const dateoptions = { month: 'long', day: 'numeric', year: 'numeric' };
     const timeoptions = { hour: 'numeric', minute: '2-digit' };
     datebutton.textContent = selecteddate.toLocaleDateString('en-us', dateoptions);
@@ -261,106 +259,111 @@ function createslider(config) {
     };
 }
 
-function initializetimer() {
-    destroycurrentslider();
-    currentslidermode = 'time';
-    timebutton.classList.add('active');
-    datebutton.classList.remove('active');
+document.addEventListener('DOMContentLoaded', function() {
+    const datebutton = document.getElementById('date-display-button');
+    const timebutton = document.getElementById('time-display-button');
 
-    const timesliderconfig = {
-        elementid: 'slider-container',
-        mode: 'time',
-        itemwidth: 80,
-        totalitems: 25,
-        initialindex: selecteddate.getHours() + (selecteddate.getMinutes() / 60),
-        itemgenerator: (i) => {
-            const item = document.createElement('div');
-            item.classList.add('slider-item');
-            item.dataset.index = i;
-            item.style.width = '80px';
-            if (i < 24) {
-                const date = new Date(); date.setHours(i, 0, 0, 0);
-                const hourlabel = document.createElement('div');
-                hourlabel.classList.add('hour-label');
-                hourlabel.textContent = date.toLocaleTimeString('en-us', { hour: 'numeric' });
-                item.appendChild(hourlabel);
+    function initializetimer() {
+        destroycurrentslider();
+        currentslidermode = 'time';
+        timebutton.classList.add('active');
+        datebutton.classList.remove('active');
+
+        const timesliderconfig = {
+            elementid: 'slider-container',
+            mode: 'time',
+            itemwidth: 80,
+            totalitems: 25,
+            initialindex: selecteddate.getHours() + (selecteddate.getMinutes() / 60),
+            itemgenerator: (i) => {
+                const item = document.createElement('div');
+                item.classList.add('slider-item');
+                item.dataset.index = i;
+                item.style.width = '80px';
+                if (i < 24) {
+                    const date = new Date(); date.setHours(i, 0, 0, 0);
+                    const hourlabel = document.createElement('div');
+                    hourlabel.classList.add('hour-label');
+                    hourlabel.textContent = date.toLocaleTimeString('en-us', { hour: 'numeric' });
+                    item.appendChild(hourlabel);
+                }
+                const majortick = document.createElement('div'); majortick.classList.add('time-tick', 'tick-major'); majortick.style.left = '0%'; item.appendChild(majortick);
+                if (i < 24) {
+                    const mediumtick = document.createElement('div'); mediumtick.classList.add('time-tick', 'tick-medium'); mediumtick.style.left = '50%'; item.appendChild(mediumtick);
+                    const minortick1 = document.createElement('div'); minortick1.classList.add('time-tick', 'tick-minor'); minortick1.style.left = '25%'; item.appendChild(minortick1);
+                    const minortick2 = document.createElement('div'); minortick2.classList.add('time-tick', 'tick-minor'); minortick2.style.left = '75%'; item.appendChild(minortick2);
+                }
+                return item;
+            },
+            onupdate: (value, isfinal) => {
+                const hour = Math.floor(value);
+                const minute = Math.round((value % 1) * 60);
+                selecteddate.setHours(hour, minute);
+                updatedisplay(datebutton, timebutton);
+                if (isfinal) updatemaplayers();
             }
-            const majortick = document.createElement('div'); majortick.classList.add('time-tick', 'tick-major'); majortick.style.left = '0%'; item.appendChild(majortick);
-            if (i < 24) {
-                const mediumtick = document.createElement('div'); mediumtick.classList.add('time-tick', 'tick-medium'); mediumtick.style.left = '50%'; item.appendChild(mediumtick);
-                const minortick1 = document.createElement('div'); minortick1.classList.add('time-tick', 'tick-minor'); minortick1.style.left = '25%'; item.appendChild(minortick1);
-                const minortick2 = document.createElement('div'); minortick2.classList.add('time-tick', 'tick-minor'); minortick2.style.left = '75%'; item.appendChild(minortick2);
+        };
+        destroycurrentslider = createslider(timesliderconfig);
+    }
+
+    function initializedaytimer() {
+        destroycurrentslider();
+        currentslidermode = 'day';
+        datebutton.classList.add('active');
+        timebutton.classList.remove('active');
+
+        const daysliderconfig = {
+            elementid: 'slider-container',
+            mode: 'day',
+            itemwidth: 20,
+            totalitems: 365,
+            initialindex: Math.floor((selecteddate - new Date(selecteddate.getFullYear(), 0, 1)) / (1000 * 60 * 60 * 24)),
+            itemgenerator: (i) => {
+                const item = document.createElement('div');
+                item.classList.add('slider-item');
+                item.dataset.index = i;
+                item.style.width = '20px';
+                
+                const currentdate = new Date(selecteddate.getFullYear(), 0, i + 1);
+                const dayofmonth = currentdate.getDate();
+
+                if (dayofmonth === 15) {
+                    const monthlabel = document.createElement('div');
+                    monthlabel.classList.add('month-label');
+                    monthlabel.textContent = currentdate.toLocaleDateString('en-us', { month: 'short' }).toUpperCase();
+                    item.appendChild(monthlabel);
+                }
+                
+                const tick = document.createElement('div');
+                tick.classList.add('time-tick');
+                tick.style.left = '0%';
+                if (dayofmonth === 1) {
+                    tick.classList.add('tick-major');
+                } else if (dayofmonth % 5 === 0) {
+                    tick.classList.add('tick-medium');
+                } else {
+                    tick.classList.add('tick-minor');
+                }
+                item.appendChild(tick);
+
+                return item;
+            },
+            onupdate: (value, isfinal) => {
+                const dayofyear = Math.floor(value);
+                const newdate = new Date(selecteddate.getFullYear(), 0, dayofyear + 1);
+                selecteddate.setDate(newdate.getDate());
+                selecteddate.setMonth(newdate.getMonth());
+                updatedisplay(datebutton, timebutton);
+                if (isfinal) updatemaplayers();
             }
-            return item;
-        },
-        onupdate: (value, isfinal) => {
-            const hour = Math.floor(value);
-            const minute = Math.round((value % 1) * 60);
-            selecteddate.setHours(hour, minute);
-            updatedisplay();
-            if (isfinal) updatemaplayers();
-        }
-    };
-    destroycurrentslider = createslider(timesliderconfig);
-}
+        };
+        destroycurrentslider = createslider(daysliderconfig);
+    }
 
-function initializedaytimer() {
-    destroycurrentslider();
-    currentslidermode = 'day';
-    datebutton.classList.add('active');
-    timebutton.classList.remove('active');
+    timebutton.addEventListener('click', initializetimer);
+    datebutton.addEventListener('click', initializedaytimer);
 
-    const daysliderconfig = {
-        elementid: 'slider-container',
-        mode: 'day',
-        itemwidth: 20,
-        totalitems: 365,
-        initialindex: Math.floor((selecteddate - new Date(selecteddate.getFullYear(), 0, 1)) / (1000 * 60 * 60 * 24)),
-        itemgenerator: (i) => {
-            const item = document.createElement('div');
-            item.classList.add('slider-item');
-            item.dataset.index = i;
-            item.style.width = '20px';
-            
-            const currentdate = new Date(selecteddate.getFullYear(), 0, i + 1);
-            const dayofmonth = currentdate.getDate();
-
-            if (dayofmonth === 15) {
-                const monthlabel = document.createElement('div');
-                monthlabel.classList.add('month-label');
-                monthlabel.textContent = currentdate.toLocaleDateString('en-us', { month: 'short' }).toUpperCase();
-                item.appendChild(monthlabel);
-            }
-            
-            const tick = document.createElement('div');
-            tick.classList.add('time-tick');
-            tick.style.left = '0%';
-            if (dayofmonth === 1) {
-                tick.classList.add('tick-major');
-            } else if (dayofmonth % 5 === 0) {
-                tick.classList.add('tick-medium');
-            } else {
-                tick.classList.add('tick-minor');
-            }
-            item.appendChild(tick);
-
-            return item;
-        },
-        onupdate: (value, isfinal) => {
-            const dayofyear = Math.floor(value);
-            const newdate = new Date(selecteddate.getFullYear(), 0, dayofyear + 1);
-            selecteddate.setDate(newdate.getDate());
-            selecteddate.setMonth(newdate.getMonth());
-            updatedisplay();
-            if (isfinal) updatemaplayers();
-        }
-    };
-    destroycurrentslider = createslider(daysliderconfig);
-}
-
-timebutton.addEventListener('click', initializetimer);
-datebutton.addEventListener('click', initializedaytimer);
-
-updatedisplay();
-updatemaplayers();
-initializetimer();
+    updatedisplay(datebutton, timebutton);
+    updatemaplayers();
+    initializetimer();
+});
