@@ -163,21 +163,20 @@ map.on('click', function(e) {
     L.popup().setLatLng(e.latlng).setContent(popupcontent).openOn(map);
 });
 
-const selecteddatetime = {
-    time: 12.0
-};
+const datedisplay = document.getElementById('date-display');
+const timedisplay = document.getElementById('time-display');
+const selecteddate = new Date();
+selecteddate.setHours(12, 0, 0, 0);
 
 function getcurrentdate() {
-    const now = new Date();
-    const hour = Math.floor(selecteddatetime.time);
-    const minute = (selecteddatetime.time % 1) * 60;
-    if (hour >= 24) {
-        now.setDate(now.getDate() + 1);
-        now.setHours(0, 0, 0, 0);
-    } else {
-        now.setHours(hour, minute, 0, 0);
-    }
-    return now;
+    return selecteddate;
+}
+
+function updatedisplay() {
+    const dateoptions = { month: 'long', day: 'numeric', year: 'numeric' };
+    const timeoptions = { hour: 'numeric', minute: '2-digit' };
+    datedisplay.textContent = selecteddate.toLocaleDateString('en-us', dateoptions);
+    timedisplay.textContent = selecteddate.toLocaleTimeString('en-us', timeoptions);
 }
 
 function createslider(config) {
@@ -215,9 +214,7 @@ function createslider(config) {
                 item.classList.add('active');
             }
         });
-        if (config.onupdate) {
-            config.onupdate(currentvalue);
-        }
+        config.onupdate(currentvalue, true);
     }
     
     function ondragstart(e) {
@@ -233,17 +230,19 @@ function createslider(config) {
         e.preventDefault();
         const currentx = e.pageX || e.touches[0].pageX;
         const diff = currentx - startx;
-        track.style.transform = `translateX(${currenttrackoffset + diff}px)`;
+        const newtrackoffset = currenttrackoffset + diff;
+        track.style.transform = `translateX(${newtrackoffset}px)`;
+
+        const containerwidth = container.offsetWidth;
+        const newvalue = (-newtrackoffset + (containerwidth / 2)) / config.itemwidth;
+        currentvalue = Math.max(0, Math.min(config.totalitems - 1, newvalue));
+        config.onupdate(currentvalue, false);
     }
 
     function ondragend(e) {
         if (!isdragging) return;
         isdragging = false;
         document.body.classList.remove('dragging');
-        const finaloffset = track.getBoundingClientRect().left - container.getBoundingClientRect().left;
-        const containerwidth = container.offsetWidth;
-        const finalvalue = (-finaloffset + (containerwidth / 2)) / config.itemwidth;
-        currentvalue = Math.max(0, Math.min(config.totalitems - 1, finalvalue));
         updateslider(currentvalue, true);
     }
 
@@ -268,19 +267,16 @@ createslider({
         item.dataset.index = i;
         const date = new Date();
         date.setHours(i, 0, 0, 0);
-        
         if (i < 24) {
             const hourlabel = document.createElement('div');
             hourlabel.classList.add('hour-label');
             hourlabel.textContent = date.toLocaleTimeString('en-us', { hour: 'numeric' });
             item.appendChild(hourlabel);
         }
-        
         const majortick = document.createElement('div');
         majortick.classList.add('time-tick', 'tick-major');
         majortick.style.left = '0%';
         item.appendChild(majortick);
-
         if (i < 24) {
             const mediumtick = document.createElement('div');
             mediumtick.classList.add('time-tick', 'tick-medium');
@@ -297,8 +293,18 @@ createslider({
         }
         return item;
     },
-    onupdate: (value) => {
-        selecteddatetime.time = value;
-        updatemaplayers();
+    onupdate: (value, isfinal) => {
+        const hour = Math.floor(value);
+        const minute = (value % 1) * 60;
+        selecteddate.setHours(hour, minute);
+        if (hour >= 24) {
+           selecteddate.setHours(0,0);
+        }
+        updatedisplay();
+        if (isfinal) {
+            updatemaplayers();
+        }
     }
 });
+
+updatedisplay();

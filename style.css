@@ -36,6 +36,37 @@ body:not(.dark-mode) .leaflet-control-attribution {
     max-width: 900px;
     z-index: 1000;
     user-select: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#display-wrapper {
+    display: flex;
+    gap: 8px;
+    width: 50%;
+    margin: 0 auto;
+}
+
+.display-box {
+    flex-grow: 1;
+    background-color: rgba(44, 44, 44, 0.9);
+    border: 1px solid #555;
+    border-radius: 12px;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+    color: #fff;
+    padding: 10px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+body:not(.dark-mode) .display-box {
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid #ccc;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.2);
+    color: #111;
 }
 
 .slider-container {
