@@ -108,7 +108,7 @@ function updatedaylightlayer() {
             const times = SunCalc.getTimes(getcurrentdate(), lat, lng);
             let durationhours = 0;
             if (!isNaN(times.sunrise.getTime()) && !isNaN(times.sunset.getTime())) {
-                const durationms = times.sunset.getTime() - times.sunrise.getTime();
+                const durationms = times.sunset.getTime() - times.sunset.getTime();
                 durationhours = durationms / (1000 * 60 * 60);
             } else {
                 const sunposnoon = SunCalc.getPosition(getcurrentdate(), lat, lng);
@@ -165,18 +165,26 @@ map.on('click', function(e) {
 
 const datedisplay = document.getElementById('date-display');
 const timedisplay = document.getElementById('time-display');
-const selecteddate = new Date();
-selecteddate.setHours(12, 0, 0, 0);
+const basedate = new Date();
+basedate.setHours(0, 0, 0, 0);
+let currenttimeoffsethours = 12.0;
 
 function getcurrentdate() {
-    return selecteddate;
+    const d = new Date(basedate);
+    // --- THIS IS THE FIX ---
+    const hour = Math.floor(currenttimeoffsethours);
+    const minute = Math.round((currenttimeoffsethours % 1) * 60);
+    d.setHours(hour, minute);
+    // -----------------------
+    return d;
 }
 
 function updatedisplay() {
+    const currentdate = getcurrentdate();
     const dateoptions = { month: 'long', day: 'numeric', year: 'numeric' };
     const timeoptions = { hour: 'numeric', minute: '2-digit' };
-    datedisplay.textContent = selecteddate.toLocaleDateString('en-us', dateoptions);
-    timedisplay.textContent = selecteddate.toLocaleTimeString('en-us', timeoptions);
+    datedisplay.textContent = currentdate.toLocaleDateString('en-us', dateoptions);
+    timedisplay.textContent = currentdate.toLocaleTimeString('en-us', timeoptions);
 }
 
 function createslider(config) {
@@ -187,6 +195,7 @@ function createslider(config) {
     let trackoffset = 0;
     let currenttrackoffset = 0;
     let currentvalue = config.initialindex;
+    let lastactiveindex = -1;
 
     function init() {
         track.innerHTML = '';
@@ -195,6 +204,19 @@ function createslider(config) {
             track.appendChild(item);
         }
         updateslider(config.initialindex, false);
+    }
+    
+    function updatehighlight(value) {
+        const activeindex = Math.floor(value);
+        if (activeindex === lastactiveindex) return;
+        
+        const oldactive = track.querySelector('.slider-item.active');
+        if (oldactive) oldactive.classList.remove('active');
+        
+        const newactive = track.querySelector(`.slider-item[data-index="${activeindex}"]`);
+        if (newactive) newactive.classList.add('active');
+
+        lastactiveindex = activeindex;
     }
 
     function updateslider(value, isanimated = true) {
@@ -207,13 +229,7 @@ function createslider(config) {
             track.style.transition = 'none';
         }
         track.style.transform = `translateX(${trackoffset}px)`;
-        const activeindex = Math.round(currentvalue);
-        track.querySelectorAll('.slider-item').forEach(item => {
-            item.classList.remove('active');
-            if (parseInt(item.dataset.index) === activeindex) {
-                item.classList.add('active');
-            }
-        });
+        updatehighlight(value);
         config.onupdate(currentvalue, true);
     }
     
@@ -223,6 +239,10 @@ function createslider(config) {
         currenttrackoffset = trackoffset;
         track.style.transition = 'none';
         document.body.classList.add('dragging');
+        document.addEventListener('mousemove', ondragmove);
+        document.addEventListener('mouseup', ondragend);
+        document.addEventListener('touchmove', ondragmove);
+        document.addEventListener('touchend', ondragend);
     }
 
     function ondragmove(e) {
@@ -236,6 +256,8 @@ function createslider(config) {
         const containerwidth = container.offsetWidth;
         const newvalue = (-newtrackoffset + (containerwidth / 2)) / config.itemwidth;
         currentvalue = Math.max(0, Math.min(config.totalitems - 1, newvalue));
+        
+        updatehighlight(currentvalue);
         config.onupdate(currentvalue, false);
     }
 
@@ -243,16 +265,17 @@ function createslider(config) {
         if (!isdragging) return;
         isdragging = false;
         document.body.classList.remove('dragging');
+        
+        document.removeEventListener('mousemove', ondragmove);
+        document.removeEventListener('mouseup', ondragend);
+        document.removeEventListener('touchmove', ondragmove);
+        document.removeEventListener('touchend', ondragend);
+        
         updateslider(currentvalue, true);
     }
 
     container.addEventListener('mousedown', ondragstart);
-    container.addEventListener('mousemove', ondragmove);
-    container.addEventListener('mouseup', ondragend);
-    container.addEventListener('mouseleave', ondragend);
     container.addEventListener('touchstart', ondragstart, { passive: true });
-    container.addEventListener('touchmove', ondragmove);
-    container.addEventListener('touchend', ondragend);
     init();
 }
 
@@ -294,12 +317,7 @@ createslider({
         return item;
     },
     onupdate: (value, isfinal) => {
-        const hour = Math.floor(value);
-        const minute = (value % 1) * 60;
-        selecteddate.setHours(hour, minute);
-        if (hour >= 24) {
-           selecteddate.setHours(0,0);
-        }
+        currenttimeoffsethours = value;
         updatedisplay();
         if (isfinal) {
             updatemaplayers();
