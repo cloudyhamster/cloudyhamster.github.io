@@ -108,7 +108,7 @@ function updatedaylightlayer() {
             const times = SunCalc.getTimes(getcurrentdate(), lat, lng);
             let durationhours = 0;
             if (!isNaN(times.sunrise.getTime()) && !isNaN(times.sunset.getTime())) {
-                const durationms = times.sunset.getTime() - times.sunset.getTime();
+                const durationms = times.sunset.getTime() - times.sunrise.getTime();
                 durationhours = durationms / (1000 * 60 * 60);
             } else {
                 const sunposnoon = SunCalc.getPosition(getcurrentdate(), lat, lng);
@@ -165,17 +165,17 @@ map.on('click', function(e) {
 
 const datedisplay = document.getElementById('date-display');
 const timedisplay = document.getElementById('time-display');
+const systemdate = new Date();
+const initialhouroffset = systemdate.getHours() + (systemdate.getMinutes() / 60);
 const basedate = new Date();
 basedate.setHours(0, 0, 0, 0);
-let currenttimeoffsethours = 12.0;
+let currenttimeoffsethours = initialhouroffset;
 
 function getcurrentdate() {
     const d = new Date(basedate);
-    // --- THIS IS THE FIX ---
     const hour = Math.floor(currenttimeoffsethours);
     const minute = Math.round((currenttimeoffsethours % 1) * 60);
     d.setHours(hour, minute);
-    // -----------------------
     return d;
 }
 
@@ -283,7 +283,7 @@ createslider({
     elementid: 'time-slider',
     itemwidth: 80,
     totalitems: 25,
-    initialindex: 12,
+    initialindex: initialhouroffset,
     itemgenerator: (i) => {
         const item = document.createElement('div');
         item.classList.add('slider-item');
@@ -326,3 +326,4 @@ createslider({
 });
 
 updatedisplay();
+updatemaplayers();
