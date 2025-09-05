@@ -96,6 +96,7 @@ daylightlegend.onAdd = function (map) {
 };
 
 function updatedaylightlayer() {
+    const calculationdate = new Date(getcurrentdate().setHours(12, 0, 0, 0));
     daylightlayer.clearLayers();
     const bounds = map.getBounds();
     const zoom = map.getZoom();
@@ -105,13 +106,13 @@ function updatedaylightlayer() {
     const lngstep = (east - west) / gridcells;
     for (let lat = south; lat < north; lat += latstep) {
         for (let lng = west; lng < east; lng += lngstep) {
-            const times = SunCalc.getTimes(getcurrentdate(), lat, lng);
+            const times = SunCalc.getTimes(calculationdate, lat, lng);
             let durationhours = 0;
             if (!isNaN(times.sunrise.getTime()) && !isNaN(times.sunset.getTime())) {
                 const durationms = times.sunset.getTime() - times.sunrise.getTime();
                 durationhours = durationms / (1000 * 60 * 60);
             } else {
-                const sunposnoon = SunCalc.getPosition(getcurrentdate(), lat, lng);
+                const sunposnoon = SunCalc.getPosition(calculationdate, lat, lng);
                 if (sunposnoon.altitude > 0) durationhours = 24;
             }
             const rectangle = L.rectangle([[lat, lng], [lat + latstep, lng + lngstep]], { color: getdaylightcolor(durationhours), weight: 0, fillOpacity: 0.5 });
@@ -126,12 +127,8 @@ function getdaylightcolor(hourofday) {
 }
 
 function updatemaplayers() {
-    if (map.hasLayer(sunriselayer)) {
-        updatesunriselayer();
-    }
-    if (map.hasLayer(daylightlayer)) {
-        updatedaylightlayer();
-    }
+    if (map.hasLayer(sunriselayer)) updatesunriselayer();
+    if (map.hasLayer(daylightlayer)) updatedaylightlayer();
 }
 
 map.on('overlayadd', function(e) {
@@ -163,32 +160,27 @@ map.on('click', function(e) {
     L.popup().setLatLng(e.latlng).setContent(popupcontent).openOn(map);
 });
 
-const datedisplay = document.getElementById('date-display');
-const timedisplay = document.getElementById('time-display');
-const systemdate = new Date();
-const initialhouroffset = systemdate.getHours() + (systemdate.getMinutes() / 60);
-const basedate = new Date();
-basedate.setHours(0, 0, 0, 0);
-let currenttimeoffsethours = initialhouroffset;
+const datebutton = document.getElementById('date-display-button');
+const timebutton = document.getElementById('time-display-button');
+const selecteddate = new Date();
+let currentslidermode = 'time';
 
 function getcurrentdate() {
-    const d = new Date(basedate);
-    const hour = Math.floor(currenttimeoffsethours);
-    const minute = Math.round((currenttimeoffsethours % 1) * 60);
-    d.setHours(hour, minute);
-    return d;
+    return selecteddate;
 }
 
 function updatedisplay() {
-    const currentdate = getcurrentdate();
     const dateoptions = { month: 'long', day: 'numeric', year: 'numeric' };
     const timeoptions = { hour: 'numeric', minute: '2-digit' };
-    datedisplay.textContent = currentdate.toLocaleDateString('en-us', dateoptions);
-    timedisplay.textContent = currentdate.toLocaleTimeString('en-us', timeoptions);
+    datebutton.textContent = selecteddate.toLocaleDateString('en-us', dateoptions);
+    timebutton.textContent = selecteddate.toLocaleTimeString('en-us', timeoptions);
 }
+
+let destroycurrentslider = () => {};
 
 function createslider(config) {
     const container = document.getElementById(config.elementid);
+    container.dataset.mode = config.mode;
     const track = container.querySelector('.slider-track');
     let isdragging = false;
     let startx;
@@ -210,9 +202,7 @@ function createslider(config) {
         const activeindex = Math.floor(value);
         if (activeindex === lastactiveindex) return;
         
-        const oldactive = track.querySelector('.slider-item.active');
-        if (oldactive) oldactive.classList.remove('active');
-        
+        track.querySelectorAll('.slider-item.active').forEach(i => i.classList.remove('active'));
         const newactive = track.querySelector(`.slider-item[data-index="${activeindex}"]`);
         if (newactive) newactive.classList.add('active');
 
@@ -223,11 +213,8 @@ function createslider(config) {
         currentvalue = value;
         const containerwidth = container.offsetWidth;
         trackoffset = - (currentvalue * config.itemwidth) + (containerwidth / 2);
-        if (isanimated) {
-            track.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)';
-        } else {
-            track.style.transition = 'none';
-        }
+        if (isanimated) track.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)';
+        else track.style.transition = 'none';
         track.style.transform = `translateX(${trackoffset}px)`;
         updatehighlight(value);
         config.onupdate(currentvalue, true);
@@ -241,8 +228,6 @@ function createslider(config) {
         document.body.classList.add('dragging');
         document.addEventListener('mousemove', ondragmove);
         document.addEventListener('mouseup', ondragend);
-        document.addEventListener('touchmove', ondragmove);
-        document.addEventListener('touchend', ondragend);
     }
 
     function ondragmove(e) {
@@ -252,11 +237,9 @@ function createslider(config) {
         const diff = currentx - startx;
         const newtrackoffset = currenttrackoffset + diff;
         track.style.transform = `translateX(${newtrackoffset}px)`;
-
         const containerwidth = container.offsetWidth;
         const newvalue = (-newtrackoffset + (containerwidth / 2)) / config.itemwidth;
         currentvalue = Math.max(0, Math.min(config.totalitems - 1, newvalue));
-        
         updatehighlight(currentvalue);
         config.onupdate(currentvalue, false);
     }
@@ -265,65 +248,119 @@ function createslider(config) {
         if (!isdragging) return;
         isdragging = false;
         document.body.classList.remove('dragging');
-        
         document.removeEventListener('mousemove', ondragmove);
         document.removeEventListener('mouseup', ondragend);
-        document.removeEventListener('touchmove', ondragmove);
-        document.removeEventListener('touchend', ondragend);
-        
         updateslider(currentvalue, true);
     }
-
+    
     container.addEventListener('mousedown', ondragstart);
-    container.addEventListener('touchstart', ondragstart, { passive: true });
     init();
+
+    return () => {
+        container.removeEventListener('mousedown', ondragstart);
+    };
 }
 
-createslider({
-    elementid: 'time-slider',
-    itemwidth: 80,
-    totalitems: 25,
-    initialindex: initialhouroffset,
-    itemgenerator: (i) => {
-        const item = document.createElement('div');
-        item.classList.add('slider-item');
-        item.dataset.index = i;
-        const date = new Date();
-        date.setHours(i, 0, 0, 0);
-        if (i < 24) {
-            const hourlabel = document.createElement('div');
-            hourlabel.classList.add('hour-label');
-            hourlabel.textContent = date.toLocaleTimeString('en-us', { hour: 'numeric' });
-            item.appendChild(hourlabel);
+function initializetimer() {
+    destroycurrentslider();
+    currentslidermode = 'time';
+    timebutton.classList.add('active');
+    datebutton.classList.remove('active');
+
+    const timesliderconfig = {
+        elementid: 'slider-container',
+        mode: 'time',
+        itemwidth: 80,
+        totalitems: 25,
+        initialindex: selecteddate.getHours() + (selecteddate.getMinutes() / 60),
+        itemgenerator: (i) => {
+            const item = document.createElement('div');
+            item.classList.add('slider-item');
+            item.dataset.index = i;
+            item.style.width = '80px';
+            if (i < 24) {
+                const date = new Date(); date.setHours(i, 0, 0, 0);
+                const hourlabel = document.createElement('div');
+                hourlabel.classList.add('hour-label');
+                hourlabel.textContent = date.toLocaleTimeString('en-us', { hour: 'numeric' });
+                item.appendChild(hourlabel);
+            }
+            const majortick = document.createElement('div'); majortick.classList.add('time-tick', 'tick-major'); majortick.style.left = '0%'; item.appendChild(majortick);
+            if (i < 24) {
+                const mediumtick = document.createElement('div'); mediumtick.classList.add('time-tick', 'tick-medium'); mediumtick.style.left = '50%'; item.appendChild(mediumtick);
+                const minortick1 = document.createElement('div'); minortick1.classList.add('time-tick', 'tick-minor'); minortick1.style.left = '25%'; item.appendChild(minortick1);
+                const minortick2 = document.createElement('div'); minortick2.classList.add('time-tick', 'tick-minor'); minortick2.style.left = '75%'; item.appendChild(minortick2);
+            }
+            return item;
+        },
+        onupdate: (value, isfinal) => {
+            const hour = Math.floor(value);
+            const minute = Math.round((value % 1) * 60);
+            selecteddate.setHours(hour, minute);
+            updatedisplay();
+            if (isfinal) updatemaplayers();
         }
-        const majortick = document.createElement('div');
-        majortick.classList.add('time-tick', 'tick-major');
-        majortick.style.left = '0%';
-        item.appendChild(majortick);
-        if (i < 24) {
-            const mediumtick = document.createElement('div');
-            mediumtick.classList.add('time-tick', 'tick-medium');
-            mediumtick.style.left = '50%';
-            item.appendChild(mediumtick);
-            const minortick1 = document.createElement('div');
-            minortick1.classList.add('time-tick', 'tick-minor');
-            minortick1.style.left = '25%';
-            item.appendChild(minortick1);
-            const minortick2 = document.createElement('div');
-            minortick2.classList.add('time-tick', 'tick-minor');
-            minortick2.style.left = '75%';
-            item.appendChild(minortick2);
+    };
+    destroycurrentslider = createslider(timesliderconfig);
+}
+
+function initializedaytimer() {
+    destroycurrentslider();
+    currentslidermode = 'day';
+    datebutton.classList.add('active');
+    timebutton.classList.remove('active');
+
+    const daysliderconfig = {
+        elementid: 'slider-container',
+        mode: 'day',
+        itemwidth: 20,
+        totalitems: 365,
+        initialindex: Math.floor((selecteddate - new Date(selecteddate.getFullYear(), 0, 1)) / (1000 * 60 * 60 * 24)),
+        itemgenerator: (i) => {
+            const item = document.createElement('div');
+            item.classList.add('slider-item');
+            item.dataset.index = i;
+            item.style.width = '20px';
+            
+            const currentdate = new Date(selecteddate.getFullYear(), 0, i + 1);
+            const dayofmonth = currentdate.getDate();
+
+            if (dayofmonth === 15) {
+                const monthlabel = document.createElement('div');
+                monthlabel.classList.add('month-label');
+                monthlabel.textContent = currentdate.toLocaleDateString('en-us', { month: 'short' }).toUpperCase();
+                item.appendChild(monthlabel);
+            }
+            
+            const tick = document.createElement('div');
+            tick.classList.add('time-tick');
+            tick.style.left = '0%';
+            if (dayofmonth === 1) {
+                tick.classList.add('tick-major');
+            } else if (dayofmonth % 5 === 0) {
+                tick.classList.add('tick-medium');
+            } else {
+                tick.classList.add('tick-minor');
+            }
+            item.appendChild(tick);
+
+            return item;
+        },
+        onupdate: (value, isfinal) => {
+            const dayofyear = Math.floor(value);
+            const newdate = new Date(selecteddate.getFullYear(), 0, dayofyear + 1);
+            selecteddate.setDate(newdate.getDate());
+            selecteddate.setMonth(newdate.getMonth());
+            updatedisplay();
+            if (isfinal) updatemaplayers();
         }
-        return item;
-    },
-    onupdate: (value, isfinal) => {
-        currenttimeoffsethours = value;
-        updatedisplay();
-        if (isfinal) {
-            updatemaplayers();
-        }
-    }
-});
+    };
+    destroycurrentslider = createslider(daysliderconfig);
+}
+
+timebutton.addEventListener('click', initializetimer);
+datebutton.addEventListener('click', initializedaytimer);
 
 updatedisplay();
 updatemaplayers();
+initializetimer();

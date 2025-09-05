@@ -88,7 +88,7 @@ body:not(.dark-mode) .info-legend h4 {
 
 .display-box {
     flex-grow: 1;
-    background-color: rgba(44, 44, 44, 0.9);
+    background-color: rgba(44, 44, 44, 0.8);
     border: 1px solid #555;
     border-radius: 12px;
     box-shadow: 0 1px 5px rgba(0,0,0,0.4);
@@ -98,13 +98,25 @@ body:not(.dark-mode) .info-legend h4 {
     font-size: 16px;
     font-weight: bold;
     transition: all 0.3s ease;
+    cursor: pointer;
+    font-family: sans-serif;
+}
+
+.display-box.active {
+    border-color: #f09540;
+    color: #f09540;
 }
 
 body:not(.dark-mode) .display-box {
     background-color: rgba(255, 255, 255, 0.9);
     border: 1px solid #ccc;
     box-shadow: 0 1px 5px rgba(0,0,0,0.2);
-    color: #111;
+    color: #555;
+}
+
+body:not(.dark-mode) .display-box.active {
+    border-color: #f09540;
+    color: #d86c00;
 }
 
 .slider-container {
@@ -137,30 +149,8 @@ body:not(.dark-mode) .slider-container {
 .slider-item {
     flex-shrink: 0;
     position: relative;
-    width: 80px;
     height: 100%;
-}
-
-.hour-label {
-    position: absolute;
-    bottom: 5px;
-    left: 0;
-    width: 100%;
-    text-align: center;
-    font-size: 14px;
-    font-weight: bold;
-    color: #888;
     z-index: 2;
-    pointer-events: none;
-    transition: color 0.3s ease;
-}
-
-.slider-item.active .hour-label {
-    color: #fff;
-}
-
-body:not(.dark-mode) .slider-item.active .hour-label {
-    color: #111;
 }
 
 .time-slider-ticker {
@@ -176,6 +166,38 @@ body:not(.dark-mode) .slider-item.active .hour-label {
     border-top: 10px solid #f09540;
 }
 
+.hour-label, .month-label {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    font-weight: bold;
+    color: #888;
+    z-index: 2;
+    pointer-events: none;
+    transition: color 0.3s ease;
+}
+
+.hour-label {
+    bottom: 5px;
+    font-size: 14px;
+}
+
+.month-label {
+    top: 5px;
+    font-size: 12px;
+}
+
+.slider-item.active .hour-label,
+.slider-item.active .month-label { 
+    color: #fff; 
+}
+
+body:not(.dark-mode) .slider-item.active .hour-label,
+body:not(.dark-mode) .slider-item.active .month-label { 
+    color: #111; 
+}
+
 .time-tick {
     position: absolute;
     top: 50%;
@@ -188,3 +210,77 @@ body:not(.dark-mode) .slider-item.active .hour-label {
 .tick-major { height: 24px; background-color: #999; }
 .tick-medium { height: 16px; }
 .tick-minor { height: 8px; }
+
+.leaflet-control-layers {
+    border: 1px solid #555 !important;
+    background-color: rgba(44, 44, 44, 0.9) !important;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.4) !important;
+    border-radius: 8px !important;
+}
+
+.leaflet-control-layers-toggle {
+    color: #eee !important;
+}
+
+.leaflet-control-layers:hover {
+    background-color: rgba(68, 68, 68, 0.9) !important;
+}
+
+.leaflet-control-layers-expanded {
+    color: #eee !important;
+}
+
+.leaflet-control-zoom {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+    background-color: rgba(44, 44, 44, 0.9) !important;
+    color: #eee !important;
+    border: 1px solid #555 !important;
+    width: 32px !important;
+    height: 32px !important;
+    line-height: 32px !important;
+    font-size: 22px !important;
+    font-weight: bold !important;
+}
+.leaflet-control-zoom-in {
+    border-radius: 8px 8px 0 0 !important;
+}
+.leaflet-control-zoom-out {
+    border-radius: 0 0 8px 8px !important;
+    border-top: none !important;
+}
+.leaflet-control-zoom-in:hover,
+.leaflet-control-zoom-out:hover {
+    background-color: rgba(68, 68, 68, 0.9) !important;
+}
+
+body:not(.dark-mode) .leaflet-control-layers {
+    border: 1px solid #ccc !important;
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.2) !important;
+}
+
+body:not(.dark-mode) .leaflet-control-layers-toggle,
+body:not(.dark-mode) .leaflet-control-layers-expanded {
+    color: #333 !important;
+}
+
+body:not(.dark-mode) .leaflet-control-layers:hover {
+    background-color: #f4f4f4 !important;
+}
+
+body:not(.dark-mode) .leaflet-control-zoom-in,
+body:not(.dark-mode) .leaflet-control-zoom-out {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    color: #333 !important;
+    border-color: #ccc !important;
+}
+
+body:not(.dark-mode) .leaflet-control-zoom-in:hover,
+body:not(.dark-mode) .leaflet-control-zoom-out:hover {
+    background-color: #f4f4f4 !important;
+}
