@@ -160,112 +160,115 @@ map.on('click', function(e) {
     L.popup().setLatLng(e.latlng).setContent(popupcontent).openOn(map);
 });
 
-const selecteddate = new Date();
-let currentslidermode = 'time';
-
-function getcurrentdate() {
-    return selecteddate;
-}
-
-function updatedisplay(datebutton, timebutton) {
-    const dateoptions = { month: 'long', day: 'numeric', year: 'numeric' };
-    const timeoptions = { hour: 'numeric', minute: '2-digit' };
-    datebutton.textContent = selecteddate.toLocaleDateString('en-us', dateoptions);
-    timebutton.textContent = selecteddate.toLocaleTimeString('en-us', timeoptions);
-}
-
 let destroycurrentslider = () => {};
-
-function createslider(config) {
-    const container = document.getElementById(config.elementid);
-    container.dataset.mode = config.mode;
-    const track = container.querySelector('.slider-track');
-    let isdragging = false;
-    let startx;
-    let trackoffset = 0;
-    let currenttrackoffset = 0;
-    let currentvalue = config.initialindex;
-    let lastactiveindex = -1;
-
-    function init() {
-        track.innerHTML = '';
-        for (let i = 0; i < config.totalitems; i++) {
-            const item = config.itemgenerator(i);
-            track.appendChild(item);
-        }
-        updateslider(config.initialindex, false);
-    }
-    
-    function updatehighlight(value) {
-        const activeindex = Math.floor(value);
-        if (activeindex === lastactiveindex) return;
-        
-        track.querySelectorAll('.slider-item.active').forEach(i => i.classList.remove('active'));
-        const newactive = track.querySelector(`.slider-item[data-index="${activeindex}"]`);
-        if (newactive) newactive.classList.add('active');
-
-        lastactiveindex = activeindex;
-    }
-
-    function updateslider(value, isanimated = true) {
-        currentvalue = value;
-        const containerwidth = container.offsetWidth;
-        trackoffset = - (currentvalue * config.itemwidth) + (containerwidth / 2);
-        if (isanimated) track.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)';
-        else track.style.transition = 'none';
-        track.style.transform = `translateX(${trackoffset}px)`;
-        updatehighlight(value);
-        config.onupdate(currentvalue, true);
-    }
-    
-    function ondragstart(e) {
-        isdragging = true;
-        startx = e.pageX || e.touches[0].pageX;
-        currenttrackoffset = trackoffset;
-        track.style.transition = 'none';
-        document.body.classList.add('dragging');
-        document.addEventListener('mousemove', ondragmove);
-        document.addEventListener('mouseup', ondragend);
-    }
-
-    function ondragmove(e) {
-        if (!isdragging) return;
-        e.preventDefault();
-        const currentx = e.pageX || e.touches[0].pageX;
-        const diff = currentx - startx;
-        const newtrackoffset = currenttrackoffset + diff;
-        track.style.transform = `translateX(${newtrackoffset}px)`;
-        const containerwidth = container.offsetWidth;
-        const newvalue = (-newtrackoffset + (containerwidth / 2)) / config.itemwidth;
-        currentvalue = Math.max(0, Math.min(config.totalitems - 1, newvalue));
-        updatehighlight(currentvalue);
-        config.onupdate(currentvalue, false);
-    }
-
-    function ondragend(e) {
-        if (!isdragging) return;
-        isdragging = false;
-        document.body.classList.remove('dragging');
-        document.removeEventListener('mousemove', ondragmove);
-        document.removeEventListener('mouseup', ondragend);
-        updateslider(currentvalue, true);
-    }
-    
-    container.addEventListener('mousedown', ondragstart);
-    init();
-
-    return () => {
-        container.removeEventListener('mousedown', ondragstart);
-    };
-}
 
 document.addEventListener('DOMContentLoaded', function() {
     const datebutton = document.getElementById('date-display-button');
     const timebutton = document.getElementById('time-display-button');
+    
+    const basedate = new Date();
+    basedate.setHours(0,0,0,0);
+    let currenttimeoffsethours = new Date().getHours() + (new Date().getMinutes() / 60);
+
+    function getcurrentdate() {
+        const d = new Date(basedate);
+        d.setMilliseconds(d.getMilliseconds() + (currenttimeoffsethours * 60 * 60 * 1000));
+        return d;
+    }
+
+    function updatedisplay() {
+        const currentdate = getcurrentdate();
+        const dateoptions = { month: 'long', day: 'numeric', year: 'numeric' };
+        const timeoptions = { hour: 'numeric', minute: '2-digit' };
+        datebutton.textContent = currentdate.toLocaleDateString('en-us', dateoptions);
+        timebutton.textContent = currentdate.toLocaleTimeString('en-us', timeoptions);
+    }
+
+    function createslider(config) {
+        const container = document.getElementById(config.elementid);
+        container.dataset.mode = config.mode;
+        const track = container.querySelector('.slider-track');
+        let isdragging = false;
+        let startx;
+        let trackoffset = 0;
+        let currenttrackoffset = 0;
+        let currentvalue = config.initialindex;
+        let lastactiveindex = -1;
+
+        function init() {
+            track.innerHTML = '';
+            for (let i = 0; i < config.totalitems; i++) {
+                const item = config.itemgenerator(i);
+                track.appendChild(item);
+            }
+            updateslider(config.initialindex, false);
+        }
+        
+        function updatehighlight(value) {
+            const activeindex = Math.floor(value);
+            if (activeindex === lastactiveindex) return;
+            
+            track.querySelectorAll('.slider-item.active').forEach(i => i.classList.remove('active'));
+            const newactive = track.querySelector(`.slider-item[data-index="${activeindex}"]`);
+            if (newactive) newactive.classList.add('active');
+
+            lastactiveindex = activeindex;
+        }
+
+        function updateslider(value, isanimated = true) {
+            currentvalue = value;
+            const containerwidth = container.offsetWidth;
+            trackoffset = - (currentvalue * config.itemwidth) + (containerwidth / 2);
+            if (isanimated) track.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)';
+            else track.style.transition = 'none';
+            track.style.transform = `translateX(${trackoffset}px)`;
+            updatehighlight(value);
+            config.onupdate(currentvalue, true);
+        }
+        
+        function ondragstart(e) {
+            isdragging = true;
+            startx = e.pageX || e.touches[0].pageX;
+            currenttrackoffset = trackoffset;
+            track.style.transition = 'none';
+            document.body.classList.add('dragging');
+            document.addEventListener('mousemove', ondragmove);
+            document.addEventListener('mouseup', ondragend);
+        }
+
+        function ondragmove(e) {
+            if (!isdragging) return;
+            e.preventDefault();
+            const currentx = e.pageX || e.touches[0].pageX;
+            const diff = currentx - startx;
+            const newtrackoffset = currenttrackoffset + diff;
+            track.style.transform = `translateX(${newtrackoffset}px)`;
+            const containerwidth = container.offsetWidth;
+            const newvalue = (-newtrackoffset + (containerwidth / 2)) / config.itemwidth;
+            currentvalue = Math.max(0, Math.min(config.totalitems - 1, newvalue));
+            updatehighlight(currentvalue);
+            config.onupdate(currentvalue, false);
+        }
+
+        function ondragend(e) {
+            if (!isdragging) return;
+            isdragging = false;
+            document.body.classList.remove('dragging');
+            document.removeEventListener('mousemove', ondragmove);
+            document.removeEventListener('mouseup', ondragend);
+            updateslider(currentvalue, true);
+        }
+        
+        container.addEventListener('mousedown', ondragstart);
+        init();
+
+        return () => {
+            container.removeEventListener('mousedown', ondragstart);
+        };
+    }
 
     function initializetimer() {
         destroycurrentslider();
-        currentslidermode = 'time';
         timebutton.classList.add('active');
         datebutton.classList.remove('active');
 
@@ -274,7 +277,7 @@ document.addEventListener('DOMContentLoaded', function() {
             mode: 'time',
             itemwidth: 80,
             totalitems: 25,
-            initialindex: selecteddate.getHours() + (selecteddate.getMinutes() / 60),
+            initialindex: currenttimeoffsethours,
             itemgenerator: (i) => {
                 const item = document.createElement('div');
                 item.classList.add('slider-item');
@@ -296,10 +299,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 return item;
             },
             onupdate: (value, isfinal) => {
-                const hour = Math.floor(value);
-                const minute = Math.round((value % 1) * 60);
-                selecteddate.setHours(hour, minute);
-                updatedisplay(datebutton, timebutton);
+                currenttimeoffsethours = value;
+                updatedisplay();
                 if (isfinal) updatemaplayers();
             }
         };
@@ -308,23 +309,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function initializedaytimer() {
         destroycurrentslider();
-        currentslidermode = 'day';
         datebutton.classList.add('active');
         timebutton.classList.remove('active');
+        
+        const dayofyear = Math.floor((basedate - new Date(basedate.getFullYear(), 0, 1)) / (1000 * 60 * 60 * 24));
 
         const daysliderconfig = {
             elementid: 'slider-container',
             mode: 'day',
             itemwidth: 20,
             totalitems: 365,
-            initialindex: Math.floor((selecteddate - new Date(selecteddate.getFullYear(), 0, 1)) / (1000 * 60 * 60 * 24)),
+            initialindex: dayofyear,
             itemgenerator: (i) => {
                 const item = document.createElement('div');
                 item.classList.add('slider-item');
                 item.dataset.index = i;
                 item.style.width = '20px';
                 
-                const currentdate = new Date(selecteddate.getFullYear(), 0, i + 1);
+                const currentdate = new Date(basedate.getFullYear(), 0, i + 1);
                 const dayofmonth = currentdate.getDate();
 
                 if (dayofmonth === 15) {
@@ -349,11 +351,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 return item;
             },
             onupdate: (value, isfinal) => {
-                const dayofyear = Math.floor(value);
-                const newdate = new Date(selecteddate.getFullYear(), 0, dayofyear + 1);
-                selecteddate.setDate(newdate.getDate());
-                selecteddate.setMonth(newdate.getMonth());
-                updatedisplay(datebutton, timebutton);
+                const newdayofyear = Math.floor(value);
+                const newdate = new Date(basedate.getFullYear(), 0, newdayofyear + 1);
+                basedate.setDate(newdate.getDate());
+                basedate.setMonth(newdate.getMonth());
+                updatedisplay();
                 if (isfinal) updatemaplayers();
             }
         };
@@ -363,7 +365,7 @@ document.addEventListener('DOMContentLoaded', function() {
     timebutton.addEventListener('click', initializetimer);
     datebutton.addEventListener('click', initializedaytimer);
 
-    updatedisplay(datebutton, timebutton);
+    updatedisplay();
     updatemaplayers();
     initializetimer();
 });
