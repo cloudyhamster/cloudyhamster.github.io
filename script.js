@@ -1,28 +1,30 @@
 const map = L.map('map', {
     zoomControl: false,
-    minZoom: 2
-}).setView([20, 0], 3);
+    minZoom: 5
+}).setView([20, 0], 5);
 
 L.control.zoom({
     position: 'topleft'
 }).addTo(map);
 
 const lightlayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    maxZoom: 19,
+    maxZoom: 21,
     attribution: '© OpenStreetMap contributors & © CartoDB'
 });
 
 const darklayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    maxZoom: 19,
+    maxZoom: 21,
     attribution: '© OpenStreetMap contributors & © CartoDB'
 });
 
 const basemaps = { "Light": lightlayer, "Dark": darklayer };
 const sunriselayer = L.layerGroup();
 const daylightlayer = L.layerGroup();
+const sunsetlayer = L.layerGroup();
 
 const overlaymaps = {
     "Sunrise Times (Local)": sunriselayer,
+    "Sunset Times (Local)": sunsetlayer,
     "Daylight Hours": daylightlayer
 };
 
@@ -31,136 +33,6 @@ document.body.classList.add('dark-mode');
 let isdarkmode = true;
 
 const layercontrol = L.control.layers(basemaps, overlaymaps, { position: 'topright' }).addTo(map);
-
-map.on('baselayerchange', function(e) {
-    if (e.name === 'Light') {
-        document.body.classList.remove('dark-mode');
-        isdarkmode = false;
-    } else {
-        document.body.classList.add('dark-mode');
-        isdarkmode = true;
-    }
-});
-
-const sunrisecolors = ['#2c003e', '#7a004b', '#d83c3e', '#ff962d', '#fffa73', '#87ceeb'];
-const sunrisedomain = [4, 5, 6, 7, 8, 10];
-const sunrisecolorscale = chroma.scale(sunrisecolors).domain(sunrisedomain).mode('lch');
-
-const sunriselegend = L.control({position: 'bottomright'});
-sunriselegend.onAdd = function (map) {
-    const div = L.DomUtil.create('div', 'info-legend');
-    const gradientcss = 'linear-gradient(to right, ' + sunrisecolors.join(', ') + ')';
-    div.innerHTML = `<h4>Local Sunrise Time</h4><div class="legend-gradient" style="background: ${gradientcss};"></div><div class="legend-labels"><span>${sunrisedomain[0]}:00 AM</span><span>${sunrisedomain[sunrisedomain.length - 1]}:00 AM</span></div>`;
-    return div;
-};
-
-function updatesunriselayer() {
-    sunriselayer.clearLayers();
-    const bounds = map.getBounds();
-    const zoom = map.getZoom();
-    const gridcells = zoom < 4 ? 20 : 30;
-    const west = bounds.getWest(), east = bounds.getEast(), north = bounds.getNorth(), south = bounds.getSouth();
-    const latstep = (north - south) / gridcells;
-    const lngstep = (east - west) / gridcells;
-    for (let lat = south; lat < north; lat += latstep) {
-        for (let lng = west; lng < east; lng += lngstep) {
-            const times = SunCalc.getTimes(getcurrentdate(), lat, lng);
-            const timezone = tzlookup(lat, lng);
-            const dateobj = new Date(times.sunrise);
-            const hour = parseInt(dateobj.toLocaleTimeString('en-GB', { timeZone: timezone, hour: 'numeric' }));
-            const minute = parseInt(dateobj.toLocaleTimeString('en-GB', { timeZone: timezone, minute: 'numeric' }));
-            const localhour = hour + (minute / 60);
-            const rectangle = L.rectangle([[lat, lng], [lat + latstep, lng + lngstep]], { color: getsunrisecolor(localhour), weight: 0, fillOpacity: 0.5 });
-            sunriselayer.addLayer(rectangle);
-        }
-    }
-}
-
-function getsunrisecolor(hourofday) {
-    if (isNaN(hourofday) || hourofday < sunrisedomain[0] || hourofday > sunrisedomain[sunrisedomain.length - 1]) {
-        return 'transparent';
-    }
-    return sunrisecolorscale(hourofday).hex();
-}
-
-const daylightcolors = ['#0d0887', '#7e03a8', '#cb4778', '#f89540', '#f0f921'];
-const daylightdomain = [0, 6, 12, 18, 24];
-const daylightcolorscale = chroma.scale(daylightcolors).domain(daylightdomain);
-
-const daylightlegend = L.control({position: 'bottomright'});
-daylightlegend.onAdd = function (map) {
-    const div = L.DomUtil.create('div', 'info-legend');
-    const gradientcss = 'linear-gradient(to right, ' + daylightcolors.join(', ') + ')';
-    div.innerHTML = `<h4>Daylight Duration</h4><div class="legend-gradient" style="background: ${gradientcss};"></div><div class="legend-labels"><span>${daylightdomain[0]} Hours</span><span>${daylightdomain[daylightdomain.length - 1]} Hours</span></div>`;
-    return div;
-};
-
-function updatedaylightlayer() {
-    const calculationdate = new Date(getcurrentdate().setHours(12, 0, 0, 0));
-    daylightlayer.clearLayers();
-    const bounds = map.getBounds();
-    const zoom = map.getZoom();
-    const gridcells = zoom < 4 ? 20 : 30;
-    const west = bounds.getWest(), east = bounds.getEast(), north = bounds.getNorth(), south = bounds.getSouth();
-    const latstep = (north - south) / gridcells;
-    const lngstep = (east - west) / gridcells;
-    for (let lat = south; lat < north; lat += latstep) {
-        for (let lng = west; lng < east; lng += lngstep) {
-            const times = SunCalc.getTimes(calculationdate, lat, lng);
-            let durationhours = 0;
-            if (!isNaN(times.sunrise.getTime()) && !isNaN(times.sunset.getTime())) {
-                const durationms = times.sunset.getTime() - times.sunrise.getTime();
-                durationhours = durationms / (1000 * 60 * 60);
-            } else {
-                const sunposnoon = SunCalc.getPosition(calculationdate, lat, lng);
-                if (sunposnoon.altitude > 0) durationhours = 24;
-            }
-            const rectangle = L.rectangle([[lat, lng], [lat + latstep, lng + lngstep]], { color: getdaylightcolor(durationhours), weight: 0, fillOpacity: 0.5 });
-            daylightlayer.addLayer(rectangle);
-        }
-    }
-}
-
-function getdaylightcolor(hourofday) {
-    if (isNaN(hourofday)) return 'transparent';
-    return daylightcolorscale(hourofday).hex();
-}
-
-function updatemaplayers() {
-    if (map.hasLayer(sunriselayer)) updatesunriselayer();
-    if (map.hasLayer(daylightlayer)) updatedaylightlayer();
-}
-
-map.on('overlayadd', function(e) {
-    updatemaplayers();
-    if (e.name === "Sunrise Times (Local)") sunriselegend.addTo(map);
-    else if (e.name === "Daylight Hours") daylightlegend.addTo(map);
-});
-
-map.on('overlayremove', function(e) {
-    if (e.name === "Sunrise Times (Local)") {
-        sunriselayer.clearLayers();
-        sunriselegend.remove();
-    } else if (e.name === "Daylight Hours") {
-        daylightlayer.clearLayers();
-        daylightlegend.remove();
-    }
-});
-
-map.on('moveend', updatemaplayers);
-
-map.on('click', function(e) {
-    const lat = e.latlng.lat;
-    const lng = e.latlng.lng;
-    const times = SunCalc.getTimes(getcurrentdate(), lat, lng);
-    const timezone = tzlookup(lat, lng);
-    const sunrisestr = times.sunrise.toLocaleTimeString('en-us', { hour: '2-digit', minute: '2-digit', timeZone: timezone, timeZoneName: 'short' });
-    const sunsetstr = times.sunset.toLocaleTimeString('en-us', { hour: '2-digit', minute: '2-digit', timeZone: timezone, timeZoneName: 'short' });
-    const popupcontent = `<strong>Location Information</strong><br>Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}<br>Timezone: ${timezone.replace('_', ' ')}<br><br><strong>Sunrise:</strong> ${sunrisestr}<br><strong>Sunset:</strong> ${sunsetstr}`;
-    L.popup().setLatLng(e.latlng).setContent(popupcontent).openOn(map);
-});
-
-let destroycurrentslider = () => {};
 
 document.addEventListener('DOMContentLoaded', function() {
     const datebutton = document.getElementById('date-display-button');
@@ -183,6 +55,190 @@ document.addEventListener('DOMContentLoaded', function() {
         datebutton.textContent = currentdate.toLocaleDateString('en-us', dateoptions);
         timebutton.textContent = currentdate.toLocaleTimeString('en-us', timeoptions);
     }
+
+    const sunrisecolors = ['#2c003e', '#7a004b', '#d83c3e', '#ff962d', '#fffa73', '#87ceeb'];
+    const sunrisedomain = [4, 5, 6, 7, 8, 10];
+    const sunrisecolorscale = chroma.scale(sunrisecolors).domain(sunrisedomain).mode('lch');
+
+    const sunriselegend = L.control({position: 'bottomright'});
+    sunriselegend.onAdd = function (map) {
+        const div = L.DomUtil.create('div', 'info-legend');
+        const gradientcss = 'linear-gradient(to right, ' + sunrisecolors.join(', ') + ')';
+        div.innerHTML = `<h4>Local Sunrise Time</h4><div class="legend-gradient" style="background: ${gradientcss};"></div><div class="legend-labels"><span>${sunrisedomain[0]}:00 AM</span><span>${sunrisedomain[sunrisedomain.length - 1]}:00 AM</span></div>`;
+        return div;
+    };
+
+    function updatesunriselayer() {
+        sunriselayer.clearLayers();
+        const calculationdate = new Date(getcurrentdate().setHours(12, 0, 0, 0));
+        const bounds = map.getBounds();
+        const zoom = map.getZoom();
+        const gridcells = zoom < 5 ? 30 : 40;
+        const west = bounds.getWest(), east = bounds.getEast(), north = bounds.getNorth(), south = bounds.getSouth();
+        const latstep = (north - south) / gridcells;
+        const lngstep = (east - west) / gridcells;
+        for (let lat = south; lat < north; lat += latstep) {
+            for (let lng = west; lng < east; lng += lngstep) {
+                const times = SunCalc.getTimes(calculationdate, lat, lng);
+                const timezone = tzlookup(lat, lng);
+                const dateobj = new Date(times.sunrise);
+                const hour = parseInt(dateobj.toLocaleTimeString('en-GB', { timeZone: timezone, hour: 'numeric' }));
+                const minute = parseInt(dateobj.toLocaleTimeString('en-GB', { timeZone: timezone, minute: 'numeric' }));
+                const localhour = hour + (minute / 60);
+                const rectangle = L.rectangle([[lat, lng], [lat + latstep, lng + lngstep]], { color: getsunrisecolor(localhour), weight: 0, fillOpacity: 0.5 });
+                sunriselayer.addLayer(rectangle);
+            }
+        }
+    }
+
+    function getsunrisecolor(hourofday) {
+        if (isNaN(hourofday) || hourofday < sunrisedomain[0] || hourofday > sunrisedomain[sunrisedomain.length - 1]) {
+            return 'transparent';
+        }
+        return sunrisecolorscale(hourofday).hex();
+    }
+
+    const daylightcolors = ['#0d0887', '#7e03a8', '#cb4778', '#f89540', '#f0f921'];
+    const daylightdomain = [0, 6, 12, 18, 24];
+    const daylightcolorscale = chroma.scale(daylightcolors).domain(daylightdomain);
+
+    const daylightlegend = L.control({position: 'bottomright'});
+    daylightlegend.onAdd = function (map) {
+        const div = L.DomUtil.create('div', 'info-legend');
+        const gradientcss = 'linear-gradient(to right, ' + daylightcolors.join(', ') + ')';
+        div.innerHTML = `<h4>Daylight Duration</h4><div class="legend-gradient" style="background: ${gradientcss};"></div><div class="legend-labels"><span>${daylightdomain[0]} Hours</span><span>${daylightdomain[daylightdomain.length - 1]} Hours</span></div>`;
+        return div;
+    };
+
+    function updatedaylightlayer() {
+        const calculationdate = new Date(getcurrentdate().setHours(12, 0, 0, 0));
+        daylightlayer.clearLayers();
+        const bounds = map.getBounds();
+        const zoom = map.getZoom();
+        const gridcells = zoom < 5 ? 30 : 40;
+        const west = bounds.getWest(), east = bounds.getEast(), north = bounds.getNorth(), south = bounds.getSouth();
+        const latstep = (north - south) / gridcells;
+        const lngstep = (east - west) / gridcells;
+        for (let lat = south; lat < north; lat += latstep) {
+            for (let lng = west; lng < east; lng += lngstep) {
+                const times = SunCalc.getTimes(calculationdate, lat, lng);
+                let durationhours = 0;
+                if (!isNaN(times.sunrise.getTime()) && !isNaN(times.sunset.getTime())) {
+                    const durationms = times.sunset.getTime() - times.sunrise.getTime();
+                    durationhours = durationms / (1000 * 60 * 60);
+                } else {
+                    const sunposnoon = SunCalc.getPosition(calculationdate, lat, lng);
+                    if (sunposnoon.altitude > 0) durationhours = 24;
+                }
+                const rectangle = L.rectangle([[lat, lng], [lat + latstep, lng + lngstep]], { color: getdaylightcolor(durationhours), weight: 0, fillOpacity: 0.5 });
+                daylightlayer.addLayer(rectangle);
+            }
+        }
+    }
+
+    function getdaylightcolor(hourofday) {
+        if (isNaN(hourofday)) return 'transparent';
+        return daylightcolorscale(hourofday).hex();
+    }
+    
+    const sunsetcolors = ['#fde725', '#f89540', '#e56b5d', '#cb4778', '#a32f8d', '#7e03a8', '#4b0055'];
+    const sunsetdomain = [15, 16, 17, 18, 19, 21, 23];
+    const sunsetcolorscale = chroma.scale(sunsetcolors).domain(sunsetdomain).mode('lch');
+    
+    const sunsetlegend = L.control({position: 'bottomright'});
+    sunsetlegend.onAdd = function (map) {
+        const div = L.DomUtil.create('div', 'info-legend');
+        const gradientcss = 'linear-gradient(to right, ' + sunsetcolors.join(', ') + ')';
+        div.innerHTML = `<h4>Local Sunset Time</h4><div class="legend-gradient" style="background: ${gradientcss};"></div><div class="legend-labels"><span>3:00 PM</span><span>11:00 PM</span></div>`;
+        return div;
+    };
+
+    function updatesunsetlayer() {
+        sunsetlayer.clearLayers();
+        const calculationdate = new Date(getcurrentdate().setHours(12, 0, 0, 0));
+        const bounds = map.getBounds();
+        const zoom = map.getZoom();
+        const gridcells = zoom < 5 ? 30 : 40;
+        const west = bounds.getWest(), east = bounds.getEast(), north = bounds.getNorth(), south = bounds.getSouth();
+        const latstep = (north - south) / gridcells;
+        const lngstep = (east - west) / gridcells;
+        for (let lat = south; lat < north; lat += latstep) {
+            for (let lng = west; lng < east; lng += lngstep) {
+                const times = SunCalc.getTimes(calculationdate, lat, lng);
+                const timezone = tzlookup(lat, lng);
+                const dateobj = new Date(times.sunset);
+                const hour = parseInt(dateobj.toLocaleTimeString('en-GB', { timeZone: timezone, hour: 'numeric' }));
+                const minute = parseInt(dateobj.toLocaleTimeString('en-GB', { timeZone: timezone, minute: 'numeric' }));
+                const localhour = hour + (minute / 60);
+                const rectangle = L.rectangle([[lat, lng], [lat + latstep, lng + lngstep]], { color: getsunsetcolor(localhour), weight: 0, fillOpacity: 0.5 });
+                sunsetlayer.addLayer(rectangle);
+            }
+        }
+    }
+
+    function getsunsetcolor(hourofday) {
+        if (isNaN(hourofday) || hourofday < sunsetdomain[0] || hourofday > sunsetdomain[sunsetdomain.length - 1]) {
+            return 'transparent';
+        }
+        return sunsetcolorscale(hourofday).hex();
+    }
+
+    function debounce(func, wait) {
+        let timeout;
+        return function executedfunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    function updatemaplayers() {
+        if (map.hasLayer(sunriselayer)) updatesunriselayer();
+        if (map.hasLayer(daylightlayer)) updatedaylightlayer();
+        if (map.hasLayer(sunsetlayer)) updatesunsetlayer();
+    }
+    
+    let activelegend = null;
+    function removealllegends() {
+        if(activelegend) {
+            activelegend.remove();
+            activelegend = null;
+        }
+    }
+
+    map.on('overlayadd', function(e) {
+        removealllegends();
+        updatemaplayers();
+        if (e.name === "Sunrise Times (Local)") activelegend = sunriselegend.addTo(map);
+        else if (e.name === "Daylight Hours") activelegend = daylightlegend.addTo(map);
+        else if (e.name === "Sunset Times (Local)") activelegend = sunsetlegend.addTo(map);
+    });
+
+    map.on('overlayremove', function(e) {
+        if (e.name === "Sunrise Times (Local)") sunriselayer.clearLayers();
+        else if (e.name === "Daylight Hours") daylightlayer.clearLayers();
+        else if (e.name === "Sunset Times (Local)") sunsetlayer.clearLayers();
+        removealllegends();
+    });
+
+    const debouncedupdatemaplayers = debounce(updatemaplayers, 250);
+    map.on('moveend', debouncedupdatemaplayers);
+
+    map.on('click', function(e) {
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+        const times = SunCalc.getTimes(getcurrentdate(), lat, lng);
+        const timezone = tzlookup(lat, lng);
+        const sunrisestr = times.sunrise.toLocaleTimeString('en-us', { hour: '2-digit', minute: '2-digit', timeZone: timezone, timeZoneName: 'short' });
+        const sunsetstr = times.sunset.toLocaleTimeString('en-us', { hour: '2-digit', minute: '2-digit', timeZone: timezone, timeZoneName: 'short' });
+        const popupcontent = `<strong>Location Information</strong><br>Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}<br>Timezone: ${timezone.replace('_', ' ')}<br><br><strong>Sunrise:</strong> ${sunrisestr}<br><strong>Sunset:</strong> ${sunsetstr}`;
+        L.popup().setLatLng(e.latlng).setContent(popupcontent).openOn(map);
+    });
+    
+    let destroycurrentslider = () => {};
 
     function createslider(config) {
         const container = document.getElementById(config.elementid);
@@ -352,9 +408,8 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             onupdate: (value, isfinal) => {
                 const newdayofyear = Math.floor(value);
-                const newdate = new Date(basedate.getFullYear(), 0, newdayofyear + 1);
-                basedate.setDate(newdate.getDate());
-                basedate.setMonth(newdate.getMonth());
+                basedate.setMonth(0);
+                basedate.setDate(newdayofyear + 1);
                 updatedisplay();
                 if (isfinal) updatemaplayers();
             }
