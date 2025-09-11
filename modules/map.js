@@ -39,7 +39,7 @@ map.on('load', function() {
                 map.flyTo([lat, lon], 10);
             },
             function() {
-                console.log('geolocation permission denied by user');
+                console.log('geolocation permission denied by user.');
             }
         );
     }

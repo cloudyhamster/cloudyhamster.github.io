@@ -146,24 +146,6 @@ function getsunsetcolor(hourofday) {
     return sunsetcolorscale(hourofday).hex();
 }
 
-function debounce(func, wait) {
-    let timeout;
-    const debounced = function(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-    debounced.cancel = function() {
-        clearTimeout(timeout);
-    };
-    return debounced;
-}
-
-const debouncedupdatemaplayers = debounce(updatemaplayers, 250);
-
 let activelegend = null;
 function removealllegends() {
     if(activelegend) {
@@ -192,7 +174,7 @@ export function initializeLayers(map, dateGetter) {
         removealllegends();
     });
 
-    mapinstance.on('moveend', debouncedupdatemaplayers);
+    mapinstance.on('moveend', updatemaplayers);
 
     mapinstance.on('click', function(e) {
         const lat = e.latlng.lat;
