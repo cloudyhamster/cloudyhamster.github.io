@@ -1,42 +1,105 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>map</title>
+    <meta charset="utf-8"/>
+    <title>cloudyhamster projects</title>
+    <link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect"/>
+    <link as="style" href="https://fonts.googleapis.com/css2?display=swap&amp;family=Inter:wght@400;500;700" onload="this.rel='stylesheet'" rel="stylesheet"/>
     
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8QHLDYH5ZY"></script>
-    <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-8QHLDYH5ZY');
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://cdn.tailwindcss.com?plugins=container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "primary": "#3713ec",
+                "background-light": "#f6f6f8",
+                "background-dark": "#000000",
+              },
+              fontFamily: {
+                "display": ["Inter", "sans-serif"]
+              },
+              borderRadius: {
+                "DEFAULT": "0.5rem",
+                "lg": "1rem",
+                "xl": "1.5rem",
+                "full": "9999px"
+              },
+               boxShadow: {
+                 'social-glow-twitter': '0 0 15px 5px rgba(29, 161, 242, 0.4)',
+                 'social-glow-github': '0 0 15px 5px rgba(255, 255, 255, 0.3)',
+                 'social-glow-dribbble': '0 0 15px 5px rgba(234, 76, 137, 0.4)',
+               }
+            },
+          },
+        }
     </script>
-    
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="style.css?v=1.0">
 </head>
-<body>
-
-    <div id="map"></div>
-    
-    <div id="slider-controls-wrapper">
-        <div id="display-wrapper">
-            <button id="date-display-button" class="display-box"></button>
-            <button id="time-display-button" class="display-box"></button>
+<body class="bg-background-light font-display text-white">
+    <div class="relative min-h-screen w-full overflow-x-hidden aurora-background aurora-animate">
+        <div class="galaxy-background">
+            <div class="galaxy-circle circle-1"></div>
+            <div class="galaxy-circle circle-2"></div>
+            <div class="galaxy-circle circle-3"></div>
         </div>
-
-        <div id="slider-container" class="slider-container">
-            <div class="time-slider-ticker"></div>
-            <div class="slider-track"></div>
-        </div>
+        <main class="container mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center min-h-[calc(100vh-80px)] pt-16 pb-24 sm:pb-32">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-4xl">
+                <!-- card 1 - sky explorer -->
+                <a class="project-card group block p-4 rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl hover:bg-white/10 transition-all duration-300 h-48 shadow-lg shadow-purple-500/10 hover:shadow-purple-500/20" href="/skymap/">
+                    <div class="flex flex-col justify-between h-full relative z-10">
+                        <div>
+                            <h3 class="text-md font-bold">Sky Explorer Map</h3>
+                            <p class="mt-2 text-xs text-white/60">An interactive map showcasing information about the sky at any moment in time.</p>
+                        </div>
+                        <div class="flex items-center text-white/70 group-hover:text-white transition-colors self-end">
+                            <span class="text-xs">View Project</span>
+                            <svg class="ml-2 transform group-hover:translate-x-1 transition-transform" fill="currentColor" height="12" viewBox="0 0 256 256" width="12" xmlns="http://www.w3.org/2000/svg"><path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"></path></svg>
+                        </div>
+                    </div>
+                </a>
+                <!-- card 2 - none -->
+                <a class="project-card group block p-4 rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl hover:bg-white/10 transition-all duration-300 h-48 shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20" href="#">
+                    <div class="flex flex-col justify-between h-full relative z-10">
+                        <div>
+                            <h3 class="text-md font-bold">[placeholder]</h3>
+                            <p class="mt-2 text-xs text-white/60">[placeholder description]</p>
+                        </div>
+                        <div class="flex items-center text-white/70 group-hover:text-white transition-colors self-end">
+                            <span class="text-xs">View Project</span>
+                            <svg class="ml-2 transform group-hover:translate-x-1 transition-transform" fill="currentColor" height="12" viewBox="0 0 256 256" width="12" xmlns="http://www.w3.org/2000/svg"><path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"></path></svg>
+                        </div>
+                    </div>
+                </a>
+                <!-- card 3 - none -->
+                <a class="project-card group block p-4 rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl hover:bg-white/10 transition-all duration-300 h-48 shadow-lg shadow-pink-500/10 hover:shadow-pink-500/20" href="#">
+                    <div class="flex flex-col justify-between h-full relative z-10">
+                        <div>
+                            <h3 class="text-md font-bold">[placeholder]</h3>
+                            <p class="mt-2 text-xs text-white/60">[placeholder description]</p>
+                        </div>
+                        <div class="flex items-center text-white/70 group-hover:text-white transition-colors self-end">
+                            <span class="text-xs">View Project</span>
+                            <svg class="ml-2 transform group-hover:translate-x-1 transition-transform" fill="currentColor" height="12" viewBox="0 0 256 256" width="12" xmlns="http://www.w3.org/2000/svg"><path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"></path></svg>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </main>
+        <footer class="absolute bottom-0 left-0 w-full bg-black/10 backdrop-blur-lg">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div class="flex flex-col sm:flex-row justify-center items-center text-center text-xs text-white/50 space-y-2 sm:space-y-0 sm:space-x-4">
+                    <p>© 2025 cloudyhamster. All rights reserved.</p>
+                    <div class="flex items-center space-x-4">
+                        <a class="hover:text-white transition-colors hover:shadow-social-glow-github rounded-full p-1" href="#">
+                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12,2A10,10 0 0,0 2,12C2,16.42 4.87,20.17 8.84,21.5C9.34,21.58 9.5,21.27 9.5,21C9.5,20.77 9.5,20.14 9.5,19.31C6.73,19.91 6.14,17.97 6.14,17.97C5.68,16.81 5.03,16.5 5.03,16.5C4.12,15.88 5.1,15.9 5.1,15.9C6.1,15.97 6.63,16.93 6.63,16.93C7.5,18.45 8.97,18 9.54,17.73C9.63,17.11 9.89,16.67 10.17,16.42C7.95,16.17 5.62,15.31 5.62,11.5C5.62,10.39 6,9.5 6.65,8.79C6.55,8.54 6.2,7.5 6.75,6.15C6.75,6.15 7.59,5.88 9.5,7.17C10.29,6.95 11.15,6.84 12,6.84C12.85,6.84 13.71,6.95 14.5,7.17C16.41,5.88 17.25,6.15 17.25,6.15C17.8,7.5 17.45,8.54 17.35,8.79C18,9.5 18.38,10.39 18.38,11.5C18.38,15.32 16.04,16.16 13.83,16.41C14.17,16.72 14.5,17.33 14.5,18.26C14.5,19.6 14.5,20.68 14.5,21C14.5,21.27 14.66,21.59 15.17,21.5C19.14,20.16 22,16.42 22,12A10,10 0 0,0 12,2Z"></path></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </footer>
     </div>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/suncalc@1.8.0/suncalc.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tz-lookup@6.1.25/tz.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.4.2/chroma.min.js"></script>
-    <script type="module" src="main.js"></script>
 </body>
 </html>
