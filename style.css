@@ -385,10 +385,10 @@ video {
 
 .aurora-background {
   background-color: #000000;
-  background-image: radial-gradient(at 27% 37%, hsla(215, 98%, 61%, 0.07) 0px, transparent 50%),
-                    radial-gradient(at 97% 21%, hsla(215, 98%, 61%, 0.07) 0px, transparent 50%),
-                    radial-gradient(at 82% 99%, hsla(286, 88%, 63%, 0.07) 0px, transparent 50%),
-                    radial-gradient(at 29% 97%, hsla(317, 88%, 63%, 0.07) 0px, transparent 50%);
+  background-image: radial-gradient(at 27% 37%, hsla(215, 98%, 61%, 0.12) 0px, transparent 50%),
+                    radial-gradient(at 97% 21%, hsla(215, 98%, 61%, 0.12) 0px, transparent 50%),
+                    radial-gradient(at 82% 99%, hsla(286, 88%, 63%, 0.12) 0px, transparent 50%),
+                    radial-gradient(at 29% 97%, hsla(317, 88%, 63%, 0.12) 0px, transparent 50%);
 }
 
 .absolute {

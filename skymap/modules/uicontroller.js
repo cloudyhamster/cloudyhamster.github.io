@@ -144,7 +144,10 @@ export class uicontroller {
 
         const ondragmove = (e) => {
             if (!isdragging) return;
-            const currentx = e.pageX || e.touches[0].pageX;
+            e.preventDefault(); // Prevent default touch behavior
+            const currentx = e.pageX || (e.touches && e.touches[0].pageX);
+            if (!currentx) return;
+            
             const diff = currentx - startx;
             const newtrackoffset = currenttrackoffset + diff;
             track.style.transform = `translateX(${newtrackoffset}px)`;
@@ -158,12 +161,17 @@ export class uicontroller {
             this.ontemporaryupdate();
         };
 
-        const ondragend = () => {
+        const ondragend = (e) => {
             if (!isdragging) return;
             isdragging = false;
             document.body.classList.remove('dragging');
+            
             document.removeEventListener('mousemove', ondragmove);
             document.removeEventListener('mouseup', ondragend);
+            document.removeEventListener('touchmove', ondragmove);
+            document.removeEventListener('touchend', ondragend);
+            document.removeEventListener('touchcancel', ondragend);
+            
             this.ontemporaryupdate.cancel();
             updateslider();
             this.onfinalupdate();
@@ -171,17 +179,30 @@ export class uicontroller {
 
         const ondragstart = (e) => {
             isdragging = true;
-            startx = e.pageX || e.touches[0].pageX;
+            startx = e.pageX || (e.touches && e.touches[0].pageX);
+            if (!startx) return;
+            
             currenttrackoffset = trackoffset;
             track.style.transition = 'none';
             document.body.classList.add('dragging');
-            document.addEventListener('mousemove', ondragmove);
+            
+            document.addEventListener('mousemove', ondragmove, { passive: false });
             document.addEventListener('mouseup', ondragend);
+            document.addEventListener('touchmove', ondragmove, { passive: false });
+            document.addEventListener('touchend', ondragend);
+            document.addEventListener('touchcancel', ondragend);
+            
+            e.preventDefault(); // Prevent default touch behavior
         };
 
         this.slidercontainer.addEventListener('mousedown', ondragstart);
+        this.slidercontainer.addEventListener('touchstart', ondragstart, { passive: false });
+        
         updateslider(false);
 
-        return () => this.slidercontainer.removeEventListener('mousedown', ondragstart);
+        return () => {
+            this.slidercontainer.removeEventListener('mousedown', ondragstart);
+            this.slidercontainer.removeEventListener('touchstart', ondragstart);
+        };
     }
 }

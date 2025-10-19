@@ -1,7 +1,15 @@
-body {
+html, body {
     margin: 0;
     padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: fixed;
+}
+
+body {
     font-family: sans-serif;
+    background-color: #262626;
 }
 
 #map {
@@ -67,22 +75,24 @@ body:not(.dark-mode) .info-legend h4 {
 
 #slider-controls-wrapper {
     position: fixed;
-    bottom: 25px;
+    bottom: env(safe-area-inset-bottom, 25px);
     left: 50%;
     transform: translateX(-50%);
-    width: 60vw;
+    width: 90vw;
     max-width: 700px;
     z-index: 1000;
     user-select: none;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    padding: 0 15px;
 }
 
 #display-wrapper {
     display: flex;
     gap: 8px;
-    width: 50%;
+    width: 100%;
+    max-width: 400px;
     margin: 0 auto;
 }
 
@@ -93,18 +103,25 @@ body:not(.dark-mode) .info-legend h4 {
     border-radius: 12px;
     box-shadow: 0 1px 5px rgba(0,0,0,0.4);
     color: #fff;
-    padding: 10px;
+    padding: 12px 10px;
     text-align: center;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: bold;
     transition: all 0.3s ease;
     cursor: pointer;
     font-family: sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 .display-box.active {
     border-color: #f09540;
     color: #f09540;
+    background-color: rgba(44, 44, 44, 0.95);
+}
+
+body:not(.dark-mode) {
+    background-color: #d4dadc;
 }
 
 body:not(.dark-mode) .display-box {
@@ -117,21 +134,27 @@ body:not(.dark-mode) .display-box {
 body:not(.dark-mode) .display-box.active {
     border-color: #f09540;
     color: #d86c00;
+    background-color: rgba(255, 255, 255, 0.95);
 }
 
 .slider-container {
     position: relative;
-    background-color: rgba(44,44,44,0.9);
+    background-color: rgba(44,44,44,0.95);
     border: 1px solid #555;
     border-radius: 12px;
     box-shadow: 0 1px 5px rgba(0,0,0,0.4);
     overflow: hidden;
     cursor: grab;
     height: 60px;
+    touch-action: pan-x;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 body.dragging .slider-container {
     cursor: grabbing;
+    background-color: rgba(44,44,44,1);
 }
 
 body:not(.dark-mode) .slider-container {
@@ -180,17 +203,20 @@ body:not(.dark-mode) .slider-container {
 
 .hour-label {
     bottom: 5px;
-    font-size: 14px;
+    font-size: 13px;
+    font-weight: 500;
 }
 
 .month-label {
     top: 5px;
-    font-size: 12px;
+    font-size: 11px;
+    font-weight: 500;
 }
 
 .slider-item.active .hour-label,
 .slider-item.active .month-label { 
-    color: #fff; 
+    color: #fff;
+    font-weight: bold;
 }
 
 body:not(.dark-mode) .slider-item.active .hour-label,
