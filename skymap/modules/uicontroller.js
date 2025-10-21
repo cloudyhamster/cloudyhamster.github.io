@@ -144,7 +144,7 @@ export class uicontroller {
 
         const ondragmove = (e) => {
             if (!isdragging) return;
-            e.preventDefault(); // Prevent default touch behavior
+            e.preventDefault();
             const currentx = e.pageX || (e.touches && e.touches[0].pageX);
             if (!currentx) return;
             
@@ -192,7 +192,7 @@ export class uicontroller {
             document.addEventListener('touchend', ondragend);
             document.addEventListener('touchcancel', ondragend);
             
-            e.preventDefault(); // Prevent default touch behavior
+            e.preventDefault();
         };
 
         this.slidercontainer.addEventListener('mousedown', ondragstart);
