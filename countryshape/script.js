@@ -3,7 +3,8 @@ const loader = document.getElementById('loader');
 
 const map = L.map('map', {
     zoomControl: false,
-    attributionControl: false 
+    attributionControl: false,
+    minZoom: 3
 }).setView([20, 0], 2);
 
 L.control.zoom({ position: 'topright' }).addTo(map);
