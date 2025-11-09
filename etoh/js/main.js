@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
             { key: 'Ring 1', name: 'Ring 1: Limbo' },
             { key: 'Forgotten Ridge', name: 'Forgotten Ridge' },
             { key: 'Ring 2', name: 'Ring 2: Desire' },
-            { key: 'Garden Of Eesh%C3%B6L', name: 'Garden Of Eeshol' },
+            { key: 'Garden Of Eesh%C3%B6L', name: 'Garden of Eeshöl' },
             { key: 'Ring 3', name: 'Ring 3: Gluttony' },
             { key: 'Ring 4', name: 'Ring 4: Greed' },
             { key: 'Silent Abyss', name: 'Silent Abyss' },
