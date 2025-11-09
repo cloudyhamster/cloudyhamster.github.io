@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const API_BASE_URL = 'https://etoh-thing.onrender.com';
+    const API_BASE_URL = 'http://127.0.0.1:5000';
     let completionChart = null;
     let currentView = 'chart';
 
@@ -71,13 +71,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const calculateAndRenderStats = (beatenTowers, allTowers) => {
         const canonCompletions = beatenTowers.filter(tower => !NON_CANON_TOWERS.has(tower.name));
         const totalCanonTowers = allTowers.filter(tower => !NON_CANON_TOWERS.has(tower.name));
-
         const totalBeaten = canonCompletions.length;
         const totalInGame = totalCanonTowers.length;
-        
         let hardestTowerName = "N/A";
         let hardestDifficultyStr = "N/A";
-
         if (beatenTowers.length > 0) {
             const sortedByDifficulty = [...beatenTowers].sort((a, b) => b.number_difficulty - a.number_difficulty);
             const hardestTower = sortedByDifficulty[0];
@@ -88,7 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const fullDiffText = `${modifier} ${difficulty}`.trim();
             hardestDifficultyStr = `${fullDiffText} [${numeric.toFixed(2)}]`;
         }
-        
         totalTowersStat.textContent = `${totalBeaten}/${totalInGame}`;
         hardestTowerStat.textContent = hardestTowerName;
         hardestDifficultyStat.textContent = hardestDifficultyStr;
@@ -105,16 +101,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!allTowers || allTowers.length === 0) return;
 
         const difficultyColors = {
-            "Easy": "#76F447", 
-            "Medium": "#FFFF00", 
-            "Hard": "#FE7C00", 
+            "Easy": "#76F447",
+            "Medium": "#FFFF00",
+            "Hard": "#FE7C00",
             "Difficult": "#FF3232",
-            "Challenging": "#A00000", 
-            "Intense": "#19222D", 
-            "Remorseless": "#C900C8", 
+            "Challenging": "#A00000",
+            "Intense": "#19222D",
+            "Remorseless": "#C900C8",
             "Insane": "#0000FF",
-            "Extreme": "#0287FF", 
-            "Terrifying": "#00FFFF", 
+            "Extreme": "#0287FF",
+            "Terrifying": "#00FFFF",
             "Catastrophic": "#FFFFFF",
         };
         const defaultColor = "#808080";
@@ -135,36 +131,22 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         
         const ringAreas = [
-            { key: 'Ring 0', name: 'Ring 0: Purgatorio' },
-            { key: 'Ring 1', name: 'Ring 1: Limbo' },
-            { key: 'Forgotten Ridge', name: 'Forgotten Ridge' },
-            { key: 'Ring 2', name: 'Ring 2: Desire' },
-            { key: 'Garden Of Eesh%C3%B6L', name: 'Garden of Eeshöl' },
-            { key: 'Ring 3', name: 'Ring 3: Gluttony' },
-            { key: 'Ring 4', name: 'Ring 4: Greed' },
-            { key: 'Silent Abyss', name: 'Silent Abyss' },
-            { key: 'Ring 5', name: 'Ring 5: Wrath' },
-            { key: 'Lost River', name: 'Lost River' },
-            { key: 'Ring 6', name: 'Ring 6: Heresy' },
-            { key: 'Ashen Towerworks', name: 'Ashen Towerworks' },
-            { key: 'Ring 7', name: 'Ring 7: Violence' },
-            { key: 'Ring 8', name: 'Ring 8: Fraud' },
-            { key: 'The Starlit Archives', name: 'The Starlit Archives' },
-            { key: 'Ring 9', name: 'Ring 9: Treachery' },
+            { key: 'Ring 0', name: 'Ring 0: Purgatorio' }, { key: 'Ring 1', name: 'Ring 1: Limbo' },
+            { key: 'Forgotten Ridge', name: 'Forgotten Ridge' }, { key: 'Ring 2', name: 'Ring 2: Desire' },
+            { key: 'Garden Of Eesh%C3%B6L', name: 'Garden of Eeshöl' }, { key: 'Ring 3', name: 'Ring 3: Gluttony' },
+            { key: 'Ring 4', name: 'Ring 4: Greed' }, { key: 'Silent Abyss', name: 'Silent Abyss' },
+            { key: 'Ring 5', name: 'Ring 5: Wrath' }, { key: 'Lost River', name: 'Lost River' },
+            { key: 'Ring 6', name: 'Ring 6: Heresy' }, { key: 'Ashen Towerworks', name: 'Ashen Towerworks' },
+            { key: 'Ring 7', name: 'Ring 7: Violence' }, { key: 'Ring 8', name: 'Ring 8: Fraud' },
+            { key: 'The Starlit Archives', name: 'The Starlit Archives' }, { key: 'Ring 9', name: 'Ring 9: Treachery' },
         ];
         const zoneAreas = [
-            { key: 'Zone 1', name: 'Zone 1: Sea' },
-            { key: 'Zone 2', name: 'Zone 2: Surface' },
-            { key: 'Arcane Area', name: 'Arcane Area' },
-            { key: 'Zone 3', name: 'Zone 3: Sky' },
-            { key: 'Paradise Atoll', name: 'Paradise Atoll' },
-            { key: 'Zone 4', name: 'Zone 4: Exosphere' },
-            { key: 'Zone 5', name: 'Zone 5: The Moon' },
-            { key: 'Zone 6', name: 'Zone 6: Mars' },
-            { key: 'Zone 7', name: 'Zone 7: Asteroid Belt' },
-            { key: 'Zone 8', name: 'Zone 8: Pluto' },
-            { key: 'Zone 9', name: 'Zone 9: Singularity' },
-            { key: 'Zone 10', name: 'Zone 10: Interstellar Shore' },
+            { key: 'Zone 1', name: 'Zone 1: Sea' }, { key: 'Zone 2', name: 'Zone 2: Surface' },
+            { key: 'Arcane Area', name: 'Arcane Area' }, { key: 'Zone 3', name: 'Zone 3: Sky' },
+            { key: 'Paradise Atoll', name: 'Paradise Atoll' }, { key: 'Zone 4', name: 'Zone 4: Exosphere' },
+            { key: 'Zone 5', name: 'Zone 5: The Moon' }, { key: 'Zone 6', name: 'Zone 6: Mars' },
+            { key: 'Zone 7', name: 'Zone 7: Asteroid Belt' }, { key: 'Zone 8', name: 'Zone 8: Pluto' },
+            { key: 'Zone 9', name: 'Zone 9: Singularity' }, { key: 'Zone 10', name: 'Zone 10: Interstellar Shore' },
         ];
 
         const beatenTowerMap = new Map(beatenTowers.map(tower => [tower.name, tower]));
@@ -177,7 +159,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (towersInArea.length > 0) {
                     let towerRowsHtml = '';
                     towersInArea.sort((a,b) => a.number_difficulty - b.number_difficulty).forEach(tower => {
-                        const isCompleted = beatenTowerMap.has(tower.name);
+                        const beatenVersion = beatenTowerMap.get(tower.name);
+                        const isCompleted = !!beatenVersion;
+                        
+                        let datePillHtml = `<span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 text-gray-400 bg-gray-500/10">--</span>`;
+                        if (isCompleted) {
+                            const date = new Date(beatenVersion.awarded_unix * 1000).toLocaleDateString();
+                            datePillHtml = `<span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 text-gray-300 bg-gray-500/10">${date}</span>`;
+                        }
+
                         const difficultyText = `${tower.modifier || ''} ${tower.difficulty || ''}`.trim();
                         const pillClasses = difficultyPillClasses[tower.difficulty] || difficultyPillClasses.nil;
                         const numericDifficulty = (tower.number_difficulty || 0).toFixed(2);
@@ -194,7 +184,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             <tr class="tower-row ${outlineClass}" ${rowStyle}>
                                 <td class="py-0.8 px-3 ${textColorClass}">${tower.name}</td>
                                 <td class="py-0.8 px-3 text-right">
-                                    <span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${pillClasses}">${pillContent}</span>
+                                    <div class="flex justify-end items-center gap-2">
+                                        ${datePillHtml}
+                                        <span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${pillClasses}">${pillContent}</span>
+                                    </div>
                                 </td>
                             </tr>
                         `;
