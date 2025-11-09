@@ -15,7 +15,6 @@
     </script>
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 
@@ -27,7 +26,6 @@
     <link rel="stylesheet" href="./css/style.css">
 </head>
 <body class="text-[#EAEAEA]">
-
     <div class="relative flex h-auto min-h-screen w-full flex-col overflow-hidden">
         
         <header class="fixed top-0 left-0 right-0 z-20 mx-auto w-full max-w-screen-2xl p-3">
@@ -38,16 +36,15 @@
                     </div>
                     <h2 class="text-base font-bold leading-tight tracking-[-0.015em]">ETOH Progression</h2>
                 </div>
-                <div class="flex items-center gap-6">
+                <!-- <div class="flex items-center gap-6">
                     <a class="text-xs font-medium leading-normal text-gray-300 transition-colors hover:text-white" href="#">About</a>
                     <a class="text-xs font-medium leading-normal text-gray-300 transition-colors hover:text-white" href="#">Help/FAQ</a>
-                </div>
+                </div> -->
             </div>
         </header>
 
         <main class="flex h-full min-h-screen w-full grow flex-row pt-20 pb-3 px-3 gap-3">
-            
-            <aside class="flex w-full max-w-[280px] flex-col gap-3">
+            <aside class="sticky top-[92px] self-start flex w-full max-w-[280px] flex-col gap-3" style="height: calc(100vh - 92px - 12px);">
                 <div class="glass-panel rounded-lg p-3">
                     <div class="flex flex-col min-w-40 h-10 w-full">
                         <div class="flex w-full flex-1 items-stretch rounded-md h-full">
@@ -63,17 +60,17 @@
                     </div>
                 </div>
 
-                <div class="glass-panel flex h-full flex-col justify-between rounded-lg p-3">
+                <div class="glass-panel flex-grow rounded-lg p-3">
                     <div class="flex flex-col gap-3">
                         <h1 class="text-sm font-medium leading-normal px-2">Visualization Options</h1>
-                        <div class="flex flex-col gap-1">
-                            <a class="flex items-center gap-2.5 px-2 py-1.5 rounded-md bg-[#BE00FF]/20 border border-[#BE00FF]/50 text-[#BE00FF]" href="#">
+                        <div id="nav-links" class="flex flex-col gap-1">
+                            <a data-view="chart" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md" href="#">
                                 <span class="material-symbols-outlined fill text-xl">stacked_line_chart</span>
                                 <p class="text-xs font-medium leading-normal">Completion Chart</p>
                             </a>
-                            <a class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-gray-300 transition-colors hover:bg-white/5 hover:text-white" href="#">
+                            <a data-view="table" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md" href="#">
                                 <span class="material-symbols-outlined text-xl">history</span>
-                                <p class="text-xs font-medium leading-normal">Completion History (Table)</p>
+                                <p class="text-xs font-medium leading-normal">Completion History</p>
                             </a>
                         </div>
                     </div>
@@ -81,7 +78,7 @@
 
                 <div class="glass-panel flex flex-col rounded-lg p-3">
                     <h2 class="text-sm font-medium leading-normal mb-3">Quick Stats</h2>
-                    <div id="loadingIndicator" style="display: none;" class="flex items-center justify-center p-4">
+                    <div id="loadingIndicator" class="flex items-center justify-center p-4" style="display: none;">
                         <p>Loading...</p>
                     </div>
                     <div id="statsContainer" class="grid grid-cols-1 gap-2" style="display: none;">
@@ -103,15 +100,18 @@
 
             <section class="glass-panel flex-1 rounded-lg p-4">
                 <div class="flex flex-col h-full w-full">
-                    <h2 class="text-xl font-bold mb-3">Completion Chart</h2>
-                    <div class="flex-grow w-full h-full relative">
+                    <h2 id="main-content-title" class="text-xl font-bold mb-3"></h2>
+                    <div id="chart-view" class="flex-grow w-full h-full relative">
                         <canvas id="completionChart"></canvas>
+                    </div>
+                    <div id="table-view" class="flex-grow w-full h-full overflow-y-auto hidden">
+                        <div id="completion-history-container" class="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+                        </div>
                     </div>
                 </div>
             </section>
         </main>
     </div>
-
     <div id="notification-container" class="notification-container"></div>
 
     <script src="./js/main.js"></script>

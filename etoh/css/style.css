@@ -1,14 +1,6 @@
 body {
-    background: linear-gradient(-45deg, #120E1C, #1C142A, #120E1C, #1C142A);
-    background-size: 400% 400%;
-    animation: gradientBG 15s ease infinite;
+    background-color: #120E1C;
     font-family: 'Space Grotesk', sans-serif;
-}
-
-@keyframes gradientBG {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
 }
 
 .glass-panel {
@@ -25,6 +17,58 @@ body {
 
 .material-symbols-outlined.fill {
     font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+}
+
+#completionChart {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.tower-row {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background-color 0.2s ease-in-out;
+    overflow: hidden;
+}
+
+.tower-row:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.tower-row::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 30%;
+    background-image: linear-gradient(to left, rgba(var(--difficulty-rgb), 0.1), transparent);
+    pointer-events: none;
+    opacity: 1;
+}
+
+.status-outline-completed {
+    border-left: 3px solid rgba(67, 255, 129, 0.4);
+}
+
+.status-outline-incomplete {
+    border-left: 3px solid rgba(255, 50, 50, 0.3);
+}
+
+.clickable-caption {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dropdown-arrow {
+    transition: transform 0.2s ease-in-out;
 }
 
 .notification-container {
@@ -45,7 +89,6 @@ body {
     padding: 12px 16px;
     border-radius: 8px;
     width: 320px;
-    
     transform: translateX(120%);
     opacity: 0;
     transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out;
@@ -70,9 +113,4 @@ body {
 
 .notification.error .material-symbols-outlined {
     color: #FF3232;
-}
-
-#completionChart {
-    width: 100% !important;
-    height: 100% !important;
 }
