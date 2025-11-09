@@ -122,27 +122,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!beatenTowers || beatenTowers.length === 0) return;
 
         const difficultyColors = {
-            "Easy": "#76F447", 
-            "Medium": "#FFFF00", 
-            "Hard": "#FE7C00", 
-            "Difficult": "#FF3232",
-            "Challenging": "#A00000", 
-            "Intense": "#19222D", 
-            "Remorseless": "#C900C8", 
-            "Insane": "#0000FF",
-            "Extreme": "#0287FF", 
-            "Terrifying": "#00FFFF", 
-            "Catastrophic": "#FFFFFF",
+            "Easy": "#76F447", "Medium": "#FFFF00", "Hard": "#FE7C00", "Difficult": "#FF3232",
+            "Challenging": "#A00000", "Intense": "#19222D", "Remorseless": "#C900C8", "Insane": "#0000FF",
+            "Extreme": "#0287FF", "Terrifying": "#00FFFF", "Catastrophic": "#FFFFFF",
         };
         const defaultColor = "#808080";
 
         const difficultyPillClasses = {
-            "Easy": "border-green-500/50 text-green-300 bg-green-500/10", "Medium": "border-yellow-500/50 text-yellow-300 bg-yellow-500/10",
-            "Hard": "border-orange-500/50 text-orange-300 bg-orange-500/10", "Difficult": "border-red-500/50 text-red-300 bg-red-500/10",
-            "Challenging": "border-red-700/50 text-red-400 bg-red-700/10", "Intense": "border-gray-500/50 text-gray-300 bg-gray-500/10",
-            "Remorseless": "border-fuchsia-500/50 text-fuchsia-300 bg-fuchsia-500/10", "Insane": "border-blue-500/50 text-blue-300 bg-blue-500/10",
-            "Extreme": "border-sky-500/50 text-sky-300 bg-sky-500/10", "Terrifying": "border-cyan-500/50 text-cyan-300 bg-cyan-500/10",
-            "Catastrophic": "border-white/50 text-white bg-white/10", "nil": "border-gray-500/50 text-gray-300 bg-gray-500/10"
+            "Easy": "border-green-500/50 text-green-300 bg-green-500/10",
+            "Medium": "border-yellow-500/50 text-yellow-300 bg-yellow-500/10",
+            "Hard": "border-orange-500/50 text-orange-300 bg-orange-500/10",
+            "Difficult": "border-red-500/50 text-red-300 bg-red-500/10",
+            "Challenging": "border-red-700/50 text-red-400 bg-red-700/10",
+            "Intense": "border-gray-500/50 text-gray-300 bg-gray-500/10",
+            "Remorseless": "border-fuchsia-500/50 text-fuchsia-300 bg-fuchsia-500/10",
+            "Insane": "border-blue-500/50 text-blue-300 bg-blue-500/10",
+            "Extreme": "border-sky-500/50 text-sky-300 bg-sky-500/10",
+            "Terrifying": "border-cyan-500/50 text-cyan-300 bg-cyan-500/10",
+            "Catastrophic": "border-white/50 text-white bg-white/10",
         };
         
         const areaPillClasses = {
@@ -177,8 +174,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const minDate = Math.min(...completionDates);
         const maxDate = Math.max(...completionDates);
         const dateRange = maxDate - minDate;
-        const oldColor = '#ffffff';
-        const newColor = '#ffeb32';
+        const oldColor = '#4B0082';
+        const newColor = '#FDE047';
         
         const sortedTowers = [...beatenTowers].sort((a, b) => b.awarded_unix - a.awarded_unix);
 
@@ -236,17 +233,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!allTowers || allTowers.length === 0) return;
 
         const difficultyColors = {
-            "Easy": "#76F447", 
-            "Medium": "#FFFF00", 
-            "Hard": "#FE7C00", 
-            "Difficult": "#FF3232",
-            "Challenging": "#A00000", 
-            "Intense": "#19222D", 
-            "Remorseless": "#C900C8", 
-            "Insane": "#0000FF",
-            "Extreme": "#0287FF", 
-            "Terrifying": "#00FFFF", 
-            "Catastrophic": "#FFFFFF",
+            "Easy": "#76F447", "Medium": "#FFFF00", "Hard": "#FE7C00", "Difficult": "#FF3232",
+            "Challenging": "#A00000", "Intense": "#19222D", "Remorseless": "#C900C8", "Insane": "#0000FF",
+            "Extreme": "#0287FF", "Terrifying": "#00FFFF", "Catastrophic": "#FFFFFF",
         };
         const defaultColor = "#808080";
         
@@ -266,36 +255,22 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         
         const ringAreas = [
-            { key: 'Ring 0', name: 'Ring 0: Purgatorio' }, 
-            { key: 'Ring 1', name: 'Ring 1: Limbo' },
-            { key: 'Forgotten Ridge', name: 'Forgotten Ridge' }, 
-            { key: 'Ring 2', name: 'Ring 2: Desire' },
-            { key: 'Garden Of Eesh%C3%B6L', name: 'Garden Of Eeshöl' }, 
-            { key: 'Ring 3', name: 'Ring 3: Gluttony' },
-            { key: 'Ring 4', name: 'Ring 4: Greed' }, 
-            { key: 'Silent Abyss', name: 'Silent Abyss' },
-            { key: 'Ring 5', name: 'Ring 5: Wrath' }, 
-            { key: 'Lost River', name: 'Lost River' },
-            { key: 'Ring 6', name: 'Ring 6: Heresy' }, 
-            { key: 'Ashen Towerworks', name: 'Ashen Towerworks' },
-            { key: 'Ring 7', name: 'Ring 7: Violence' }, 
-            { key: 'Ring 8', name: 'Ring 8: Fraud' },
-            { key: 'The Starlit Archives', name: 'The Starlit Archives' }, 
-            { key: 'Ring 9', name: 'Ring 9: Treachery' },
+            { key: 'Ring 0', name: 'Ring 0: Purgatorio' }, { key: 'Ring 1', name: 'Ring 1: Limbo' },
+            { key: 'Forgotten Ridge', name: 'Forgotten Ridge' }, { key: 'Ring 2', name: 'Ring 2: Desire' },
+            { key: 'Garden Of Eesh%C3%B6L', name: 'Garden Of Eeshöl' }, { key: 'Ring 3', name: 'Ring 3: Gluttony' },
+            { key: 'Ring 4', name: 'Ring 4: Greed' }, { key: 'Silent Abyss', name: 'Silent Abyss' },
+            { key: 'Ring 5', name: 'Ring 5: Wrath' }, { key: 'Lost River', name: 'Lost River' },
+            { key: 'Ring 6', name: 'Ring 6: Heresy' }, { key: 'Ashen Towerworks', name: 'Ashen Towerworks' },
+            { key: 'Ring 7', name: 'Ring 7: Violence' }, { key: 'Ring 8', name: 'Ring 8: Fraud' },
+            { key: 'The Starlit Archives', name: 'The Starlit Archives' }, { key: 'Ring 9', name: 'Ring 9: Treachery' },
         ];
         const zoneAreas = [
-            { key: 'Zone 1', name: 'Zone 1: Sea' }, 
-            { key: 'Zone 2', name: 'Zone 2: Surface' },
-            { key: 'Arcane Area', name: 'Arcane Area' }, 
-            { key: 'Zone 3', name: 'Zone 3: Sky' },
-            { key: 'Paradise Atoll', name: 'Paradise Atoll' }, 
-            { key: 'Zone 4', name: 'Zone 4: Exosphere' },
-            { key: 'Zone 5', name: 'Zone 5: The Moon' }, 
-            { key: 'Zone 6', name: 'Zone 6: Mars' },
-            { key: 'Zone 7', name: 'Zone 7: Asteroid Belt' }, 
-            { key: 'Zone 8', name: 'Zone 8: Pluto' },
-            { key: 'Zone 9', name: 'Zone 9: Singularity' }, 
-            { key: 'Zone 10', name: 'Zone 10: Interstellar Shore' },
+            { key: 'Zone 1', name: 'Zone 1: Sea' }, { key: 'Zone 2', name: 'Zone 2: Surface' },
+            { key: 'Arcane Area', name: 'Arcane Area' }, { key: 'Zone 3', name: 'Zone 3: Sky' },
+            { key: 'Paradise Atoll', name: 'Paradise Atoll' }, { key: 'Zone 4', name: 'Zone 4: Exosphere' },
+            { key: 'Zone 5', name: 'Zone 5: The Moon' }, { key: 'Zone 6', name: 'Zone 6: Mars' },
+            { key: 'Zone 7', name: 'Zone 7: Asteroid Belt' }, { key: 'Zone 8', name: 'Zone 8: Pluto' },
+            { key: 'Zone 9', name: 'Zone 9: Singularity' }, { key: 'Zone 10', name: 'Zone 10: Interstellar Shore' },
         ];
 
         const beatenTowerMap = new Map(beatenTowers.map(tower => [tower.name, tower]));
@@ -317,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const accentColorHex = difficultyColors[tower.difficulty] || defaultColor;
                         const rgb = hexToRgb(accentColorHex);
                         const accentColorRgbStr = rgb ? rgb.join(', ') : '128, 128, 128';
-                        const rowStyle = accentColorRgbStr ? `style="--difficulty-rgb: ${accentColorRgbStr};"` : '';
+                        const rowStyle = `style="--area-rgb: ${accentColorRgbStr}; --difficulty-rgb: 0,0,0,0;"`;
                         
                         const outlineClass = isCompleted ? 'status-outline-completed' : 'status-outline-incomplete';
                         const textColorClass = isCompleted ? 'text-gray-200' : 'text-gray-500';
@@ -375,17 +350,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const difficultyColors = {
-            "Easy": "#76F447", 
-            "Medium": "#FFFF00", 
-            "Hard": "#FE7C00", 
-            "Difficult": "#FF3232",
-            "Challenging": "#A00000", 
-            "Intense": "#19222D", 
-            "Remorseless": "#C900C8", 
-            "Insane": "#0000FF",
-            "Extreme": "#0287FF", 
-            "Terrifying": "#00FFFF", 
-            "Catastrophic": "#FFFFFF",
+            "Easy": "#76F447", "Medium": "#FFFF00", "Hard": "#FE7C00", "Difficult": "#FF3232",
+            "Challenging": "#A00000", "Intense": "#19222D", "Remorseless": "#C900C8", "Insane": "#0000FF",
+            "Extreme": "#0287FF", "Terrifying": "#00FFFF", "Catastrophic": "#FFFFFF",
         };
         const defaultColor = "#808080";
         const difficultyOrder = Object.keys(difficultyColors);
