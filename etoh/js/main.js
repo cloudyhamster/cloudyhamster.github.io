@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
             "Challenging": "border-red-700/50 text-red-400 bg-red-700/10", "Intense": "border-gray-500/50 text-gray-300 bg-gray-500/10",
             "Remorseless": "border-fuchsia-500/50 text-fuchsia-300 bg-fuchsia-500/10", "Insane": "border-blue-500/50 text-blue-300 bg-blue-500/10",
             "Extreme": "border-sky-500/50 text-sky-300 bg-sky-500/10", "Terrifying": "border-cyan-500/50 text-cyan-300 bg-cyan-500/10",
-            "Catastrophic": "border-white/50 text-white bg-white/10", "nil": "border-gray-500/50 text-gray-300 bg-gray-500/10"
+            "Catastrophic": "border-white/50 text-white bg-white/10"
         };
         
         const areaPillClasses = {
@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const maxDate = Math.max(...completionDates);
         const dateRange = maxDate - minDate;
         const oldColor = '#ffffff';
-        const newColor = '#ffee00';
+        const newColor = '#ffe600';
         
         const sortedTowers = [...beatenTowers].sort((a, b) => b.awarded_unix - a.awarded_unix);
 
@@ -249,7 +249,6 @@ document.addEventListener('DOMContentLoaded', () => {
             "Extreme": "border-sky-500/50 text-sky-300 bg-sky-500/10",
             "Terrifying": "border-cyan-500/50 text-cyan-300 bg-cyan-500/10",
             "Catastrophic": "border-white/50 text-white bg-white/10",
-            "nil": "border-gray-500/50 text-gray-300 bg-gray-500/10"
         };
         
         const ringAreas = [
@@ -281,7 +280,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (towersInArea.length > 0) {
                     let towerRowsHtml = '';
                     towersInArea.sort((a,b) => a.number_difficulty - b.number_difficulty).forEach(tower => {
-                        const isCompleted = beatenTowerMap.has(tower.name);
+                        const beatenVersion = beatenTowerMap.get(tower.name);
+                        const isCompleted = !!beatenVersion;
+
+                        const date = isCompleted ? new Date(beatenVersion.awarded_unix * 1000).toLocaleDateString() : '--';
+                        const datePillHtml = `<span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 ${isCompleted ? 'text-gray-300 bg-gray-500/10' : 'text-gray-600 bg-gray-500/10'}">${date}</span>`;
+
                         const difficultyText = `${tower.modifier || ''} ${tower.difficulty || ''}`.trim();
                         const pillClasses = difficultyPillClasses[tower.difficulty] || difficultyPillClasses.nil;
                         const numericDifficulty = (tower.number_difficulty || 0).toFixed(2);
@@ -299,7 +303,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             <tr class="tower-row ${outlineClass}" ${rowStyle}>
                                 <td class="py-0.8 px-3 ${textColorClass}">${tower.name}</td>
                                 <td class="py-0.8 px-3 text-right">
-                                    <span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${pillClasses}">${pillContent}</span>
+                                    <div class="flex justify-end items-center gap-2">
+                                        ${datePillHtml}
+                                        <span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${pillClasses}">${pillContent}</span>
+                                    </div>
                                 </td>
                             </tr>
                         `;

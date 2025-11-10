@@ -45,7 +45,7 @@ body {
     position: absolute;
     top: 0;
     bottom: 0;
-    width: 25%;
+    width: 30%;
     pointer-events: none;
     opacity: 1;
 }
