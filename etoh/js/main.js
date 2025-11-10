@@ -129,17 +129,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const defaultColor = "#808080";
 
         const difficultyPillClasses = {
-            "Easy": "border-green-500/50 text-green-300 bg-green-500/10",
-            "Medium": "border-yellow-500/50 text-yellow-300 bg-yellow-500/10",
-            "Hard": "border-orange-500/50 text-orange-300 bg-orange-500/10",
-            "Difficult": "border-red-500/50 text-red-300 bg-red-500/10",
-            "Challenging": "border-red-700/50 text-red-400 bg-red-700/10",
-            "Intense": "border-gray-500/50 text-gray-300 bg-gray-500/10",
-            "Remorseless": "border-fuchsia-500/50 text-fuchsia-300 bg-fuchsia-500/10",
-            "Insane": "border-blue-500/50 text-blue-300 bg-blue-500/10",
-            "Extreme": "border-sky-500/50 text-sky-300 bg-sky-500/10",
-            "Terrifying": "border-cyan-500/50 text-cyan-300 bg-cyan-500/10",
-            "Catastrophic": "border-white/50 text-white bg-white/10",
+            "Easy": "border-green-500/50 text-green-300 bg-green-500/10", "Medium": "border-yellow-500/50 text-yellow-300 bg-yellow-500/10",
+            "Hard": "border-orange-500/50 text-orange-300 bg-orange-500/10", "Difficult": "border-red-500/50 text-red-300 bg-red-500/10",
+            "Challenging": "border-red-700/50 text-red-400 bg-red-700/10", "Intense": "border-gray-500/50 text-gray-300 bg-gray-500/10",
+            "Remorseless": "border-fuchsia-500/50 text-fuchsia-300 bg-fuchsia-500/10", "Insane": "border-blue-500/50 text-blue-300 bg-blue-500/10",
+            "Extreme": "border-sky-500/50 text-sky-300 bg-sky-500/10", "Terrifying": "border-cyan-500/50 text-cyan-300 bg-cyan-500/10",
+            "Catastrophic": "border-white/50 text-white bg-white/10", "nil": "border-gray-500/50 text-gray-300 bg-gray-500/10"
         };
         
         const areaPillClasses = {
@@ -170,12 +165,14 @@ document.addEventListener('DOMContentLoaded', () => {
             'Zone 7': '#06b6d4', 'Zone 8': '#0891b2', 'Zone 9': '#0e7490', 'Zone 10': '#14b8a6', 'Default': '#6b7280'
         };
 
+        const areaDisplayNames = { 'Garden Of Eesh%C3%B6L': 'Garden Of Eeshöl' };
+
         const completionDates = beatenTowers.map(t => t.awarded_unix).filter(Boolean);
         const minDate = Math.min(...completionDates);
         const maxDate = Math.max(...completionDates);
         const dateRange = maxDate - minDate;
-        const oldColor = '#4B0082';
-        const newColor = '#FDE047';
+        const oldColor = '#ffffff';
+        const newColor = '#ffee00';
         
         const sortedTowers = [...beatenTowers].sort((a, b) => b.awarded_unix - a.awarded_unix);
 
@@ -187,9 +184,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const datePillStyle = `color: ${dateColor}; background-color: ${dateColor}20; border-color: ${dateColor}80;`;
             const datePillHtml = `<span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border" style="${datePillStyle}">${date}</span>`;
 
-            const areaName = tower.area || 'Unknown';
-            const areaPillClass = areaPillClasses[areaName] || areaPillClasses.Default;
-            const areaPillHtml = `<span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${areaPillClass}">${areaName}</span>`;
+            const areaKey = tower.area || 'Unknown';
+            const areaDisplayName = areaDisplayNames[areaKey] || areaKey;
+            const areaPillClass = areaPillClasses[areaKey] || areaPillClasses.Default;
+            const areaPillHtml = `<span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${areaPillClass}">${areaDisplayName}</span>`;
 
             const difficultyText = `${tower.modifier || ''} ${tower.difficulty || ''}`.trim();
             const diffPillClasses = difficultyPillClasses[tower.difficulty] || difficultyPillClasses.nil;
@@ -201,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const diffRgb = hexToRgb(diffColorHex);
             const diffRgbStr = diffRgb ? diffRgb.join(', ') : '128, 128, 128';
 
-            const areaColorHex = areaColors[areaName] || areaColors.Default;
+            const areaColorHex = areaColors[areaKey] || areaColors.Default;
             const areaRgb = hexToRgb(areaColorHex);
             const areaRgbStr = areaRgb ? areaRgb.join(', ') : '128, 128, 128';
 
@@ -292,7 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const accentColorHex = difficultyColors[tower.difficulty] || defaultColor;
                         const rgb = hexToRgb(accentColorHex);
                         const accentColorRgbStr = rgb ? rgb.join(', ') : '128, 128, 128';
-                        const rowStyle = `style="--area-rgb: ${accentColorRgbStr}; --difficulty-rgb: 0,0,0,0;"`;
+                        const rowStyle = `style="--difficulty-rgb: 0,0,0; --area-rgb: ${accentColorRgbStr};"`;
                         
                         const outlineClass = isCompleted ? 'status-outline-completed' : 'status-outline-incomplete';
                         const textColorClass = isCompleted ? 'text-gray-200' : 'text-gray-500';
@@ -350,9 +348,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const difficultyColors = {
-            "Easy": "#76F447", "Medium": "#FFFF00", "Hard": "#FE7C00", "Difficult": "#FF3232",
-            "Challenging": "#A00000", "Intense": "#19222D", "Remorseless": "#C900C8", "Insane": "#0000FF",
-            "Extreme": "#0287FF", "Terrifying": "#00FFFF", "Catastrophic": "#FFFFFF",
+            "Easy": "#76F447",
+            "Medium": "#FFFF00",
+            "Hard": "#FE7C00",
+            "Difficult": "#FF3232",
+            "Challenging": "#A00000",
+            "Intense": "#19222D",
+            "Remorseless": "#C900C8",
+            "Insane": "#0000FF",
+            "Extreme": "#0287FF",
+            "Terrifying": "#00FFFF",
+            "Catastrophic": "#FFFFFF",
         };
         const defaultColor = "#808080";
         const difficultyOrder = Object.keys(difficultyColors);
