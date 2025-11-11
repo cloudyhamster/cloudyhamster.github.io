@@ -2,6 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const API_BASE_URL = 'https://etoh-thing.onrender.com';
     let completionChart = null;
     let currentView = 'chart';
+    let allTowersData = [];
+    let beatenTowersData = [];
 
     const NON_CANON_TOWERS = new Set([
         "Tower Not Found", "Not Even A Tower", "This Is Probably A Tower",
@@ -10,18 +12,51 @@ document.addEventListener('DOMContentLoaded', () => {
         "Possibly A Tower"
     ]);
 
+    const difficultyColors = {
+        "Easy": "#76F447", "Medium": "#FFFF00", "Hard": "#FE7C00", "Difficult": "#FF3232",
+        "Challenging": "#A00000", "Intense": "#19222D", "Remorseless": "#C900C8", "Insane": "#0000FF",
+        "Extreme": "#0287FF", "Terrifying": "#00FFFF", "Catastrophic": "#FFFFFF",
+    };
+    const defaultColor = "#808080";
+
+    const difficultyPillClasses = {
+        "Easy": "border-green-500/50 text-green-300 bg-green-500/10", "Medium": "border-yellow-500/50 text-yellow-300 bg-yellow-500/10",
+        "Hard": "border-orange-500/50 text-orange-300 bg-orange-500/10", "Difficult": "border-red-500/50 text-red-300 bg-red-500/10",
+        "Challenging": "border-red-700/50 text-red-400 bg-red-700/10", "Intense": "border-gray-500/50 text-gray-300 bg-gray-500/10",
+        "Remorseless": "border-fuchsia-500/50 text-fuchsia-300 bg-fuchsia-500/10", "Insane": "border-blue-500/50 text-blue-300 bg-blue-500/10",
+        "Extreme": "border-sky-500/50 text-sky-300 bg-sky-500/10", "Terrifying": "border-cyan-500/50 text-cyan-300 bg-cyan-500/10",
+        "Catastrophic": "border-white/50 text-white bg-white/10"
+    };
+
+    const areaPillClasses = {
+        'Ring 0': 'border-red-400/50 text-red-300 bg-red-400/10', 'Ring 1': 'border-red-500/50 text-red-400 bg-red-500/10',
+        'Forgotten Ridge': 'border-red-500/50 text-red-400 bg-red-500/10', 'Ring 2': 'border-red-600/50 text-red-500 bg-red-600/10',
+        'Garden Of Eesh%C3%B6L': 'border-red-600/50 text-red-500 bg-red-600/10', 'Ring 3': 'border-red-700/50 text-red-600 bg-red-700/10',
+        'Ring 4': 'border-rose-400/50 text-rose-300 bg-rose-400/10', 'Silent Abyss': 'border-rose-400/50 text-rose-300 bg-rose-400/10',
+        'Ring 5': 'border-rose-500/50 text-rose-400 bg-rose-500/10', 'Lost River': 'border-rose-500/50 text-rose-400 bg-rose-500/10',
+        'Ring 6': 'border-rose-600/50 text-rose-500 bg-rose-600/10', 'Ashen Towerworks': 'border-rose-600/50 text-rose-500 bg-rose-600/10',
+        'Ring 7': 'border-rose-700/50 text-rose-600 bg-rose-700/10', 'Ring 8': 'border-pink-400/50 text-pink-300 bg-pink-400/10',
+        'The Starlit Archives': 'border-pink-400/50 text-pink-300 bg-pink-400/10', 'Ring 9': 'border-pink-500/50 text-pink-400 bg-pink-500/10',
+        'Zone 1': 'border-blue-400/50 text-blue-300 bg-blue-400/10', 'Zone 2': 'border-blue-500/50 text-blue-400 bg-blue-500/10',
+        'Arcane Area': 'border-blue-500/50 text-blue-400 bg-blue-500/10', 'Zone 3': 'border-blue-600/50 text-blue-500 bg-blue-600/10',
+        'Paradise Atoll': 'border-blue-600/50 text-blue-500 bg-blue-600/10', 'Zone 4': 'border-sky-400/50 text-sky-300 bg-sky-400/10',
+        'Zone 5': 'border-sky-500/50 text-sky-400 bg-sky-500/10', 'Zone 6': 'border-sky-600/50 text-sky-500 bg-sky-600/10',
+        'Zone 7': 'border-cyan-400/50 text-cyan-300 bg-cyan-400/10', 'Zone 8': 'border-cyan-500/50 text-cyan-400 bg-cyan-500/10',
+        'Zone 9': 'border-cyan-600/50 text-cyan-500 bg-cyan-600/10', 'Zone 10': 'border-teal-400/50 text-teal-300 bg-teal-400/10',
+        'Default': 'border-gray-500/50 text-gray-300 bg-gray-500/10',
+    };
+
+    const areaDisplayNames = { 'Garden Of Eesh%C3%B6L': 'Garden Of Eeshöl' };
+
     const searchInput = document.getElementById('searchInput');
     const searchButton = document.getElementById('searchButton');
     const loadingIndicator = document.getElementById('loadingIndicator');
     const statsContainer = document.getElementById('statsContainer');
     const forceRefreshCheckbox = document.getElementById('forceRefreshCheckbox');
-    
     const totalTowersStat = document.getElementById('totalTowersStat');
     const hardestTowerStat = document.getElementById('hardestTowerStat');
     const hardestDifficultyStat = document.getElementById('hardestDifficultyStat');
-    
     const notificationContainer = document.getElementById('notification-container');
-    
     const navLinksContainer = document.getElementById('nav-links');
     const mainContentTitle = document.getElementById('main-content-title');
     const chartView = document.getElementById('chart-view');
@@ -29,7 +64,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const listView = document.getElementById('list-view');
     const areaHistoryContainer = document.getElementById('area-history-container');
     const fullHistoryContainer = document.getElementById('full-history-container');
+    const modalBackdrop = document.getElementById('tower-modal-backdrop');
+    const modalPanel = document.getElementById('tower-modal-panel');
+    const modalCloseButton = document.getElementById('modal-close-button');
+    const modalTowerName = document.getElementById('modal-tower-name');
+    const modalDifficulty = document.getElementById('modal-difficulty');
+    const modalLength = document.getElementById('modal-length');
+    const modalFloors = document.getElementById('modal-floors');
+    const modalCreator = document.getElementById('modal-creator');
+    const modalWarnings = document.getElementById('modal-warnings');
+    const modalArea = document.getElementById('modal-area');
+    const modalDate = document.getElementById('modal-date');
 
+    const titleCase = (str) => {
+        if (!str) return '';
+        return str.toLowerCase().split(' ').map(word => {
+            return word.charAt(0).toUpperCase() + word.slice(1);
+        }).join(' ');
+    };
     const showNotification = (message, type = 'success') => {
         if (notificationContainer.children.length >= 8) {
             notificationContainer.firstChild.remove();
@@ -50,21 +102,16 @@ document.addEventListener('DOMContentLoaded', () => {
         currentView = viewName;
         const activeClasses = ['bg-[#BE00FF]/20', 'border', 'border-[#BE00FF]/50', 'text-[#BE00FF]'];
         const inactiveClasses = ['text-gray-300', 'transition-colors', 'hover:bg-white/5', 'hover:text-white'];
-        
         const views = {
             chart: { title: 'Completion Chart', element: chartView },
             list: { title: 'Completion History', element: listView },
             table: { title: 'Area Completion', element: tableView }
         };
-        
         mainContentTitle.textContent = views[viewName].title;
-        
         Object.values(views).forEach(view => view.element.classList.add('hidden'));
         views[viewName].element.classList.remove('hidden');
-
         navLinksContainer.querySelectorAll('a').forEach(link => {
-            const linkView = link.dataset.view;
-            if (linkView === viewName) {
+            if (link.dataset.view === viewName) {
                 link.classList.remove(...inactiveClasses);
                 link.classList.add(...activeClasses);
             } else {
@@ -73,7 +120,101 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     };
+
+    const getLengthCategory = (difficulty) => {
+        if (difficulty < 3) return '<20 minutes';
+        if (difficulty < 5) return '20+ minutes';
+        if (difficulty < 8) return '30+ minutes';
+        if (difficulty < 12) return '45+ minutes';
+        if (difficulty < 15) return '60+ minutes';
+        return '90+ minutes';
+    };
     
+    const openModalWithTower = (towerName) => {
+        const tower = allTowersData.find(t => t.name === towerName);
+        if (!tower) return;
+
+        const beatenVersion = beatenTowersData.find(t => t.name === towerName);
+
+        modalTowerName.textContent = tower.name;
+        
+        const difficultyText = `${tower.modifier || ''} ${tower.difficulty || ''}`.trim();
+        const numericDifficulty = (tower.number_difficulty || 0).toFixed(2);
+        const diffPillContent = `${difficultyText} [${numericDifficulty}]`;
+        modalDifficulty.className = `inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${difficultyPillClasses[tower.difficulty] || difficultyPillClasses.nil}`;
+        modalDifficulty.textContent = diffPillContent;
+
+        const areaKey = tower.area || 'Unknown';
+        const areaDisplayName = areaDisplayNames[areaKey] || areaKey;
+        modalArea.className = `inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${areaPillClasses[areaKey] || areaPillClasses.Default}`;
+        modalArea.textContent = areaDisplayName;
+        
+        const lengthCategory = tower.length || getLengthCategory(tower.number_difficulty);
+        const lengthColorClasses = {
+            '<20 minutes': 'border-orange-300/50 text-orange-200 bg-orange-300/10',
+            '20+ minutes': 'border-orange-400/50 text-orange-300 bg-orange-400/10',
+            '30+ minutes': 'border-orange-500/50 text-orange-400 bg-orange-500/10',
+            '45+ minutes': 'border-orange-600/50 text-orange-500 bg-orange-600/10',
+            '60+ minutes': 'border-orange-700/50 text-orange-600 bg-orange-700/10',
+            '90+ minutes': 'border-orange-800/50 text-orange-700 bg-orange-800/10',
+        };
+        const cleanedLength = lengthCategory.replace(' long', '');
+        modalLength.className = `inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${lengthColorClasses[cleanedLength] || 'border-gray-500/50 text-gray-300 bg-gray-500/10'}`;
+        modalLength.textContent = cleanedLength;
+
+        if (beatenVersion) {
+            modalDate.className = 'inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 text-gray-300 bg-gray-500/10';
+            modalDate.textContent = new Date(beatenVersion.awarded_unix * 1000).toLocaleString();
+        } else {
+            modalDate.className = 'inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-600/50 text-gray-400 bg-gray-600/10';
+            modalDate.textContent = "Not Completed";
+        }
+        
+        const neutralPillClass = 'inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 text-gray-300 bg-gray-500/10';
+        
+        modalFloors.innerHTML = '';
+        const floorsPill = document.createElement('span');
+        floorsPill.className = neutralPillClass;
+        floorsPill.textContent = tower.floors ?? 10;
+        modalFloors.appendChild(floorsPill);
+        
+        modalCreator.innerHTML = '';
+        const creatorsSource = Array.isArray(tower.creators) ? tower.creators : ["Unknown"];
+        const allCreators = creatorsSource.flatMap(c => c.split(',').map(name => name.trim())).filter(Boolean);
+
+        allCreators.forEach(creator => {
+            const pill = document.createElement('span');
+            pill.className = neutralPillClass;
+            pill.textContent = creator;
+            modalCreator.appendChild(pill);
+        });
+
+        modalWarnings.innerHTML = '';
+        const warnings = Array.isArray(tower.warnings) && tower.warnings.length > 0 ? tower.warnings : [];
+        if (warnings.length > 0) {
+            warnings.forEach(warning => {
+                const pill = document.createElement('span');
+                pill.className = neutralPillClass;
+                pill.textContent = titleCase(warning);
+                modalWarnings.appendChild(pill);
+            });
+        } else {
+            const pill = document.createElement('span');
+            pill.className = 'inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-600/50 text-gray-400 bg-gray-600/10';
+            pill.textContent = "None";
+            modalWarnings.appendChild(pill);
+        }
+
+        const accentColor = difficultyColors[tower.difficulty] || defaultColor;
+        modalPanel.style.setProperty('--difficulty-color', accentColor);
+        
+        modalBackdrop.classList.remove('hidden');
+    };
+
+    const closeModal = () => {
+        modalBackdrop.classList.add('hidden');
+    };
+
     const calculateAndRenderStats = (beatenTowers, allTowers) => {
         const canonCompletions = beatenTowers.filter(tower => !NON_CANON_TOWERS.has(tower.name));
         const totalCanonTowers = allTowers.filter(tower => !NON_CANON_TOWERS.has(tower.name));
@@ -120,41 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderFullHistoryList = (beatenTowers) => {
         fullHistoryContainer.innerHTML = '';
         if (!beatenTowers || beatenTowers.length === 0) return;
-
-        const difficultyColors = {
-            "Easy": "#76F447", "Medium": "#FFFF00", "Hard": "#FE7C00", "Difficult": "#FF3232",
-            "Challenging": "#A00000", "Intense": "#19222D", "Remorseless": "#C900C8", "Insane": "#0000FF",
-            "Extreme": "#0287FF", "Terrifying": "#00FFFF", "Catastrophic": "#FFFFFF",
-        };
-        const defaultColor = "#808080";
-
-        const difficultyPillClasses = {
-            "Easy": "border-green-500/50 text-green-300 bg-green-500/10", "Medium": "border-yellow-500/50 text-yellow-300 bg-yellow-500/10",
-            "Hard": "border-orange-500/50 text-orange-300 bg-orange-500/10", "Difficult": "border-red-500/50 text-red-300 bg-red-500/10",
-            "Challenging": "border-red-700/50 text-red-400 bg-red-700/10", "Intense": "border-gray-500/50 text-gray-300 bg-gray-500/10",
-            "Remorseless": "border-fuchsia-500/50 text-fuchsia-300 bg-fuchsia-500/10", "Insane": "border-blue-500/50 text-blue-300 bg-blue-500/10",
-            "Extreme": "border-sky-500/50 text-sky-300 bg-sky-500/10", "Terrifying": "border-cyan-500/50 text-cyan-300 bg-cyan-500/10",
-            "Catastrophic": "border-white/50 text-white bg-white/10"
-        };
         
-        const areaPillClasses = {
-            'Ring 0': 'border-red-400/50 text-red-300 bg-red-400/10', 'Ring 1': 'border-red-500/50 text-red-400 bg-red-500/10',
-            'Forgotten Ridge': 'border-red-500/50 text-red-400 bg-red-500/10', 'Ring 2': 'border-red-600/50 text-red-500 bg-red-600/10',
-            'Garden Of Eesh%C3%B6L': 'border-red-600/50 text-red-500 bg-red-600/10', 'Ring 3': 'border-red-700/50 text-red-600 bg-red-700/10',
-            'Ring 4': 'border-rose-400/50 text-rose-300 bg-rose-400/10', 'Silent Abyss': 'border-rose-400/50 text-rose-300 bg-rose-400/10',
-            'Ring 5': 'border-rose-500/50 text-rose-400 bg-rose-500/10', 'Lost River': 'border-rose-500/50 text-rose-400 bg-rose-500/10',
-            'Ring 6': 'border-rose-600/50 text-rose-500 bg-rose-600/10', 'Ashen Towerworks': 'border-rose-600/50 text-rose-500 bg-rose-600/10',
-            'Ring 7': 'border-rose-700/50 text-rose-600 bg-rose-700/10', 'Ring 8': 'border-pink-400/50 text-pink-300 bg-pink-400/10',
-            'The Starlit Archives': 'border-pink-400/50 text-pink-300 bg-pink-400/10', 'Ring 9': 'border-pink-500/50 text-pink-400 bg-pink-500/10',
-            'Zone 1': 'border-blue-400/50 text-blue-300 bg-blue-400/10', 'Zone 2': 'border-blue-500/50 text-blue-400 bg-blue-500/10',
-            'Arcane Area': 'border-blue-500/50 text-blue-400 bg-blue-500/10', 'Zone 3': 'border-blue-600/50 text-blue-500 bg-blue-600/10',
-            'Paradise Atoll': 'border-blue-600/50 text-blue-500 bg-blue-600/10', 'Zone 4': 'border-sky-400/50 text-sky-300 bg-sky-400/10',
-            'Zone 5': 'border-sky-500/50 text-sky-400 bg-sky-500/10', 'Zone 6': 'border-sky-600/50 text-sky-500 bg-sky-600/10',
-            'Zone 7': 'border-cyan-400/50 text-cyan-300 bg-cyan-400/10', 'Zone 8': 'border-cyan-500/50 text-cyan-400 bg-cyan-500/10',
-            'Zone 9': 'border-cyan-600/50 text-cyan-500 bg-cyan-600/10', 'Zone 10': 'border-teal-400/50 text-teal-300 bg-teal-400/10',
-            'Default': 'border-gray-500/50 text-gray-300 bg-gray-500/10',
-        };
-
         const areaColors = {
             'Ring 0': '#ef4444', 'Ring 1': '#dc2626', 'Forgotten Ridge': '#dc2626', 'Ring 2': '#b91c1c',
             'Garden Of Eesh%C3%B6L': '#b91c1c', 'Ring 3': '#991b1b', 'Ring 4': '#881337', 'Silent Abyss': '#881337',
@@ -165,14 +272,12 @@ document.addEventListener('DOMContentLoaded', () => {
             'Zone 7': '#06b6d4', 'Zone 8': '#0891b2', 'Zone 9': '#0e7490', 'Zone 10': '#14b8a6', 'Default': '#6b7280'
         };
 
-        const areaDisplayNames = { 'Garden Of Eesh%C3%B6L': 'Garden Of Eeshöl' };
-
         const completionDates = beatenTowers.map(t => t.awarded_unix).filter(Boolean);
         const minDate = Math.min(...completionDates);
         const maxDate = Math.max(...completionDates);
         const dateRange = maxDate - minDate;
-        const oldColor = '#ffffff';
-        const newColor = '#ffe600';
+        const oldColor = '#FFFFFF';
+        const newColor = '#FFD700';
         
         const sortedTowers = [...beatenTowers].sort((a, b) => b.awarded_unix - a.awarded_unix);
 
@@ -183,28 +288,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const dateColor = interpolateColor(oldColor, newColor, factor);
             const datePillStyle = `color: ${dateColor}; background-color: ${dateColor}20; border-color: ${dateColor}80;`;
             const datePillHtml = `<span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border" style="${datePillStyle}">${date}</span>`;
-
             const areaKey = tower.area || 'Unknown';
             const areaDisplayName = areaDisplayNames[areaKey] || areaKey;
             const areaPillClass = areaPillClasses[areaKey] || areaPillClasses.Default;
             const areaPillHtml = `<span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${areaPillClass}">${areaDisplayName}</span>`;
-
             const difficultyText = `${tower.modifier || ''} ${tower.difficulty || ''}`.trim();
             const diffPillClasses = difficultyPillClasses[tower.difficulty] || difficultyPillClasses.nil;
             const numericDifficulty = (tower.number_difficulty || 0).toFixed(2);
             const diffPillContent = `${difficultyText} [${numericDifficulty}]`;
             const difficultyPillHtml = `<span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${diffPillClasses}">${diffPillContent}</span>`;
-
             const diffColorHex = difficultyColors[tower.difficulty] || defaultColor;
             const diffRgb = hexToRgb(diffColorHex);
             const diffRgbStr = diffRgb ? diffRgb.join(', ') : '128, 128, 128';
-
             const areaColorHex = areaColors[areaKey] || areaColors.Default;
             const areaRgb = hexToRgb(areaColorHex);
             const areaRgbStr = areaRgb ? areaRgb.join(', ') : '128, 128, 128';
-
             const rowStyle = `style="--difficulty-rgb: ${diffRgbStr}; --area-rgb: ${areaRgbStr};"`;
-
             towerRowsHtml += `
                 <tr class="tower-row status-outline-completed" ${rowStyle}>
                     <td class="py-0.8 px-3">
@@ -230,27 +329,6 @@ document.addEventListener('DOMContentLoaded', () => {
         areaHistoryContainer.innerHTML = '';
         if (!allTowers || allTowers.length === 0) return;
 
-        const difficultyColors = {
-            "Easy": "#76F447", "Medium": "#FFFF00", "Hard": "#FE7C00", "Difficult": "#FF3232",
-            "Challenging": "#A00000", "Intense": "#19222D", "Remorseless": "#C900C8", "Insane": "#0000FF",
-            "Extreme": "#0287FF", "Terrifying": "#00FFFF", "Catastrophic": "#FFFFFF",
-        };
-        const defaultColor = "#808080";
-        
-        const difficultyPillClasses = {
-            "Easy": "border-green-500/50 text-green-300 bg-green-500/10",
-            "Medium": "border-yellow-500/50 text-yellow-300 bg-yellow-500/10",
-            "Hard": "border-orange-500/50 text-orange-300 bg-orange-500/10",
-            "Difficult": "border-red-500/50 text-red-300 bg-red-500/10",
-            "Challenging": "border-red-700/50 text-red-400 bg-red-700/10",
-            "Intense": "border-gray-500/50 text-gray-300 bg-gray-500/10",
-            "Remorseless": "border-fuchsia-500/50 text-fuchsia-300 bg-fuchsia-500/10",
-            "Insane": "border-blue-500/50 text-blue-300 bg-blue-500/10",
-            "Extreme": "border-sky-500/50 text-sky-300 bg-sky-500/10",
-            "Terrifying": "border-cyan-500/50 text-cyan-300 bg-cyan-500/10",
-            "Catastrophic": "border-white/50 text-white bg-white/10",
-        };
-        
         const ringAreas = [
             { key: 'Ring 0', name: 'Ring 0: Purgatorio' }, { key: 'Ring 1', name: 'Ring 1: Limbo' },
             { key: 'Forgotten Ridge', name: 'Forgotten Ridge' }, { key: 'Ring 2', name: 'Ring 2: Desire' },
@@ -294,13 +372,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         const accentColorHex = difficultyColors[tower.difficulty] || defaultColor;
                         const rgb = hexToRgb(accentColorHex);
                         const accentColorRgbStr = rgb ? rgb.join(', ') : '128, 128, 128';
-                        const rowStyle = `style="--difficulty-rgb: 0,0,0; --area-rgb: ${accentColorRgbStr};"`;
+
+                        const completionRgbStr = isCompleted ? '67, 255, 129' : '255, 50, 50';
+                        
+                        const rowStyle = `style="--difficulty-rgb: ${completionRgbStr}; --area-rgb: ${accentColorRgbStr};"`;
                         
                         const outlineClass = isCompleted ? 'status-outline-completed' : 'status-outline-incomplete';
                         const textColorClass = isCompleted ? 'text-gray-200' : 'text-gray-500';
 
                         towerRowsHtml += `
-                            <tr class="tower-row ${outlineClass}" ${rowStyle}>
+                            <tr class="tower-row ${outlineClass}" ${rowStyle} data-tower-name="${tower.name}">
                                 <td class="py-0.8 px-3 ${textColorClass}">${tower.name}</td>
                                 <td class="py-0.8 px-3 text-right">
                                     <div class="flex justify-end items-center gap-2">
@@ -315,9 +396,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     columnHtml += `
                         <div class="bg-black/20 rounded-md overflow-hidden">
                             <table class="w-full text-sm">
-                                <caption class="clickable-caption py-2.5 px-4 text-left font-bold text-base text-gray-200 bg-black/10">
-                                    <span>${area.name}</span>
-                                    <span class="material-symbols-outlined dropdown-arrow">expand_less</span>
+                                <caption class="py-2.5 px-4 text-left font-bold text-base text-gray-200 bg-black/10">
+                                    <div class="clickable-caption select-none flex justify-between items-center">
+                                        <span>${area.name}</span>
+                                        <span class="material-symbols-outlined dropdown-arrow">expand_less</span>
+                                    </div>
                                 </caption>
                                 <tbody>${towerRowsHtml}</tbody>
                             </table>
@@ -335,11 +418,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const renderProfile = (data) => {
-        const { all_towers, beaten_towers } = data;
-        calculateAndRenderStats(beaten_towers, all_towers);
-        renderChart(beaten_towers);
-        renderAreaTable(all_towers, beaten_towers);
-        renderFullHistoryList(beaten_towers);
+        allTowersData = data.all_towers;
+        beatenTowersData = data.beaten_towers;
+        
+        calculateAndRenderStats(beatenTowersData, allTowersData);
+        renderChart(beatenTowersData);
+        renderAreaTable(allTowersData, beatenTowersData);
+        renderFullHistoryList(beatenTowersData);
         switchView(currentView);
     };
 
@@ -354,20 +439,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const difficultyColors = {
-            "Easy": "#76F447",
-            "Medium": "#FFFF00",
-            "Hard": "#FE7C00",
-            "Difficult": "#FF3232",
-            "Challenging": "#A00000",
-            "Intense": "#19222D",
-            "Remorseless": "#C900C8",
-            "Insane": "#0000FF",
-            "Extreme": "#0287FF",
-            "Terrifying": "#00FFFF",
-            "Catastrophic": "#FFFFFF",
-        };
-        const defaultColor = "#808080";
         const difficultyOrder = Object.keys(difficultyColors);
 
         const canonCompletions = beatenTowers.filter(tower => !NON_CANON_TOWERS.has(tower.name));
@@ -429,7 +500,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         };
-
         if (completionChart) {
             completionChart.destroy();
         }
@@ -449,11 +519,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (cachedData) {
                 const parsedData = JSON.parse(cachedData);
                 showNotification(`Loading cached data for ${username}.`, 'success');
-                calculateAndRenderStats(parsedData.beaten_towers, parsedData.all_towers);
-                renderChart(parsedData.beaten_towers);
-                renderAreaTable(parsedData.all_towers, parsedData.beaten_towers);
-                renderFullHistoryList(parsedData.beaten_towers);
-                switchView(currentView);
+                renderProfile(parsedData);
                 return;
             }
         }
@@ -468,11 +534,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
             if (result.success) {
                 localStorage.setItem(cacheKey, JSON.stringify(result));
-                calculateAndRenderStats(result.beaten_towers, result.all_towers);
-                renderChart(result.beaten_towers);
-                renderAreaTable(result.all_towers, result.beaten_towers);
-                renderFullHistoryList(result.beaten_towers);
-                switchView(currentView);
+                renderProfile(result);
                 showNotification(`Successfully loaded stats for ${username}.`, 'success');
             } else {
                 throw new Error(result.error);
@@ -501,19 +563,31 @@ document.addEventListener('DOMContentLoaded', () => {
     
     tableView.addEventListener('click', (event) => {
         const caption = event.target.closest('.clickable-caption');
-        if (!caption) return;
-        
-        const table = caption.parentElement;
-        const tbody = table.querySelector('tbody');
-        const arrow = caption.querySelector('.dropdown-arrow');
-        
-        if (tbody) {
-            tbody.classList.toggle('hidden');
-            if (tbody.classList.contains('hidden')) {
-                arrow.style.transform = 'rotate(-90deg)';
-            } else {
-                arrow.style.transform = 'rotate(0deg)';
+        if (caption) {
+            const table = caption.closest('table');
+            const tbody = table.querySelector('tbody');
+            const arrow = caption.querySelector('.dropdown-arrow');
+            if (tbody) {
+                tbody.classList.toggle('hidden');
+                arrow.style.transform = tbody.classList.contains('hidden') ? 'rotate(-90deg)' : 'rotate(0deg)';
             }
+        } else {
+            const row = event.target.closest('.tower-row');
+            if (row && row.dataset.towerName) {
+                openModalWithTower(row.dataset.towerName);
+            }
+        }
+    });
+
+    modalCloseButton.addEventListener('click', closeModal);
+    modalBackdrop.addEventListener('click', (event) => {
+        if (event.target === modalBackdrop) {
+            closeModal();
+        }
+    });
+    window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !modalBackdrop.classList.contains('hidden')) {
+            closeModal();
         }
     });
 

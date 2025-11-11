@@ -33,6 +33,7 @@ body {
     border-top: 1px solid rgba(255, 255, 255, 0.05);
     transition: background-color 0.2s ease-in-out;
     overflow: hidden;
+    cursor: pointer;
 }
 
 .tower-row:hover {
@@ -45,19 +46,19 @@ body {
     position: absolute;
     top: 0;
     bottom: 0;
-    width: 30%;
+    width: 25%;
     pointer-events: none;
     opacity: 1;
 }
 
 .tower-row::before {
     left: 0;
-    background-image: linear-gradient(to right, rgba(var(--difficulty-rgb), 0.10), transparent);
+    background-image: linear-gradient(to right, rgba(var(--difficulty-rgb), 0.08), transparent);
 }
 
 .tower-row::after {
     right: 0;
-    background-image: linear-gradient(to left, rgba(var(--area-rgb), 0.10), transparent);
+    background-image: linear-gradient(to left, rgba(var(--area-rgb), 0.12), transparent);
 }
 
 .status-outline-completed {
@@ -65,6 +66,48 @@ body {
 }
 .status-outline-incomplete {
     border-left: 3px solid rgba(255, 50, 50, 0.3);
+}
+
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+.modal-backdrop:not(.hidden) {
+    opacity: 1;
+}
+.modal-panel {
+    position: relative;
+    border-radius: 8px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 500px;
+    transform: scale(0.95);
+    transition: transform 0.2s ease-in-out;
+    overflow: hidden;
+}
+.modal-backdrop:not(.hidden) .modal-panel {
+    transform: scale(1);
+}
+
+.modal-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background-color: var(--difficulty-color, #808080);
+    transition: background-color 0.2s ease-in-out;
 }
 
 .notification-container {

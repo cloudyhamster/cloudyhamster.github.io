@@ -34,7 +34,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <link rel="icon" href="icon.jpg">
-    <link rel="stylesheet" href="./css/style.css?v=1.1.3">
+    <link rel="stylesheet" href="./css/style.css?v=1.2.0">
 </head>
 <body class="text-[#EAEAEA]">
     <div class="relative flex h-auto min-h-screen w-full flex-col overflow-hidden">
@@ -135,6 +135,47 @@
     </div>
     <div id="notification-container" class="notification-container"></div>
 
-    <script src="./js/main.js?v=1.1.3"></script>
+    <div id="tower-modal-backdrop" class="modal-backdrop hidden">
+        <div id="tower-modal-panel" class="glass-panel modal-panel">
+            <div class="flex justify-between items-center border-b border-white/10 pb-2 mb-4">
+                <h2 id="modal-tower-name" class="text-xl font-bold"></h2>
+                <button id="modal-close-button" class="text-gray-400 hover:text-white transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="space-y-3 text-sm">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400">Difficulty:</span>
+                    <span id="modal-difficulty"></span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400">Length:</span>
+                    <span id="modal-length"></span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400">Floors:</span>
+                    <span id="modal-floors"></span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400">Creator(s):</span>
+                    <div id="modal-creator" class="flex flex-wrap justify-end items-center gap-2"></div>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400">Warnings:</span>
+                    <div id="modal-warnings" class="flex flex-wrap justify-end items-center gap-2"></div>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400">Area:</span>
+                    <span id="modal-area"></span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400">Date Completed:</span>
+                    <span id="modal-date"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./js/main.js?v=1.2.0"></script>
 </body>
 </html>
