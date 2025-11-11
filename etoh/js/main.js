@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modalArea.className = `inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${areaPillClasses[areaKey] || areaPillClasses.Default}`;
         modalArea.textContent = areaDisplayName;
         
-        const lengthCategory = tower.length || getLengthCategory(tower.number_difficulty);
+        const lengthCategory = tower.length || '<20 minutes';
         const lengthColorClasses = {
             '<20 minutes': 'border-orange-300/50 text-orange-200 bg-orange-300/10',
             '20+ minutes': 'border-orange-400/50 text-orange-300 bg-orange-400/10',
