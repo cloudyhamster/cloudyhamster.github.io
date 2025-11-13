@@ -476,138 +476,91 @@ document.addEventListener('DOMContentLoaded', () => {
         fullHistoryContainer.innerHTML = `<table class="w-full text-sm"><tbody>${towerRowsHtml}</tbody></table>`;
     };
 
-    const renderAreaTable = (allTowers, beatenTowers) => {
+    const renderProfile = (data) => {
+        allTowersData = data.all_towers;
+        beatenTowersData = data.beaten_towers;
+        const unlockedAreas = new Set(data.unlocked_areas || []);
+
+        calculateAndRenderStats(beatenTowersData, allTowersData);
+        renderChart(beatenTowersData);
+        renderAreaTable(allTowersData, beatenTowersData, unlockedAreas);
+        renderFullHistoryList(beatenTowersData);
+        switchView(currentView);
+    };
+
+    const renderAreaTable = (allTowers, beatenTowers, unlockedAreas) => {
         areaHistoryContainer.innerHTML = '';
         if (!allTowers || allTowers.length === 0) return;
-        const ringAreas = [{
-            key: 'Ring 0',
-            name: 'Ring 0: Purgatorio'
-        }, {
-            key: 'Ring 1',
-            name: 'Ring 1: Limbo'
-        }, {
-            key: 'Forgotten Ridge',
-            name: 'Forgotten Ridge'
-        }, {
-            key: 'Ring 2',
-            name: 'Ring 2: Desire'
-        }, {
-            key: 'Garden Of Eesh%C3%B6L',
-            name: 'Garden of Eeshöl'
-        }, {
-            key: 'Ring 3',
-            name: 'Ring 3: Gluttony'
-        }, {
-            key: 'Ring 4',
-            name: 'Ring 4: Greed'
-        }, {
-            key: 'Silent Abyss',
-            name: 'Silent Abyss'
-        }, {
-            key: 'Ring 5',
-            name: 'Ring 5: Wrath'
-        }, {
-            key: 'Lost River',
-            name: 'Lost River'
-        }, {
-            key: 'Ring 6',
-            name: 'Ring 6: Heresy'
-        }, {
-            key: 'Ashen Towerworks',
-            name: 'Ashen Towerworks'
-        }, {
-            key: 'Ring 7',
-            name: 'Ring 7: Violence'
-        }, {
-            key: 'Ring 8',
-            name: 'Ring 8: Fraud'
-        }, {
-            key: 'The Starlit Archives',
-            name: 'The Starlit Archives'
-        }, {
-            key: 'Ring 9',
-            name: 'Ring 9: Treachery'
-        }, ];
-        const zoneAreas = [{
-            key: 'Zone 1',
-            name: 'Zone 1: Sea'
-        }, {
-            key: 'Zone 2',
-            name: 'Zone 2: Surface'
-        }, {
-            key: 'Arcane Area',
-            name: 'Arcane Area'
-        }, {
-            key: 'Zone 3',
-            name: 'Zone 3: Sky'
-        }, {
-            key: 'Paradise Atoll',
-            name: 'Paradise Atoll'
-        }, {
-            key: 'Zone 4',
-            name: 'Zone 4: Exosphere'
-        }, {
-            key: 'Zone 5',
-            name: 'Zone 5: The Moon'
-        }, {
-            key: 'Zone 6',
-            name: 'Zone 6: Mars'
-        }, {
-            key: 'Zone 7',
-            name: 'Zone 7: Asteroid Belt'
-        }, {
-            key: 'Zone 8',
-            name: 'Zone 8: Pluto'
-        }, {
-            key: 'Zone 9',
-            name: 'Zone 9: Singularity'
-        }, {
-            key: 'Zone 10',
-            name: 'Zone 10: Interstellar Shore'
-        }, ];
+        
+        const ringAreas = [ { key: 'Ring 0', name: 'Ring 0: Purgatorio' }, { key: 'Ring 1', name: 'Ring 1: Limbo' }, { key: 'Forgotten Ridge', name: 'Forgotten Ridge' }, { key: 'Ring 2', name: 'Ring 2: Desire' }, { key: 'Garden Of Eesh%C3%B6L', name: 'Garden Of Eeshöl' }, { key: 'Ring 3', name: 'Ring 3: Gluttony' }, { key: 'Ring 4', name: 'Ring 4: Greed' }, { key: 'Silent Abyss', name: 'Silent Abyss' }, { key: 'Ring 5', name: 'Ring 5: Wrath' }, { key: 'Lost River', name: 'Lost River' }, { key: 'Ring 6', name: 'Ring 6: Heresy' }, { key: 'Ashen Towerworks', name: 'Ashen Towerworks' }, { key: 'Ring 7', name: 'Ring 7: Violence' }, { key: 'Ring 8', name: 'Ring 8: Fraud' }, { key: 'The Starlit Archives', name: 'The Starlit Archives' }, { key: 'Ring 9', name: 'Ring 9: Treachery' }, ];
+        const zoneAreas = [ { key: 'Zone 1', name: 'Zone 1: Sea' }, { key: 'Zone 2', name: 'Zone 2: Surface' }, { key: 'Arcane Area', name: 'Arcane Area' }, { key: 'Zone 3', name: 'Zone 3: Sky' }, { key: 'Paradise Atoll', name: 'Paradise Atoll' }, { key: 'Zone 4', name: 'Zone 4: Exosphere' }, { key: 'Zone 5', name: 'Zone 5: The Moon' }, { key: 'Zone 6', name: 'Zone 6: Mars' }, { key: 'Zone 7', name: 'Zone 7: Asteroid Belt' }, { key: 'Zone 8', name: 'Zone 8: Pluto' }, { key: 'Zone 9', name: 'Zone 9: Singularity' }, { key: 'Zone 10', name: 'Zone 10: Interstellar Shore' }, ];
+
         const beatenTowerMap = new Map(beatenTowers.map(tower => [tower.name, tower]));
+
         const generateColumnHtml = (areaList) => {
             let columnHtml = '';
             for (const area of areaList) {
                 const towersInArea = allTowers.filter(t => t.area === area.key);
-                if (towersInArea.length > 0) {
-                    let towerRowsHtml = '';
-                    towersInArea.sort((a, b) => a.number_difficulty - b.number_difficulty).forEach(tower => {
-                        const beatenVersion = beatenTowerMap.get(tower.name);
-                        const isCompleted = !!beatenVersion;
-                        const date = isCompleted ? new Date(beatenVersion.awarded_unix * 1000).toLocaleDateString() : '--';
-                        const datePillHtml = `<span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 ${isCompleted ? 'text-gray-300 bg-gray-500/10' : 'text-gray-600 bg-gray-500/10'}">${date}</span>`;
-                        const difficultyText = `${tower.modifier || ''} ${tower.difficulty || ''}`.trim();
-                        const pillClasses = difficultyPillClasses[tower.difficulty] || difficultyPillClasses.nil;
-                        const numericDifficulty = (tower.number_difficulty || 0).toFixed(2);
-                        const pillContent = `${difficultyText} [${numericDifficulty}]`;
-                        const accentColorHex = difficultyColors[tower.difficulty] || defaultColor;
-                        const rgb = hexToRgb(accentColorHex);
-                        const accentColorRgbStr = rgb ? rgb.join(', ') : '128, 128, 128';
-                        const completionRgbStr = isCompleted ? '67, 255, 129' : '255, 50, 50';
-                        const rowStyle = `style="--difficulty-rgb: ${completionRgbStr}; --area-rgb: ${accentColorRgbStr};"`;
-                        const outlineClass = isCompleted ? 'status-outline-completed' : 'status-outline-incomplete';
-                        const textColorClass = isCompleted ? 'text-gray-200' : 'text-gray-500';
-                        towerRowsHtml += `<tr class="tower-row ${outlineClass}" ${rowStyle} data-tower-name="${tower.name}"><td class="py-0.8 px-3 ${textColorClass}">${tower.name}</td><td class="py-0.8 px-3 text-right"><div class="flex justify-end items-center gap-2">${datePillHtml}<span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${pillClasses}">${pillContent}</span></div></td></tr>`;
-                    });
-                    columnHtml += `<div class="bg-black/20 rounded-md overflow-hidden"><table class="w-full text-sm"><caption class="py-2.5 px-4 text-left font-bold text-base text-gray-200 bg-black/10"><div class="clickable-caption select-none flex justify-between items-center"><span>${area.name}</span><span class="material-symbols-outlined dropdown-arrow">expand_less</span></div></caption><tbody>${towerRowsHtml}</tbody></table></div>`;
-                }
+                if (towersInArea.length === 0) continue;
+
+                const isUnlocked = unlockedAreas.has(area.key);
+                
+                const captionClasses = ['clickable-caption', !isUnlocked ? 'locked-caption' : ''].join(' ');
+                const captionIcon = !isUnlocked ? 'expand_more' : 'expand_less';
+                const tbodyClass = !isUnlocked ? 'hidden' : '';
+
+                let towerRowsHtml = '';
+                towersInArea.sort((a,b) => a.number_difficulty - b.number_difficulty).forEach(tower => {
+                    const beatenVersion = beatenTowerMap.get(tower.name);
+                    const isCompleted = !!beatenVersion;
+                    const date = isCompleted ? new Date(beatenVersion.awarded_unix * 1000).toLocaleDateString() : '--';
+                    const datePillHtml = `<span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 ${isCompleted ? 'text-gray-300 bg-gray-500/10' : 'text-gray-600 bg-gray-500/10'}">${date}</span>`;
+                    const difficultyText = `${tower.modifier || ''} ${tower.difficulty || ''}`.trim();
+                    const pillClasses = difficultyPillClasses[tower.difficulty] || difficultyPillClasses.nil;
+                    const numericDifficulty = (tower.number_difficulty || 0).toFixed(2);
+                    const pillContent = `${difficultyText} [${numericDifficulty}]`;
+                    const accentColorHex = difficultyColors[tower.difficulty] || defaultColor;
+                    const rgb = hexToRgb(accentColorHex);
+                    const accentColorRgbStr = rgb ? rgb.join(', ') : '128, 128, 128';
+                    const completionRgbStr = isCompleted ? '67, 255, 129' : '255, 50, 50';
+                    const rowStyle = `style="--difficulty-rgb: ${completionRgbStr}; --area-rgb: ${accentColorRgbStr};"`;
+                    const outlineClass = isCompleted ? 'status-outline-completed' : 'status-outline-incomplete';
+                    const textColorClass = isCompleted ? 'text-gray-200' : 'text-gray-500';
+
+                    towerRowsHtml += `
+                        <tr class="tower-row ${outlineClass}" ${rowStyle} data-tower-name="${tower.name}">
+                            <td class="py-1 px-3 ${textColorClass}">${tower.name}</td>
+                            <td class="py-1 px-3 text-right">
+                                <div class="flex justify-end items-center gap-2">
+                                    ${datePillHtml}
+                                    <span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${pillClasses}">${pillContent}</span>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                columnHtml += `
+                    <div class="bg-black/20 rounded-md overflow-hidden">
+                        <table class="w-full text-sm">
+                            <caption class="py-2.5 px-4 text-left font-bold text-base bg-black/10">
+                                <div class="${captionClasses} select-none flex justify-between items-center">
+                                    <span class="caption-text">${area.name}</span>
+                                    <span class="material-symbols-outlined caption-icon dropdown-arrow">${captionIcon}</span>
+                                </div>
+                            </caption>
+                            <tbody class="${tbodyClass}">${towerRowsHtml}</tbody>
+                        </table>
+                    </div>
+                `;
             }
             return `<div class="flex flex-col gap-4">${columnHtml}</div>`;
         };
+        
         const ringsHtml = generateColumnHtml(ringAreas);
         const zonesHtml = generateColumnHtml(zoneAreas);
-        areaHistoryContainer.innerHTML = ringsHtml + zonesHtml;
-    };
 
-    const renderProfile = (data) => {
-        allTowersData = data.all_towers;
-        beatenTowersData = data.beaten_towers;
-        calculateAndRenderStats(beatenTowersData, allTowersData);
-        renderChart(beatenTowersData);
-        renderAreaTable(allTowersData, beatenTowersData);
-        renderFullHistoryList(beatenTowersData);
-        switchView(currentView);
+        areaHistoryContainer.innerHTML = ringsHtml + zonesHtml;
     };
 
     const renderChart = (beatenTowers) => {

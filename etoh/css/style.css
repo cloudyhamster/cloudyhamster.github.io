@@ -206,3 +206,20 @@ body {
 .notification p {
     word-break: break-word;
 }
+
+.caption-icon {
+    font-size: 1.25rem;
+    transition: transform 0.2s ease-in-out;
+}
+
+.locked-caption .caption-text {
+    text-decoration: line-through;
+}
+
+.clickable-caption {
+    cursor: pointer;
+}
+
+.locked-caption {
+    color: #6B7280; 
+}
