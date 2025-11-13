@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentView = 'chart';
     let allTowersData = [];
     let beatenTowersData = [];
+    let leaderboardData = null;
 
     const NON_CANON_TOWERS = new Set([
         "Tower Not Found", "Not Even A Tower", "This Is Probably A Tower",
@@ -38,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
         "Insane": "border-blue-500/50 text-blue-300 bg-blue-500/10",
         "Extreme": "border-sky-500/50 text-sky-300 bg-sky-500/10",
         "Terrifying": "border-cyan-500/50 text-cyan-300 bg-cyan-500/10",
-        "Catastrophic": "border-white/50 text-white bg-white/10"
+        "Catastrophic": "border-white/50 text-white bg-white/10",
     };
 
     const areaPillClasses = {
@@ -75,6 +76,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const areaDisplayNames = {
         'Garden Of Eesh%C3%B6L': 'Garden Of Eeshöl'
     };
+    const rankColors = {
+        "gold": "255, 215, 0",
+        "silver": "192, 192, 192",
+        "bronze": "205, 127, 50",
+        "top10": "190, 0, 255"
+    };
 
     const searchInput = document.getElementById('searchInput');
     const searchButton = document.getElementById('searchButton');
@@ -86,12 +93,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const hardestDifficultyStat = document.getElementById('hardestDifficultyStat');
     const notificationContainer = document.getElementById('notification-container');
     const navLinksContainer = document.getElementById('nav-links');
+    const miscNavLinksContainer = document.getElementById('misc-nav-links');
     const mainContentTitle = document.getElementById('main-content-title');
     const chartView = document.getElementById('chart-view');
     const tableView = document.getElementById('table-view');
     const listView = document.getElementById('list-view');
+    const leaderboardView = document.getElementById('leaderboard-view');
     const areaHistoryContainer = document.getElementById('area-history-container');
     const fullHistoryContainer = document.getElementById('full-history-container');
+    const leaderboardContainer = document.getElementById('leaderboard-container');
     const modalBackdrop = document.getElementById('tower-modal-backdrop');
     const modalPanel = document.getElementById('tower-modal-panel');
     const modalCloseButton = document.getElementById('modal-close-button');
@@ -141,14 +151,25 @@ document.addEventListener('DOMContentLoaded', () => {
             table: {
                 title: 'Area Completion',
                 element: tableView
+            },
+            leaderboard: {
+                title: 'Leaderboard',
+                element: leaderboardView
             }
         };
+
         mainContentTitle.textContent = views[viewName].title;
         Object.values(views).forEach(view => view.element.classList.add('hidden'));
         if (views[viewName]) {
             views[viewName].element.classList.remove('hidden');
         }
-        navLinksContainer.querySelectorAll('a').forEach(link => {
+
+        if (viewName === 'leaderboard' && !leaderboardData) {
+            fetchAndRenderLeaderboard();
+        }
+
+        const allNavLinks = [...navLinksContainer.querySelectorAll('a'), ...miscNavLinksContainer.querySelectorAll('a')];
+        allNavLinks.forEach(link => {
             if (link.dataset.view === viewName) {
                 link.classList.remove(...inactiveClasses);
                 link.classList.add(...activeClasses);
@@ -229,6 +250,81 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const closeModal = () => modalBackdrop.classList.add('hidden');
 
+    const fetchAndRenderLeaderboard = async () => {
+        leaderboardContainer.innerHTML = `<div class="flex items-center justify-center p-8">Loading leaderboard...</div>`;
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/get_leaderboard`);
+            const result = await response.json();
+            if (!result.success) throw new Error(result.error);
+
+            leaderboardData = result.leaderboard;
+
+            let headerHtml = `
+                <div class="leaderboard-header">
+                    <div class="w-16 text-center">#</div>
+                    <div class="w-64 text-left">Player</div>
+                    <div class="flex-1 text-left">Hardest Tower</div>
+                    <div class="w-56 text-left">Difficulty</div>
+                    <div class="w-24 text-center">Towers</div>
+                </div>
+            `;
+
+            let rowsHtml = '';
+            leaderboardData.forEach((player, index) => {
+                const rank = index + 1;
+                let rankClass = '';
+                let rankRgb = '';
+                if (rank === 1) {
+                    rankClass = 'rank-gold';
+                    rankRgb = rankColors.gold;
+                } else if (rank === 2) {
+                    rankClass = 'rank-silver';
+                    rankRgb = rankColors.silver;
+                } else if (rank === 3) {
+                    rankClass = 'rank-bronze';
+                    rankRgb = rankColors.bronze;
+                } else if (rank <= 10) {
+                    rankClass = 'rank-top10';
+                    rankRgb = rankColors.top10;
+                }
+
+                const difficultyText = `${player.hardest_tower_modifier || ''} ${player.hardest_tower_difficulty || ''}`.trim();
+                const diffPillClass = difficultyPillClasses[player.hardest_tower_difficulty] || difficultyPillClasses.nil;
+                const numericDifficulty = (player.number_difficulty || 0).toFixed(2);
+
+                rowsHtml += `
+                    <div class="leaderboard-row ${rankClass}" style="--rank-rgb: ${rankRgb};">
+                        <div class="w-16 text-center text-lg font-bold text-gray-400">${rank}</div>
+                        <div class="w-64">
+                            <div class="flex items-center gap-3">
+                                <img src="${player.avatar_url || 'icon.jpg'}" class="leaderboard-avatar" alt="${player.display_name || player.user_name}'s avatar">
+                                <div class="flex flex-col">
+                                    <span class="font-bold text-white truncate">${player.display_name || player.user_name}</span>
+                                    <span class="text-xs text-gray-400">@${player.user_name || 'null'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-1 text-gray-300 text-sm text-left truncate pr-4">
+                            ${player.hardest_tower_name}
+                        </div>
+                        <div class="w-56 text-left">
+                            <span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${diffPillClass}">
+                                ${difficultyText} [${numericDifficulty}]
+                            </span>
+                        </div>
+                        <div class="w-24 text-center text-lg font-bold">${player.total_towers}</div>
+                    </div>
+                `;
+            });
+
+            leaderboardContainer.innerHTML = headerHtml + rowsHtml;
+
+        } catch (error) {
+            leaderboardContainer.innerHTML = `<div class="flex items-center justify-center p-8 text-red-400">Failed to load leaderboard.</div>`;
+            showNotification(error.message, 'error');
+        }
+    };
+
     const handleSearch = async () => {
         const username = searchInput.value.trim();
         const forceRefresh = forceRefreshCheckbox.checked;
@@ -236,29 +332,23 @@ document.addEventListener('DOMContentLoaded', () => {
             showNotification('Please enter a Roblox Username.', 'error');
             return;
         }
-
         const searchIcon = document.getElementById('searchIcon');
         const searchLoadingIndicator = document.getElementById('searchLoadingIndicator');
-
         searchIcon.classList.add('hidden');
         searchLoadingIndicator.classList.remove('hidden');
         statsContainer.style.display = 'none';
-
         try {
             const cacheKey = `etoh_profile_${username.toLowerCase()}`;
             const cachedData = sessionStorage.getItem(cacheKey);
-
             let apiUrl = `${API_BASE_URL}/api/get_player_data?username=${username}`;
             if (forceRefresh) {
                 apiUrl += '&force_refresh=true';
             }
-
             const response = await fetch(apiUrl);
             if (response.status === 429) {
                 throw new Error('Rate limit exceeded. Please wait a moment.');
             }
             const result = await response.json();
-
             if (result.success) {
                 sessionStorage.setItem(cacheKey, JSON.stringify(result));
                 renderProfile(result);
@@ -624,13 +714,15 @@ document.addEventListener('DOMContentLoaded', () => {
     searchInput.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') handleSearch();
     });
-    navLinksContainer.addEventListener('click', (event) => {
+    const handleNavClick = (event) => {
         const link = event.target.closest('a');
         if (link && link.dataset.view) {
             event.preventDefault();
             switchView(link.dataset.view);
         }
-    });
+    };
+    navLinksContainer.addEventListener('click', handleNavClick);
+    miscNavLinksContainer.addEventListener('click', handleNavClick);
     tableView.addEventListener('click', (event) => {
         const caption = event.target.closest('.clickable-caption');
         if (caption) {
