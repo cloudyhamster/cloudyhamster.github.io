@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
         "Tower Not Found", "Not Even A Tower", "This Is Probably A Tower",
         "Maybe A Tower", "Totally A Tower", "Will Be A Tower", "Likely A Tower",
         "Fortunately Not A Tower", "Far From A Surprising Tower", "Somewhat A Tower",
-        "Possibly A Tower"
+        "Possibly A Tower", "Not Even A Flower"
     ]);
 
     const difficultyColors = {
@@ -493,7 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
             name: 'Ring 2: Desire'
         }, {
             key: 'Garden Of Eesh%C3%B6L',
-            name: 'Garden Of Eeshöl'
+            name: 'Garden of Eeshöl'
         }, {
             key: 'Ring 3',
             name: 'Ring 3: Gluttony'
@@ -620,17 +620,22 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
             return;
         }
+
         const difficultyOrder = Object.keys(difficultyColors);
+
         const canonCompletions = beatenTowers.filter(tower => !NON_CANON_TOWERS.has(tower.name));
         canonCompletions.sort((a, b) => a.awarded_unix - b.awarded_unix);
+
         const stepDates = [];
         const stepData = difficultyOrder.map(() => []);
         const difficultyCounts = Object.fromEntries(difficultyOrder.map(d => [d, 0]));
+
         if (canonCompletions.length > 0) {
             const firstDate = new Date(canonCompletions[0].awarded_unix * 1000);
             stepDates.push(firstDate.getTime() - 86400000);
             difficultyOrder.forEach((_, i) => stepData[i].push(0));
         }
+
         canonCompletions.forEach(tower => {
             const awardDate = new Date(tower.awarded_unix * 1000);
             stepDates.push(awardDate);
@@ -642,6 +647,15 @@ document.addEventListener('DOMContentLoaded', () => {
             stepDates.push(awardDate);
             difficultyOrder.forEach((name, i) => stepData[i].push(difficultyCounts[name]));
         });
+
+        if (canonCompletions.length > 0) {
+            const now = Date.now();
+            if (stepDates[stepDates.length - 1] < now) {
+                stepDates.push(now);
+                difficultyOrder.forEach((name, i) => stepData[i].push(difficultyCounts[name]));
+            }
+        }
+
         const datasets = difficultyOrder.map((name, i) => ({
             label: name,
             data: stepData[i],
@@ -652,54 +666,27 @@ document.addEventListener('DOMContentLoaded', () => {
             pointRadius: 0,
             borderWidth: 1,
         }));
+
         const config = {
             type: 'line',
-            data: {
-                labels: stepDates,
-                datasets: datasets
-            },
+            data: { labels: stepDates, datasets: datasets },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                interaction: {
-                    mode: 'index',
-                    intersect: false
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        enabled: true
-                    }
-                },
+                interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { display: false }, tooltip: { enabled: true } },
                 scales: {
                     x: {
                         type: 'time',
-                        time: {
-                            unit: 'month'
-                        },
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        },
-                        ticks: {
-                            color: '#EAEAEA',
-                            font: {
-                                family: "'Space Grotesk', sans-serif"
-                            }
-                        }
+                        time: { unit: 'month' },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        ticks: { color: '#EAEAEA', font: { family: "'Space Grotesk', sans-serif" } },
+                        max: Date.now()
                     },
                     y: {
                         stacked: true,
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        },
-                        ticks: {
-                            color: '#EAEAEA',
-                            font: {
-                                family: "'Space Grotesk', sans-serif"
-                            }
-                        }
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                        ticks: { color: '#EAEAEA', font: { family: "'Space Grotesk', sans-serif" } }
                     }
                 }
             }
