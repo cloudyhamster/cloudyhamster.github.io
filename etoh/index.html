@@ -22,11 +22,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <link rel="icon" href="icon.jpg">
-    <link rel="stylesheet" href="./css/style.css?v=1.3.3">
+    <link rel="stylesheet" href="./css/style.css?v=1.4.0">
 </head>
 <body class="text-[#EAEAEA]">
     <div class="relative flex h-auto min-h-screen w-full flex-col overflow-hidden">
-        <header class="fixed top-0 left-0 right-0 z-20 mx-auto w-full max-w-screen-2xl p-3">
+        <header class="fixed top-0 left-0 right-0 z-20 mx-auto w-[70%] p-3">
             <div class="glass-panel flex h-14 items-center justify-between rounded-lg px-4">
                 <div class="flex items-center gap-3">
                     <div class="text-[#BE00FF] size-5">
@@ -43,7 +43,7 @@
         </header>
 
         <main class="flex h-full min-h-screen w-full grow flex-row pt-20 pb-3 px-3 gap-3">
-            <aside class="sticky top-[92px] self-start flex w-full max-w-[280px] flex-col gap-3" style="height: calc(100vh - 92px - 12px);">
+            <aside class="sticky top-20 self-start flex w-full max-w-[280px] flex-col gap-3" style="height: calc(100vh - 80px - 12px);">
                 <div class="glass-panel rounded-lg p-3">
                     <div class="flex flex-col min-w-40 h-10 w-full">
                         <div class="flex w-full flex-1 items-stretch rounded-md h-full">
@@ -79,6 +79,15 @@
                         </div>
                     </div>
                     <div class="flex flex-col gap-3 mt-4">
+                        <h1 class="text-sm font-medium leading-normal px-2">Games</h1>
+                        <div id="games-nav-links" class="flex flex-col gap-1">
+                            <a data-view="games" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-gray-300 transition-colors hover:bg-white/5 hover:text-white" href="#">
+                                <span class="material-symbols-outlined text-xl">chess_queen</span>
+                                <p class="text-xs font-medium leading-normal">Guess the Tower</p>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-3 mt-4">
                         <h1 class="text-sm font-medium leading-normal px-2">Miscellaneous</h1>
                         <div id="misc-nav-links" class="flex flex-col gap-1">
                             <a data-view="leaderboard" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-gray-300 transition-colors hover:bg-white/5 hover:text-white" href="#">
@@ -92,7 +101,6 @@
                 <div class="glass-panel flex flex-col rounded-lg p-3">
                     <h2 class="text-sm font-medium leading-normal mb-3">Quick Stats</h2>
                     <div id="statsContainer" class="grid grid-cols-1 gap-2" style="display: none;">
-                        <div id="queueStatusMessage" class="text-center text-gray-400 p-4 hidden"></div>
                         <div class="flex flex-col gap-0.5 rounded-md p-2 bg-black/20">
                             <p class="text-xs font-medium leading-normal text-gray-400">Total Towers</p>
                             <p id="totalTowersStat" class="tracking-light text-base font-bold leading-tight">0/0</p>
@@ -109,27 +117,88 @@
                 </div>
             </aside>
 
-            <section class="glass-panel flex-1 rounded-lg p-4">
+            <section class="glass-panel flex-1 rounded-lg p-4 min-w-0">
                 <div class="flex flex-col h-full w-full">
                     <h2 id="main-content-title" class="text-xl font-bold mb-3"></h2>
+                    
                     <div id="chart-view" class="flex-grow w-full h-full relative">
                         <canvas id="completionChart"></canvas>
                     </div>
+                    
                     <div id="list-view" class="flex-grow w-full h-full overflow-y-auto hidden">
-                        <div id="full-history-container" class="bg-black/20 rounded-md overflow-hidden">
-                        </div>
+                        <div id="full-history-container" class="bg-black/20 rounded-md overflow-hidden"></div>
                     </div>
+                    
                     <div id="table-view" class="flex-grow w-full h-full overflow-y-auto hidden">
-                        <div id="area-history-container" class="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-                        </div>
+                        <div id="area-history-container" class="grid grid-cols-1 md:grid-cols-2 gap-x-6"></div>
                     </div>
+                    
                     <div id="leaderboard-view" class="flex-grow w-full h-full overflow-y-auto hidden">
                         <div id="leaderboard-container" class="bg-black/20 rounded-md overflow-hidden">
                             <div class="flex items-center justify-center p-8">Loading leaderboard...</div>
                         </div>
                     </div>
+                    
+                    <div id="games-view" class="flex-grow w-full h-full overflow-y-auto hidden">
+                        <div class="flex flex-col gap-6 w-full mx-auto p-2">
+                            <div class="flex justify-between items-end gap-4">
+                                <div class="flex-1 max-w-md relative">
+                                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5 block">Guess a Tower</label>
+                                    <input id="game-guess-input" type="text" placeholder="Start typing a tower name..." 
+                                        class="w-full rounded-md px-4 py-2.5 text-sm focus:outline-none">
+                                    <div id="game-autocomplete-list" class="absolute w-full bg-[#1C1C22] border border-white/10 rounded-b-md mt-1 max-h-60 overflow-y-auto hidden shadow-2xl z-50"></div>
+                                </div>
+                                
+                                <div class="flex items-center gap-4">
+                                    <div id="game-message" class="hidden text-right">
+                                        <h4 class="text-sm font-bold"></h4>
+                                        <p class="text-xs text-gray-400"></p>
+                                    </div>
+                                    <button id="new-game-btn" class="flex items-center gap-2 px-4 py-2 bg-[#BE00FF]/10 hover:bg-[#BE00FF]/20 border border-[#BE00FF]/50 text-[#BE00FF] rounded-md transition-all text-sm font-bold">
+                                        <span class="material-symbols-outlined text-lg">refresh</span>
+                                        New Game
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="glass-panel rounded-lg overflow-hidden flex flex-col">
+                                <div class="game-header">
+                                    <div>Tower Name</div>
+                                    <div>Difficulty</div>
+                                    <div>Length</div>
+                                    <div>Type</div>
+                                    <div>Area</div>
+                                    <div>Creators</div>
+                                </div>
+                                <div id="game-grid" class="flex flex-col"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
+            <aside id="game-stats-sidebar" class="hidden sticky top-20 self-start w-full max-w-[240px] flex-col gap-3" style="height: calc(100vh - 80px - 12px);">
+                <div class="glass-panel flex-grow rounded-lg p-3">
+                    <h2 class="text-sm font-medium leading-normal mb-3 border-b border-white/10 pb-2">Session Stats</h2>
+                    <div class="grid grid-cols-1 gap-2">
+                        <div class="flex flex-col gap-0.5 rounded-md p-2 bg-black/20">
+                            <p class="text-xs font-medium leading-normal text-gray-400">Games Played</p>
+                            <p id="stat-games-played" class="text-xl font-bold">0</p>
+                        </div>
+                        <div class="flex flex-col gap-0.5 rounded-md p-2 bg-black/20">
+                            <p class="text-xs font-medium leading-normal text-gray-400">Win Rate</p>
+                            <p id="stat-win-rate" class="text-xl font-bold">0%</p>
+                        </div>
+                        <div class="flex flex-col gap-0.5 rounded-md p-2 bg-black/20">
+                            <p class="text-xs font-medium leading-normal text-gray-400">Best Game</p>
+                            <p id="stat-best-game" class="text-xl font-bold text-[#BE00FF]">-</p>
+                        </div>
+                        <div class="flex flex-col gap-0.5 rounded-md p-2 bg-black/20">
+                            <p class="text-xs font-medium leading-normal text-gray-400">Avg. Guesses</p>
+                            <p id="stat-avg-guesses" class="text-xl font-bold">-</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
         </main>
     </div>
     
@@ -154,6 +223,6 @@
         </div>
     </div>
 
-    <script src="./js/main.js?v=1.3.3"></script>
+    <script src="./js/main.js?v=1.4.0"></script>
 </body>
 </html>

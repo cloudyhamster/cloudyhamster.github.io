@@ -1,10 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
     const API_BASE_URL = 'https://etoh-thing.onrender.com';
+
     let completionChart = null;
     let currentView = 'chart';
     let allTowersData = [];
     let beatenTowersData = [];
     let leaderboardData = null;
+
+    let targetTower = null;
+    let guesses = [];
+    const maxGuesses = 6;
+    let isGameActive = false;
+    let sessionStats = {
+        played: 0,
+        wins: 0,
+        totalGuesses: 0,
+        bestGame: null
+    };
 
     const NON_CANON_TOWERS = new Set([
         "Tower Not Found", "Not Even A Tower", "This Is Probably A Tower",
@@ -26,7 +38,38 @@ document.addEventListener('DOMContentLoaded', () => {
         "Terrifying": "#00FFFF",
         "Catastrophic": "#FFFFFF",
     };
-    const defaultColor = "#808080";
+
+    const areaColors = {
+        'Ring 0': '#ef4444',
+        'Ring 1': '#dc2626',
+        'Forgotten Ridge': '#dc2626',
+        'Ring 2': '#b91c1c',
+        'Garden Of Eesh%C3%B6L': '#b91c1c',
+        'Ring 3': '#991b1b',
+        'Ring 4': '#881337',
+        'Silent Abyss': '#881337',
+        'Ring 5': '#881337',
+        'Lost River': '#881337',
+        'Ring 6': '#7f1d1d',
+        'Ashen Towerworks': '#7f1d1d',
+        'Ring 7': '#7f1d1d',
+        'Ring 8': '#831843',
+        'The Starlit Archives': '#831843',
+        'Ring 9': '#831843',
+        'Zone 1': '#3b82f6',
+        'Zone 2': '#2563eb',
+        'Arcane Area': '#2563eb',
+        'Zone 3': '#1d4ed8',
+        'Paradise Atoll': '#1d4ed8',
+        'Zone 4': '#0ea5e9',
+        'Zone 5': '#0284c7',
+        'Zone 6': '#0369a1',
+        'Zone 7': '#06b6d4',
+        'Zone 8': '#0891b2',
+        'Zone 9': '#0e7490',
+        'Zone 10': '#14b8a6',
+        'Default': '#6b7280'
+    };
 
     const difficultyPillClasses = {
         "Easy": "border-green-500/50 text-green-300 bg-green-500/10",
@@ -73,6 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'Zone 10': 'border-teal-400/50 text-teal-300 bg-teal-400/10',
         'Default': 'border-gray-500/50 text-gray-300 bg-gray-500/10',
     };
+
     const areaDisplayNames = {
         'Garden Of Eesh%C3%B6L': 'Garden Of Eeshöl'
     };
@@ -93,15 +137,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const hardestDifficultyStat = document.getElementById('hardestDifficultyStat');
     const notificationContainer = document.getElementById('notification-container');
     const navLinksContainer = document.getElementById('nav-links');
+    const gamesNavLinksContainer = document.getElementById('games-nav-links');
     const miscNavLinksContainer = document.getElementById('misc-nav-links');
     const mainContentTitle = document.getElementById('main-content-title');
     const chartView = document.getElementById('chart-view');
     const tableView = document.getElementById('table-view');
     const listView = document.getElementById('list-view');
     const leaderboardView = document.getElementById('leaderboard-view');
+    const gamesView = document.getElementById('games-view');
     const areaHistoryContainer = document.getElementById('area-history-container');
     const fullHistoryContainer = document.getElementById('full-history-container');
     const leaderboardContainer = document.getElementById('leaderboard-container');
+    const gameGuessInput = document.getElementById('game-guess-input');
+    const gameAutocompleteList = document.getElementById('game-autocomplete-list');
+    const gameGrid = document.getElementById('game-grid');
+    const gameMessage = document.getElementById('game-message');
+    const newGameBtn = document.getElementById('new-game-btn');
+    const gameStatsSidebar = document.getElementById('game-stats-sidebar');
+    const statGamesPlayed = document.getElementById('stat-games-played');
+    const statWinRate = document.getElementById('stat-win-rate');
+    const statBestGame = document.getElementById('stat-best-game');
+    const statAvgGuesses = document.getElementById('stat-avg-guesses');
     const modalBackdrop = document.getElementById('tower-modal-backdrop');
     const modalPanel = document.getElementById('tower-modal-panel');
     const modalCloseButton = document.getElementById('modal-close-button');
@@ -114,25 +170,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalArea = document.getElementById('modal-area');
     const modalDate = document.getElementById('modal-date');
 
-    const titleCase = (str) => {
-        if (!str) return '';
-        return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-    };
-
+    const titleCase = (str) => str ? str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : '';
     const showNotification = (message, type = 'success') => {
-        if (notificationContainer.children.length >= 8) {
-            notificationContainer.firstChild.remove();
-        }
+        if (notificationContainer.children.length >= 8) notificationContainer.firstChild.remove();
         const notification = document.createElement('div');
         notification.className = `notification glass-panel ${type}`;
-        const iconName = type === 'success' ? 'check_circle' : 'error';
-        notification.innerHTML = `<span class="material-symbols-outlined">${iconName}</span><p class="text-sm font-medium">${message}</p>`;
+        notification.innerHTML = `<span class="material-symbols-outlined">${type === 'success' ? 'check_circle' : 'error'}</span><p class="text-sm font-medium">${message}</p>`;
         notificationContainer.appendChild(notification);
         setTimeout(() => notification.classList.add('show'), 50);
         setTimeout(() => {
             notification.classList.remove('show');
             notification.addEventListener('transitionend', () => notification.remove());
         }, 5000);
+    };
+    const hexToRgb = (hex) => {
+        const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return r ? [parseInt(r[1], 16), parseInt(r[2], 16), parseInt(r[3], 16)] : null;
+    };
+    const rgbToHex = (r, g, b) => '#' + [r, g, b].map(x => {
+        const h = Math.round(x).toString(16);
+        return h.length === 1 ? '0' + h : h;
+    }).join('');
+    const interpolateColor = (c1, c2, f) => {
+        const r1 = hexToRgb(c1),
+            r2 = hexToRgb(c2),
+            r = r1.slice();
+        for (let i = 0; i < 3; i++) r[i] = r1[i] + f * (r2[i] - r1[i]);
+        return rgbToHex(r[0], r[1], r[2]);
     };
 
     const switchView = (viewName) => {
@@ -155,21 +219,30 @@ document.addEventListener('DOMContentLoaded', () => {
             leaderboard: {
                 title: 'Leaderboard',
                 element: leaderboardView
+            },
+            games: {
+                title: '',
+                element: gamesView
             }
         };
 
-        mainContentTitle.textContent = views[viewName].title;
+        if (viewName === 'games') {
+            mainContentTitle.classList.add('hidden');
+            gameStatsSidebar.classList.remove('hidden');
+            gameStatsSidebar.classList.add('flex');
+        } else {
+            mainContentTitle.textContent = views[viewName].title;
+            mainContentTitle.classList.remove('hidden');
+            gameStatsSidebar.classList.add('hidden');
+            gameStatsSidebar.classList.remove('flex');
+        }
+
         Object.values(views).forEach(view => view.element.classList.add('hidden'));
-        if (views[viewName]) {
-            views[viewName].element.classList.remove('hidden');
-        }
+        if (views[viewName]) views[viewName].element.classList.remove('hidden');
+        if (viewName === 'leaderboard' && !leaderboardData) fetchAndRenderLeaderboard();
+        if (viewName === 'games' && !targetTower) initGame();
 
-        if (viewName === 'leaderboard' && !leaderboardData) {
-            fetchAndRenderLeaderboard();
-        }
-
-        const allNavLinks = [...navLinksContainer.querySelectorAll('a'), ...miscNavLinksContainer.querySelectorAll('a')];
-        allNavLinks.forEach(link => {
+        [...navLinksContainer.querySelectorAll('a'), ...gamesNavLinksContainer.querySelectorAll('a'), ...miscNavLinksContainer.querySelectorAll('a')].forEach(link => {
             if (link.dataset.view === viewName) {
                 link.classList.remove(...inactiveClasses);
                 link.classList.add(...activeClasses);
@@ -180,75 +253,279 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const openModalWithTower = (towerName) => {
-        const tower = allTowersData.find(t => t.name === towerName);
-        if (!tower) return;
-        const beatenVersion = beatenTowersData.find(t => t.name === towerName);
-        modalTowerName.textContent = tower.name;
-        const difficultyText = `${tower.modifier || ''} ${tower.difficulty || ''}`.trim();
-        const numericDifficulty = (tower.number_difficulty || 0).toFixed(2);
-        const diffPillContent = `${difficultyText} [${numericDifficulty}]`;
-        modalDifficulty.className = `inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${difficultyPillClasses[tower.difficulty] || difficultyPillClasses.nil}`;
-        modalDifficulty.textContent = diffPillContent;
-        const areaKey = tower.area || 'Unknown';
-        const areaDisplayName = areaDisplayNames[areaKey] || areaKey;
-        modalArea.className = `inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${areaPillClasses[areaKey] || areaPillClasses.Default}`;
-        modalArea.textContent = areaDisplayName;
-        const lengthCategory = tower.length || '<20 minutes';
-        const lengthColorClasses = {
-            '<20 minutes': 'border-orange-300/50 text-orange-200 bg-orange-300/10',
-            '20+ minutes': 'border-orange-400/50 text-orange-300 bg-orange-400/10',
-            '30+ minutes': 'border-orange-500/50 text-orange-400 bg-orange-500/10',
-            '45+ minutes': 'border-orange-600/50 text-orange-500 bg-orange-600/10',
-            '60+ minutes': 'border-orange-700/50 text-orange-600 bg-orange-700/10',
-            '90+ minutes': 'border-orange-800/50 text-orange-700 bg-orange-800/10'
+    const lengthMap = {
+        '<20 minutes': 1,
+        '20+ minutes': 2,
+        '30+ minutes': 3,
+        '45+ minutes': 4,
+        '60+ minutes': 5,
+        '90+ minutes': 6
+    };
+    const getLengthValue = (str) => lengthMap[str.replace(' long', '')] || 0;
+    const getTowerType = (name) => name.includes("Citadel") ? "Citadel" : name.includes("Steeple") ? "Steeple" : "Tower";
+    const getAreaInfo = (areaName) => {
+        const subrealms = {
+            "Forgotten Ridge": {
+                r: 0,
+                i: 1,
+                isSub: true
+            },
+            "Garden Of Eesh%C3%B6L": {
+                r: 0,
+                i: 2,
+                isSub: true
+            },
+            "Silent Abyss": {
+                r: 0,
+                i: 4,
+                isSub: true
+            },
+            "Lost River": {
+                r: 0,
+                i: 5,
+                isSub: true
+            },
+            "Ashen Towerworks": {
+                r: 0,
+                i: 6,
+                isSub: true
+            },
+            "The Starlit Archives": {
+                r: 0,
+                i: 8,
+                isSub: true
+            },
+            "Arcane Area": {
+                r: 1,
+                i: 2,
+                isSub: true
+            },
+            "Paradise Atoll": {
+                r: 1,
+                i: 3,
+                isSub: true
+            },
         };
-        const cleanedLength = lengthCategory.replace(' long', '');
-        modalLength.className = `inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${lengthColorClasses[cleanedLength] || 'border-gray-500/50 text-gray-300 bg-gray-500/10'}`;
-        modalLength.textContent = cleanedLength;
-        if (beatenVersion) {
-            modalDate.className = 'inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 text-gray-300 bg-gray-500/10';
-            modalDate.textContent = new Date(beatenVersion.awarded_unix * 1000).toLocaleString();
-        } else {
-            modalDate.className = 'inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-600/50 text-gray-400 bg-gray-600/10';
-            modalDate.textContent = "Not Completed";
-        }
-        const neutralPillClass = 'inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 text-gray-300 bg-gray-500/10';
-        modalFloors.innerHTML = '';
-        const floorsPill = document.createElement('span');
-        floorsPill.className = neutralPillClass;
-        floorsPill.textContent = tower.floors ?? 10;
-        modalFloors.appendChild(floorsPill);
-        modalCreator.innerHTML = '';
-        const creatorsSource = Array.isArray(tower.creators) ? tower.creators : ["Unknown"];
-        const allCreators = creatorsSource.flatMap(c => c.split(',').map(name => name.trim())).filter(Boolean);
-        allCreators.forEach(creator => {
-            const pill = document.createElement('span');
-            pill.className = neutralPillClass;
-            pill.textContent = creator;
-            modalCreator.appendChild(pill);
-        });
-        modalWarnings.innerHTML = '';
-        const warnings = Array.isArray(tower.warnings) && tower.warnings.length > 0 ? tower.warnings : [];
-        if (warnings.length > 0) {
-            warnings.forEach(warning => {
-                const pill = document.createElement('span');
-                pill.className = neutralPillClass;
-                pill.textContent = titleCase(warning);
-                modalWarnings.appendChild(pill);
-            });
-        } else {
-            const pill = document.createElement('span');
-            pill.className = 'inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-600/50 text-gray-400 bg-gray-600/10';
-            pill.textContent = "None";
-            modalWarnings.appendChild(pill);
-        }
-        const accentColor = difficultyColors[tower.difficulty] || defaultColor;
-        modalPanel.style.setProperty('--difficulty-color', accentColor);
-        modalBackdrop.classList.remove('hidden');
+        if (subrealms[areaName]) return subrealms[areaName];
+        if (areaName.startsWith("Ring")) return {
+            r: 0,
+            i: parseInt(areaName.split(' ')[1]),
+            isSub: false
+        };
+        if (areaName.startsWith("Zone")) return {
+            r: 1,
+            i: parseInt(areaName.split(' ')[1]),
+            isSub: false
+        };
+        return {
+            r: -1,
+            i: -1,
+            isSub: false
+        };
     };
 
-    const closeModal = () => modalBackdrop.classList.add('hidden');
+    const ensureGameData = async () => {
+        if (allTowersData.length > 0) return true;
+        gameGuessInput.placeholder = "Loading tower data...";
+        gameGuessInput.disabled = true;
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/get_master_towers`);
+            const result = await response.json();
+            if (result.success) {
+                allTowersData = result.towers;
+                gameGuessInput.placeholder = "Start typing a tower name...";
+                gameGuessInput.disabled = false;
+                return true;
+            }
+        } catch (e) {
+            console.error("Failed to fetch game data", e);
+            showNotification("Failed to load game data.", "error");
+        }
+        return false;
+    };
+
+    const initGame = async () => {
+        const hasData = await ensureGameData();
+        if (!hasData) return;
+        const canonTowers = allTowersData.filter(t => !NON_CANON_TOWERS.has(t.name));
+        targetTower = canonTowers[Math.floor(Math.random() * canonTowers.length)];
+        guesses = [];
+        isGameActive = true;
+        gameGuessInput.value = '';
+        gameGuessInput.disabled = false;
+        gameMessage.classList.add('hidden');
+        renderGameGrid();
+    };
+
+    const renderGameGrid = () => {
+        gameGrid.innerHTML = '';
+        guesses.forEach(guess => {
+            const row = document.createElement('div');
+            row.className = 'game-row';
+
+            const nameHtml = `<div class="${guess.name === targetTower.name ? 'status-correct font-bold' : 'text-white'}">${guess.name}</div>`;
+
+            const guessDiff = guess.number_difficulty || 0;
+            const targetDiff = targetTower.number_difficulty || 0;
+            let diffClass = 'status-wrong';
+            let diffIcon = '';
+            if (guess.difficulty === targetTower.difficulty) {
+                diffClass = 'status-correct';
+            }
+
+            if (Math.abs(guessDiff - targetDiff) < 0.01) {
+                diffIcon = 'check';
+                diffClass = 'status-correct';
+            } else if (guessDiff < targetDiff) {
+                diffIcon = 'arrow_upward';
+            } else {
+                diffIcon = 'arrow_downward';
+            }
+
+            const diffPill = `<span class="inline-flex items-center gap-1 ${diffClass}">${guess.difficulty} <span class="material-symbols-outlined feedback-icon">${diffIcon}</span></span>`;
+
+            const safeGuessLen = guess.length || '<20 minutes';
+            const safeTargetLen = targetTower.length || '<20 minutes';
+            const guessLenVal = getLengthValue(safeGuessLen);
+            const targetLenVal = getLengthValue(safeTargetLen);
+            let lenClass = 'status-wrong',
+                lenIcon = '';
+            if (guessLenVal === targetLenVal) {
+                lenClass = 'status-correct';
+                lenIcon = 'check';
+            } else lenIcon = guessLenVal < targetLenVal ? 'arrow_upward' : 'arrow_downward';
+            const lenStr = safeGuessLen.replace(' long', '');
+            const lenHtml = `<span class="inline-flex items-center gap-1 ${lenClass}">${lenStr} <span class="material-symbols-outlined feedback-icon">${lenIcon}</span></span>`;
+
+            const guessType = getTowerType(guess.name);
+            const targetType = getTowerType(targetTower.name);
+            const typeClass = guessType === targetType ? 'status-correct' : 'status-wrong';
+            const typeHtml = `<span class="${typeClass}">${guessType}</span>`;
+
+            const guessArea = getAreaInfo(guess.area); 
+            const targetArea = getAreaInfo(targetTower.area);
+            let areaClass = 'status-wrong';
+            let areaIcon = '';
+
+            if (guessArea.r !== targetArea.r) {
+                areaClass = 'status-wrong'; 
+            } else {
+                if (guessArea.i === targetArea.i) {
+                    if (guessArea.isSub === targetArea.isSub) {
+                        areaClass = 'status-correct';
+                        areaIcon = 'check';
+                    } else {
+                        areaClass = 'status-partial';
+                        areaIcon = 'location_searching'; 
+                    }
+                } else {
+                    areaClass = 'status-wrong';
+                    areaIcon = guessArea.i < targetArea.i ? 'arrow_upward' : 'arrow_downward';
+                }
+            }
+
+            const areaDisplay = areaDisplayNames[guess.area] || guess.area;
+            const areaHtml = `<span class="inline-flex items-center gap-1 ${areaClass}">${areaDisplay} <span class="material-symbols-outlined feedback-icon">${areaIcon}</span></span>`;
+
+            const guessCreators = new Set((Array.isArray(guess.creators) ? guess.creators : []).flatMap(c => c.split(',').map(x => x.trim())));
+            const targetCreators = new Set((Array.isArray(targetTower.creators) ? targetTower.creators : []).flatMap(c => c.split(',').map(x => x.trim())));
+            const areSetsEqual = (a, b) => a.size === b.size && [...a].every(value => b.has(value));
+            const isSubset = [...guessCreators].every(c => targetCreators.has(c));
+            let creatorClass = 'status-wrong';
+            if (areSetsEqual(guessCreators, targetCreators)) creatorClass = 'status-correct';
+            else if (isSubset && guessCreators.size > 0) creatorClass = 'status-partial';
+            const creatorsStr = [...guessCreators].join(', ');
+            const creatorHtml = `<div class="truncate ${creatorClass}" title="${creatorsStr}">${creatorsStr || 'Unknown'}</div>`;
+
+            row.innerHTML = nameHtml + diffPill + lenHtml + typeHtml + areaHtml + creatorHtml;
+            gameGrid.appendChild(row);
+        });
+
+        for (let i = guesses.length; i < maxGuesses; i++) {
+            const row = document.createElement('div');
+            row.className = 'game-row opacity-30';
+            row.innerHTML = `<div class="h-2 bg-white/10 rounded w-24"></div><div class="h-2 bg-white/10 rounded w-16"></div><div class="h-2 bg-white/10 rounded w-12"></div><div class="h-2 bg-white/10 rounded w-12"></div><div class="h-2 bg-white/10 rounded w-20"></div><div class="h-2 bg-white/10 rounded w-32"></div>`;
+            gameGrid.appendChild(row);
+        }
+    };
+
+    const handleGuess = (towerName) => {
+        if (!isGameActive) return;
+        const tower = allTowersData.find(t => t.name === towerName);
+        if (!tower) return;
+        if (guesses.some(g => g.name === tower.name)) {
+            showNotification("You already guessed that tower!", "error");
+            return;
+        }
+        guesses.push(tower);
+        renderGameGrid();
+        if (tower.name === targetTower.name) endGame(true);
+        else if (guesses.length >= maxGuesses) endGame(false);
+    };
+
+    const endGame = (won) => {
+        isGameActive = false;
+        gameGuessInput.disabled = true;
+        gameGuessInput.value = '';
+        sessionStats.played++;
+        if (won) {
+            sessionStats.wins++;
+            sessionStats.totalGuesses += guesses.length;
+            if (sessionStats.bestGame === null || guesses.length < sessionStats.bestGame) sessionStats.bestGame = guesses.length;
+        }
+        updateStatsUI();
+        gameMessage.classList.remove('hidden');
+        const h4 = gameMessage.querySelector('h4');
+        const p = gameMessage.querySelector('p');
+        if (won) {
+            h4.textContent = "Victory!";
+            h4.className = "text-xl font-bold mb-2 text-green-400";
+            p.textContent = `You found ${targetTower.name} in ${guesses.length} guesses.`;
+        } else {
+            h4.textContent = "Game Over";
+            h4.className = "text-xl font-bold mb-2 text-red-400";
+            p.textContent = `The tower was: ${targetTower.name}`;
+        }
+    };
+
+    const updateStatsUI = () => {
+        statGamesPlayed.textContent = sessionStats.played;
+        const winRate = sessionStats.played === 0 ? 0 : Math.round((sessionStats.wins / sessionStats.played) * 100);
+        statWinRate.textContent = `${winRate}%`;
+        statBestGame.textContent = sessionStats.bestGame === null ? '-' : sessionStats.bestGame;
+        statAvgGuesses.textContent = sessionStats.wins === 0 ? '-' : (sessionStats.totalGuesses / sessionStats.wins).toFixed(1);
+    };
+
+    gameGuessInput.addEventListener('input', (e) => {
+        const val = e.target.value.toLowerCase();
+        gameAutocompleteList.innerHTML = '';
+        if (val.length < 2) {
+            gameAutocompleteList.classList.add('hidden');
+            return;
+        }
+        const matches = allTowersData.filter(t => t.name.toLowerCase().includes(val) && !NON_CANON_TOWERS.has(t.name)).slice(0, 10);
+        if (matches.length > 0) {
+            gameAutocompleteList.classList.remove('hidden');
+            matches.forEach(t => {
+                const div = document.createElement('div');
+                div.className = 'autocomplete-item text-sm text-gray-300';
+                div.textContent = t.name;
+                div.addEventListener('click', () => {
+                    handleGuess(t.name);
+                    gameGuessInput.value = '';
+                    gameAutocompleteList.classList.add('hidden');
+                });
+                gameAutocompleteList.appendChild(div);
+            });
+        } else {
+            gameAutocompleteList.classList.add('hidden');
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!gameGuessInput.contains(e.target) && !gameAutocompleteList.contains(e.target)) gameAutocompleteList.classList.add('hidden');
+    });
+    newGameBtn.addEventListener('click', initGame);
 
     const fetchAndRenderLeaderboard = async () => {
         leaderboardContainer.innerHTML = `<div class="flex items-center justify-center p-8">Loading leaderboard...</div>`;
@@ -256,24 +533,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`${API_BASE_URL}/api/get_leaderboard`);
             const result = await response.json();
             if (!result.success) throw new Error(result.error);
-
             leaderboardData = result.leaderboard;
-
-            let headerHtml = `
-                <div class="leaderboard-header">
-                    <div class="w-16 text-center">#</div>
-                    <div class="w-64 text-left">Player</div>
-                    <div class="flex-1 text-left">Hardest Tower</div>
-                    <div class="w-56 text-left">Difficulty</div>
-                    <div class="w-24 text-center">Towers</div>
-                </div>
-            `;
-
+            let headerHtml = `<div class="leaderboard-header"><div class="w-16 text-center">#</div><div class="w-64 text-left">Player</div><div class="flex-1 text-left">Hardest Tower</div><div class="w-56 text-left">Difficulty</div><div class="w-24 text-center">Towers</div></div>`;
             let rowsHtml = '';
             leaderboardData.forEach((player, index) => {
                 const rank = index + 1;
-                let rankClass = '';
-                let rankRgb = '';
+                let rankClass = '',
+                    rankRgb = '';
                 if (rank === 1) {
                     rankClass = 'rank-gold';
                     rankRgb = rankColors.gold;
@@ -287,38 +553,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     rankClass = 'rank-top10';
                     rankRgb = rankColors.top10;
                 }
-
                 const difficultyText = `${player.hardest_tower_modifier || ''} ${player.hardest_tower_difficulty || ''}`.trim();
                 const diffPillClass = difficultyPillClasses[player.hardest_tower_difficulty] || difficultyPillClasses.nil;
                 const numericDifficulty = (player.number_difficulty || 0).toFixed(2);
-
-                rowsHtml += `
-                    <div class="leaderboard-row ${rankClass}" style="--rank-rgb: ${rankRgb};">
-                        <div class="w-16 text-center text-lg font-bold text-gray-400">${rank}</div>
-                        <div class="w-64">
-                            <div class="flex items-center gap-3">
-                                <img src="${player.avatar_url || 'icon.jpg'}" class="leaderboard-avatar" alt="${player.display_name || player.user_name}'s avatar">
-                                <div class="flex flex-col">
-                                    <span class="font-bold text-white truncate">${player.display_name || player.user_name}</span>
-                                    <span class="text-xs text-gray-400">@${player.user_name || 'null'}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex-1 text-gray-300 text-sm text-left truncate pr-4">
-                            ${player.hardest_tower_name}
-                        </div>
-                        <div class="w-56 text-left">
-                            <span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${diffPillClass}">
-                                ${difficultyText} [${numericDifficulty}]
-                            </span>
-                        </div>
-                        <div class="w-24 text-center text-lg font-bold">${player.total_towers}</div>
-                    </div>
-                `;
+                rowsHtml += `<div class="leaderboard-row ${rankClass}" style="--rank-rgb: ${rankRgb};"><div class="w-16 text-center text-lg font-bold text-gray-400">${rank}</div><div class="w-64"><div class="flex items-center gap-3"><img src="${player.avatar_url || 'icon.jpg'}" class="leaderboard-avatar" alt="avatar"><div class="flex flex-col"><span class="font-bold text-white truncate">${player.display_name || player.user_name}</span><span class="text-xs text-gray-400">@${player.user_name || 'null'}</span></div></div></div><div class="flex-1 text-gray-300 text-sm text-left truncate pr-4">${player.hardest_tower_name}</div><div class="w-56 text-left"><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${diffPillClass}">${difficultyText} [${numericDifficulty}]</span></div><div class="w-24 text-center text-lg font-bold">${player.total_towers}</div></div>`;
             });
-
             leaderboardContainer.innerHTML = headerHtml + rowsHtml;
-
         } catch (error) {
             leaderboardContainer.innerHTML = `<div class="flex items-center justify-center p-8 text-red-400">Failed to load leaderboard.</div>`;
             showNotification(error.message, 'error');
@@ -339,23 +579,17 @@ document.addEventListener('DOMContentLoaded', () => {
         statsContainer.style.display = 'none';
         try {
             const cacheKey = `etoh_profile_${username.toLowerCase()}`;
-            const cachedData = sessionStorage.getItem(cacheKey);
             let apiUrl = `${API_BASE_URL}/api/get_player_data?username=${username}`;
-            if (forceRefresh) {
-                apiUrl += '&force_refresh=true';
-            }
+            if (forceRefresh) apiUrl += '&force_refresh=true';
             const response = await fetch(apiUrl);
-            if (response.status === 429) {
-                throw new Error('Rate limit exceeded. Please wait a moment.');
-            }
+            if (response.status === 429) throw new Error('Rate limit exceeded. Please wait a moment.');
             const result = await response.json();
             if (result.success) {
                 sessionStorage.setItem(cacheKey, JSON.stringify(result));
                 renderProfile(result);
                 showNotification(`Successfully loaded stats for ${username}.`, 'success');
-            } else {
-                throw new Error(result.error);
-            }
+                if (currentView === 'games') initGame();
+            } else throw new Error(result.error);
         } catch (error) {
             showNotification(error.message, 'error');
         } finally {
@@ -369,17 +603,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalCanonTowers = allTowers.filter(tower => !NON_CANON_TOWERS.has(tower.name));
         const totalBeaten = canonCompletions.length;
         const totalInGame = totalCanonTowers.length;
-        let hardestTowerName = "N/A";
-        let hardestDifficultyStr = "N/A";
+        let hardestTowerName = "N/A",
+            hardestDifficultyStr = "N/A";
         if (beatenTowers.length > 0) {
             const sortedByDifficulty = [...beatenTowers].sort((a, b) => b.number_difficulty - a.number_difficulty);
             const hardestTower = sortedByDifficulty[0];
             hardestTowerName = hardestTower.name || 'Unknown';
-            const modifier = hardestTower.modifier || '';
-            const difficulty = hardestTower.difficulty || '';
-            const numeric = hardestTower.number_difficulty || 0;
-            const fullDiffText = `${modifier} ${difficulty}`.trim();
-            hardestDifficultyStr = `${fullDiffText} [${numeric.toFixed(2)}]`;
+            hardestDifficultyStr = `${hardestTower.modifier || ''} ${hardestTower.difficulty || ''} [${(hardestTower.number_difficulty || 0).toFixed(2)}]`.trim();
         }
         totalTowersStat.textContent = `${totalBeaten}/${totalInGame}`;
         hardestTowerStat.textContent = hardestTowerName;
@@ -387,91 +617,22 @@ document.addEventListener('DOMContentLoaded', () => {
         statsContainer.style.display = 'grid';
     };
 
-    const hexToRgb = (hex) => {
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)] : null;
-    };
-
-    const rgbToHex = (r, g, b) => '#' + [r, g, b].map(x => {
-        const hex = Math.round(x).toString(16);
-        return hex.length === 1 ? '0' + hex : hex;
-    }).join('');
-
-    const interpolateColor = (color1, color2, factor) => {
-        const rgb1 = hexToRgb(color1);
-        const rgb2 = hexToRgb(color2);
-        const result = rgb1.slice();
-        for (let i = 0; i < 3; i++) {
-            result[i] = rgb1[i] + factor * (rgb2[i] - rgb1[i]);
-        }
-        return rgbToHex(result[0], result[1], result[2]);
-    };
-
     const renderFullHistoryList = (beatenTowers) => {
         fullHistoryContainer.innerHTML = '';
         if (!beatenTowers || beatenTowers.length === 0) return;
-        const areaColors = {
-            'Ring 0': '#ef4444',
-            'Ring 1': '#dc2626',
-            'Forgotten Ridge': '#dc2626',
-            'Ring 2': '#b91c1c',
-            'Garden Of Eesh%C3%B6L': '#b91c1c',
-            'Ring 3': '#991b1b',
-            'Ring 4': '#881337',
-            'Silent Abyss': '#881337',
-            'Ring 5': '#881337',
-            'Lost River': '#881337',
-            'Ring 6': '#7f1d1d',
-            'Ashen Towerworks': '#7f1d1d',
-            'Ring 7': '#7f1d1d',
-            'Ring 8': '#831843',
-            'The Starlit Archives': '#831843',
-            'Ring 9': '#831843',
-            'Zone 1': '#3b82f6',
-            'Zone 2': '#2563eb',
-            'Arcane Area': '#2563eb',
-            'Zone 3': '#1d4ed8',
-            'Paradise Atoll': '#1d4ed8',
-            'Zone 4': '#0ea5e9',
-            'Zone 5': '#0284c7',
-            'Zone 6': '#0369a1',
-            'Zone 7': '#06b6d4',
-            'Zone 8': '#0891b2',
-            'Zone 9': '#0e7490',
-            'Zone 10': '#14b8a6',
-            'Default': '#6b7280'
-        };
         const completionDates = beatenTowers.map(t => t.awarded_unix).filter(Boolean);
-        const minDate = Math.min(...completionDates);
-        const maxDate = Math.max(...completionDates);
-        const dateRange = maxDate - minDate;
-        const oldColor = '#FFFFFF';
-        const newColor = '#FFD700';
+        const minDate = Math.min(...completionDates),
+            maxDate = Math.max(...completionDates),
+            dateRange = maxDate - minDate;
         const sortedTowers = [...beatenTowers].sort((a, b) => b.awarded_unix - a.awarded_unix);
         let towerRowsHtml = '';
         sortedTowers.forEach(tower => {
-            const date = new Date(tower.awarded_unix * 1000).toLocaleDateString();
             const factor = dateRange > 0 ? (tower.awarded_unix - minDate) / dateRange : 1;
-            const dateColor = interpolateColor(oldColor, newColor, factor);
-            const datePillStyle = `color: ${dateColor}; background-color: ${dateColor}20; border-color: ${dateColor}80;`;
-            const datePillHtml = `<span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border" style="${datePillStyle}">${date}</span>`;
+            const dateColor = interpolateColor('#FFFFFF', '#FFD700', factor);
             const areaKey = tower.area || 'Unknown';
-            const areaDisplayName = areaDisplayNames[areaKey] || areaKey;
-            const areaPillClass = areaPillClasses[areaKey] || areaPillClasses.Default;
-            const areaPillHtml = `<span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${areaPillClass}">${areaDisplayName}</span>`;
-            const difficultyText = `${tower.modifier || ''} ${tower.difficulty || ''}`.trim();
-            const diffPillClasses = difficultyPillClasses[tower.difficulty] || difficultyPillClasses.nil;
-            const numericDifficulty = (tower.number_difficulty || 0).toFixed(2);
-            const diffPillContent = `${difficultyText} [${numericDifficulty}]`;
-            const difficultyPillHtml = `<span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${diffPillClasses}">${diffPillContent}</span>`;
-            const diffColorHex = difficultyColors[tower.difficulty] || defaultColor;
-            const diffRgb = hexToRgb(diffColorHex);
-            const diffRgbStr = diffRgb ? diffRgb.join(', ') : '128, 128, 128';
-            const areaColorHex = areaColors[areaKey] || areaColors.Default;
-            const areaRgb = hexToRgb(areaColorHex);
-            const areaRgbStr = areaRgb ? areaRgb.join(', ') : '128, 128, 128';
-            const rowStyle = `style="--difficulty-rgb: ${diffRgbStr}; --area-rgb: ${areaRgbStr};"`;
-            towerRowsHtml += `<tr class="tower-row status-outline-completed" ${rowStyle}><td class="py-0.8 px-3"><div class="flex items-center gap-2"><span class="text-gray-200">${tower.name}</span>${difficultyPillHtml}</div></td><td class="py-0.8 px-3 text-right"><div class="flex justify-end items-center gap-2">${datePillHtml}${areaPillHtml}</div></td></tr>`;
+            const diffRgb = (hexToRgb(difficultyColors[tower.difficulty] || '#808080') || [128, 128, 128]).join(', ');
+            const areaRgb = (hexToRgb(areaColors[areaKey] || '#808080') || [128, 128, 128]).join(', ');
+            towerRowsHtml += `<tr class="tower-row status-outline-completed" style="--difficulty-rgb: ${diffRgb}; --area-rgb: ${areaRgb};"><td class="py-0.8 px-3"><div class="flex items-center gap-2"><span class="text-gray-200">${tower.name}</span><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${difficultyPillClasses[tower.difficulty] || difficultyPillClasses.nil}">${tower.modifier||''} ${tower.difficulty||''} [${(tower.number_difficulty||0).toFixed(2)}]</span></div></td><td class="py-0.8 px-3 text-right"><div class="flex justify-end items-center gap-2"><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border" style="color: ${dateColor}; background-color: ${dateColor}20; border-color: ${dateColor}80;">${new Date(tower.awarded_unix*1000).toLocaleDateString()}</span><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${areaPillClasses[areaKey] || areaPillClasses.Default}">${areaDisplayNames[areaKey]||areaKey}</span></div></td></tr>`;
         });
         fullHistoryContainer.innerHTML = `<table class="w-full text-sm"><tbody>${towerRowsHtml}</tbody></table>`;
     };
@@ -480,7 +641,6 @@ document.addEventListener('DOMContentLoaded', () => {
         allTowersData = data.all_towers;
         beatenTowersData = data.beaten_towers;
         const unlockedAreas = new Set(data.unlocked_areas || []);
-
         calculateAndRenderStats(beatenTowersData, allTowersData);
         renderChart(beatenTowersData);
         renderAreaTable(allTowersData, beatenTowersData, unlockedAreas);
@@ -491,76 +651,118 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderAreaTable = (allTowers, beatenTowers, unlockedAreas) => {
         areaHistoryContainer.innerHTML = '';
         if (!allTowers || allTowers.length === 0) return;
-        
-        const ringAreas = [ { key: 'Ring 0', name: 'Ring 0: Purgatorio' }, { key: 'Ring 1', name: 'Ring 1: Limbo' }, { key: 'Forgotten Ridge', name: 'Forgotten Ridge' }, { key: 'Ring 2', name: 'Ring 2: Desire' }, { key: 'Garden Of Eesh%C3%B6L', name: 'Garden Of Eeshöl' }, { key: 'Ring 3', name: 'Ring 3: Gluttony' }, { key: 'Ring 4', name: 'Ring 4: Greed' }, { key: 'Silent Abyss', name: 'Silent Abyss' }, { key: 'Ring 5', name: 'Ring 5: Wrath' }, { key: 'Lost River', name: 'Lost River' }, { key: 'Ring 6', name: 'Ring 6: Heresy' }, { key: 'Ashen Towerworks', name: 'Ashen Towerworks' }, { key: 'Ring 7', name: 'Ring 7: Violence' }, { key: 'Ring 8', name: 'Ring 8: Fraud' }, { key: 'The Starlit Archives', name: 'The Starlit Archives' }, { key: 'Ring 9', name: 'Ring 9: Treachery' }, ];
-        const zoneAreas = [ { key: 'Zone 1', name: 'Zone 1: Sea' }, { key: 'Zone 2', name: 'Zone 2: Surface' }, { key: 'Arcane Area', name: 'Arcane Area' }, { key: 'Zone 3', name: 'Zone 3: Sky' }, { key: 'Paradise Atoll', name: 'Paradise Atoll' }, { key: 'Zone 4', name: 'Zone 4: Exosphere' }, { key: 'Zone 5', name: 'Zone 5: The Moon' }, { key: 'Zone 6', name: 'Zone 6: Mars' }, { key: 'Zone 7', name: 'Zone 7: Asteroid Belt' }, { key: 'Zone 8', name: 'Zone 8: Pluto' }, { key: 'Zone 9', name: 'Zone 9: Singularity' }, { key: 'Zone 10', name: 'Zone 10: Interstellar Shore' }, ];
-
+        const ringAreas = [{
+            key: 'Ring 0',
+            name: 'Ring 0: Purgatorio'
+        }, {
+            key: 'Ring 1',
+            name: 'Ring 1: Limbo'
+        }, {
+            key: 'Forgotten Ridge',
+            name: 'Forgotten Ridge'
+        }, {
+            key: 'Ring 2',
+            name: 'Ring 2: Desire'
+        }, {
+            key: 'Garden Of Eesh%C3%B6L',
+            name: 'Garden Of Eeshöl'
+        }, {
+            key: 'Ring 3',
+            name: 'Ring 3: Gluttony'
+        }, {
+            key: 'Ring 4',
+            name: 'Ring 4: Greed'
+        }, {
+            key: 'Silent Abyss',
+            name: 'Silent Abyss'
+        }, {
+            key: 'Ring 5',
+            name: 'Ring 5: Wrath'
+        }, {
+            key: 'Lost River',
+            name: 'Lost River'
+        }, {
+            key: 'Ring 6',
+            name: 'Ring 6: Heresy'
+        }, {
+            key: 'Ashen Towerworks',
+            name: 'Ashen Towerworks'
+        }, {
+            key: 'Ring 7',
+            name: 'Ring 7: Violence'
+        }, {
+            key: 'Ring 8',
+            name: 'Ring 8: Fraud'
+        }, {
+            key: 'The Starlit Archives',
+            name: 'The Starlit Archives'
+        }, {
+            key: 'Ring 9',
+            name: 'Ring 9: Treachery'
+        }, ];
+        const zoneAreas = [{
+            key: 'Zone 1',
+            name: 'Zone 1: Sea'
+        }, {
+            key: 'Zone 2',
+            name: 'Zone 2: Surface'
+        }, {
+            key: 'Arcane Area',
+            name: 'Arcane Area'
+        }, {
+            key: 'Zone 3',
+            name: 'Zone 3: Sky'
+        }, {
+            key: 'Paradise Atoll',
+            name: 'Paradise Atoll'
+        }, {
+            key: 'Zone 4',
+            name: 'Zone 4: Exosphere'
+        }, {
+            key: 'Zone 5',
+            name: 'Zone 5: The Moon'
+        }, {
+            key: 'Zone 6',
+            name: 'Zone 6: Mars'
+        }, {
+            key: 'Zone 7',
+            name: 'Zone 7: Asteroid Belt'
+        }, {
+            key: 'Zone 8',
+            name: 'Zone 8: Pluto'
+        }, {
+            key: 'Zone 9',
+            name: 'Zone 9: Singularity'
+        }, {
+            key: 'Zone 10',
+            name: 'Zone 10: Interstellar Shore'
+        }, ];
         const beatenTowerMap = new Map(beatenTowers.map(tower => [tower.name, tower]));
-
         const generateColumnHtml = (areaList) => {
             let columnHtml = '';
             for (const area of areaList) {
                 const towersInArea = allTowers.filter(t => t.area === area.key);
                 if (towersInArea.length === 0) continue;
-
                 const isUnlocked = unlockedAreas.has(area.key);
-                
                 const captionClasses = ['clickable-caption', !isUnlocked ? 'locked-caption' : ''].join(' ');
                 const captionIcon = !isUnlocked ? 'expand_more' : 'expand_less';
                 const tbodyClass = !isUnlocked ? 'hidden' : '';
 
                 let towerRowsHtml = '';
-                towersInArea.sort((a,b) => a.number_difficulty - b.number_difficulty).forEach(tower => {
+                towersInArea.sort((a, b) => a.number_difficulty - b.number_difficulty).forEach(tower => {
                     const beatenVersion = beatenTowerMap.get(tower.name);
                     const isCompleted = !!beatenVersion;
-                    const date = isCompleted ? new Date(beatenVersion.awarded_unix * 1000).toLocaleDateString() : '--';
-                    const datePillHtml = `<span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 ${isCompleted ? 'text-gray-300 bg-gray-500/10' : 'text-gray-600 bg-gray-500/10'}">${date}</span>`;
-                    const difficultyText = `${tower.modifier || ''} ${tower.difficulty || ''}`.trim();
-                    const pillClasses = difficultyPillClasses[tower.difficulty] || difficultyPillClasses.nil;
-                    const numericDifficulty = (tower.number_difficulty || 0).toFixed(2);
-                    const pillContent = `${difficultyText} [${numericDifficulty}]`;
-                    const accentColorHex = difficultyColors[tower.difficulty] || defaultColor;
-                    const rgb = hexToRgb(accentColorHex);
-                    const accentColorRgbStr = rgb ? rgb.join(', ') : '128, 128, 128';
-                    const completionRgbStr = isCompleted ? '67, 255, 129' : '255, 50, 50';
-                    const rowStyle = `style="--difficulty-rgb: ${completionRgbStr}; --area-rgb: ${accentColorRgbStr};"`;
-                    const outlineClass = isCompleted ? 'status-outline-completed' : 'status-outline-incomplete';
-                    const textColorClass = isCompleted ? 'text-gray-200' : 'text-gray-500';
+                    const completionRgb = isCompleted ? '67, 255, 129' : '255, 50, 50';
 
-                    towerRowsHtml += `
-                        <tr class="tower-row ${outlineClass}" ${rowStyle} data-tower-name="${tower.name}">
-                            <td class="py-1 px-3 ${textColorClass}">${tower.name}</td>
-                            <td class="py-1 px-3 text-right">
-                                <div class="flex justify-end items-center gap-2">
-                                    ${datePillHtml}
-                                    <span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${pillClasses}">${pillContent}</span>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
+                    const diffRgb = (hexToRgb(difficultyColors[tower.difficulty] || '#808080') || [128, 128, 128]).join(', ');
+
+                    towerRowsHtml += `<tr class="tower-row ${isCompleted?'status-outline-completed':'status-outline-incomplete'}" style="--difficulty-rgb: ${completionRgb}; --area-rgb: ${diffRgb};" data-tower-name="${tower.name}"><td class="py-1 px-3 ${isCompleted?'text-gray-200':'text-gray-500'}">${tower.name}</td><td class="py-1 px-3 text-right"><div class="flex justify-end items-center gap-2"><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 ${isCompleted?'text-gray-300 bg-gray-500/10':'text-gray-600 bg-gray-500/10'}">${isCompleted?new Date(beatenVersion.awarded_unix*1000).toLocaleDateString():'--'}</span><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${difficultyPillClasses[tower.difficulty]||difficultyPillClasses.nil}">${tower.modifier||''} ${tower.difficulty||''} [${(tower.number_difficulty||0).toFixed(2)}]</span></div></td></tr>`;
                 });
-
-                columnHtml += `
-                    <div class="bg-black/20 rounded-md overflow-hidden">
-                        <table class="w-full text-sm">
-                            <caption class="py-2.5 px-4 text-left font-bold text-base bg-black/10">
-                                <div class="${captionClasses} select-none flex justify-between items-center">
-                                    <span class="caption-text">${area.name}</span>
-                                    <span class="material-symbols-outlined caption-icon dropdown-arrow">${captionIcon}</span>
-                                </div>
-                            </caption>
-                            <tbody class="${tbodyClass}">${towerRowsHtml}</tbody>
-                        </table>
-                    </div>
-                `;
+                columnHtml += `<div class="bg-black/20 rounded-md overflow-hidden"><table class="w-full text-sm"><caption class="py-2.5 px-4 text-left font-bold text-base bg-black/10"><div class="${captionClasses} select-none flex justify-between items-center"><span class="caption-text">${area.name}</span><span class="material-symbols-outlined caption-icon dropdown-arrow">${captionIcon}</span></div></caption><tbody class="${tbodyClass}">${towerRowsHtml}</tbody></table></div>`;
             }
             return `<div class="flex flex-col gap-4">${columnHtml}</div>`;
         };
-        
-        const ringsHtml = generateColumnHtml(ringAreas);
-        const zonesHtml = generateColumnHtml(zoneAreas);
-
-        areaHistoryContainer.innerHTML = ringsHtml + zonesHtml;
+        areaHistoryContainer.innerHTML = generateColumnHtml(ringAreas) + generateColumnHtml(zoneAreas);
     };
 
     const renderChart = (beatenTowers) => {
@@ -573,34 +775,24 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
             return;
         }
-
         const difficultyOrder = Object.keys(difficultyColors);
-
         const canonCompletions = beatenTowers.filter(tower => !NON_CANON_TOWERS.has(tower.name));
         canonCompletions.sort((a, b) => a.awarded_unix - b.awarded_unix);
-
         const stepDates = [];
         const stepData = difficultyOrder.map(() => []);
         const difficultyCounts = Object.fromEntries(difficultyOrder.map(d => [d, 0]));
-
         if (canonCompletions.length > 0) {
-            const firstDate = new Date(canonCompletions[0].awarded_unix * 1000);
-            stepDates.push(firstDate.getTime() - 86400000);
+            stepDates.push(new Date(canonCompletions[0].awarded_unix * 1000).getTime() - 86400000);
             difficultyOrder.forEach((_, i) => stepData[i].push(0));
         }
-
         canonCompletions.forEach(tower => {
-            const awardDate = new Date(tower.awarded_unix * 1000);
-            stepDates.push(awardDate);
+            const d = new Date(tower.awarded_unix * 1000);
+            stepDates.push(d);
             difficultyOrder.forEach((name, i) => stepData[i].push(difficultyCounts[name]));
-            const difficultyName = tower.difficulty || 'nil';
-            if (difficultyCounts.hasOwnProperty(difficultyName)) {
-                difficultyCounts[difficultyName]++;
-            }
-            stepDates.push(awardDate);
+            if (difficultyCounts.hasOwnProperty(tower.difficulty)) difficultyCounts[tower.difficulty]++;
+            stepDates.push(d);
             difficultyOrder.forEach((name, i) => stepData[i].push(difficultyCounts[name]));
         });
-
         if (canonCompletions.length > 0) {
             const now = Date.now();
             if (stepDates[stepDates.length - 1] < now) {
@@ -608,82 +800,144 @@ document.addEventListener('DOMContentLoaded', () => {
                 difficultyOrder.forEach((name, i) => stepData[i].push(difficultyCounts[name]));
             }
         }
-
         const datasets = difficultyOrder.map((name, i) => ({
             label: name,
             data: stepData[i],
-            backgroundColor: difficultyColors[name] || defaultColor,
-            borderColor: difficultyColors[name] || defaultColor,
+            backgroundColor: difficultyColors[name] || '#808080',
+            borderColor: difficultyColors[name] || '#808080',
             fill: true,
             stepped: true,
             pointRadius: 0,
-            borderWidth: 1,
+            borderWidth: 1
         }));
-
-        const config = {
+        if (completionChart) completionChart.destroy();
+        completionChart = new Chart(ctx, {
             type: 'line',
-            data: { labels: stepDates, datasets: datasets },
+            data: {
+                labels: stepDates,
+                datasets: datasets
+            },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                interaction: { mode: 'index', intersect: false },
-                plugins: { legend: { display: false }, tooltip: { enabled: true } },
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        enabled: true
+                    }
+                },
                 scales: {
                     x: {
                         type: 'time',
-                        time: { unit: 'month' },
-                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                        ticks: { color: '#EAEAEA', font: { family: "'Space Grotesk', sans-serif" } },
+                        time: {
+                            unit: 'month'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#EAEAEA',
+                            font: {
+                                family: "'Space Grotesk', sans-serif"
+                            }
+                        },
                         max: Date.now()
                     },
                     y: {
                         stacked: true,
-                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                        ticks: { color: '#EAEAEA', font: { family: "'Space Grotesk', sans-serif" } }
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#EAEAEA',
+                            font: {
+                                family: "'Space Grotesk', sans-serif"
+                            }
+                        }
                     }
                 }
             }
-        };
-        if (completionChart) {
-            completionChart.destroy();
-        }
-        completionChart = new Chart(ctx, config);
+        });
     };
 
+    const openModalWithTower = (towerName) => {
+        const tower = allTowersData.find(t => t.name === towerName);
+        if (!tower) return;
+        const beatenVersion = beatenTowersData.find(t => t.name === towerName);
+        modalTowerName.textContent = tower.name;
+        modalDifficulty.className = `inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${difficultyPillClasses[tower.difficulty]||difficultyPillClasses.nil}`;
+        modalDifficulty.textContent = `${tower.modifier||''} ${tower.difficulty||''} [${(tower.number_difficulty||0).toFixed(2)}]`;
+        modalArea.className = `inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${areaPillClasses[tower.area]||areaPillClasses.Default}`;
+        modalArea.textContent = areaDisplayNames[tower.area] || tower.area;
+        const lengthText = tower.length || '<20 minutes';
+        modalLength.textContent = lengthText.replace(' long', '');
+        modalLength.className = 'inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-orange-400/50 text-orange-300 bg-orange-400/10';
+        modalFloors.innerHTML = `<span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 text-gray-300 bg-gray-500/10">${tower.floors??10}</span>`;
+        modalCreator.innerHTML = '';
+        (Array.isArray(tower.creators) ? tower.creators : ["Unknown"]).flatMap(c => c.split(',').map(x => x.trim())).filter(Boolean).forEach(c => {
+            const p = document.createElement('span');
+            p.className = 'inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 text-gray-300 bg-gray-500/10 mr-1';
+            p.textContent = c;
+            modalCreator.appendChild(p);
+        });
+        modalWarnings.innerHTML = '';
+        const w = Array.isArray(tower.warnings) ? tower.warnings : [];
+        if (w.length > 0) w.forEach(x => {
+            const p = document.createElement('span');
+            p.className = 'inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 text-gray-300 bg-gray-500/10 mr-1';
+            p.textContent = titleCase(x);
+            modalWarnings.appendChild(p);
+        });
+        else modalWarnings.innerHTML = '<span class="text-gray-400">None</span>';
+        if (beatenVersion) {
+            modalDate.className = 'inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 text-gray-300 bg-gray-500/10';
+            modalDate.textContent = new Date(beatenVersion.awarded_unix * 1000).toLocaleString();
+        } else {
+            modalDate.className = 'inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-600/50 text-gray-400 bg-gray-600/10';
+            modalDate.textContent = "Not Completed";
+        }
+        modalPanel.style.setProperty('--difficulty-color', difficultyColors[tower.difficulty] || '#808080');
+        modalBackdrop.classList.remove('hidden');
+    };
+    const closeModal = () => modalBackdrop.classList.add('hidden');
+
     searchButton.addEventListener('click', handleSearch);
-    searchInput.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') handleSearch();
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleSearch();
     });
-    const handleNavClick = (event) => {
-        const link = event.target.closest('a');
-        if (link && link.dataset.view) {
-            event.preventDefault();
-            switchView(link.dataset.view);
+    const handleNavClick = (e) => {
+        const l = e.target.closest('a');
+        if (l && l.dataset.view) {
+            e.preventDefault();
+            switchView(l.dataset.view);
         }
     };
     navLinksContainer.addEventListener('click', handleNavClick);
+    gamesNavLinksContainer.addEventListener('click', handleNavClick);
     miscNavLinksContainer.addEventListener('click', handleNavClick);
-    tableView.addEventListener('click', (event) => {
-        const caption = event.target.closest('.clickable-caption');
-        if (caption) {
-            const table = caption.closest('table');
-            const tbody = table.querySelector('tbody');
-            const arrow = caption.querySelector('.dropdown-arrow');
-            if (tbody) {
-                tbody.classList.toggle('hidden');
-                arrow.style.transform = tbody.classList.contains('hidden') ? 'rotate(-90deg)' : 'rotate(0deg)';
-            }
+    tableView.addEventListener('click', (e) => {
+        const c = e.target.closest('.clickable-caption');
+        if (c) {
+            const tb = c.closest('table').querySelector('tbody');
+            tb.classList.toggle('hidden');
+            c.querySelector('.dropdown-arrow').style.transform = tb.classList.contains('hidden') ? 'rotate(-90deg)' : 'rotate(0deg)';
         } else {
-            const row = event.target.closest('.tower-row');
-            if (row && row.dataset.towerName) openModalWithTower(row.dataset.towerName);
+            const r = e.target.closest('.tower-row');
+            if (r && r.dataset.towerName) openModalWithTower(r.dataset.towerName);
         }
     });
     modalCloseButton.addEventListener('click', closeModal);
-    modalBackdrop.addEventListener('click', (event) => {
-        if (event.target === modalBackdrop) closeModal();
+    modalBackdrop.addEventListener('click', (e) => {
+        if (e.target === modalBackdrop) closeModal();
     });
-    window.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && !modalBackdrop.classList.contains('hidden')) closeModal();
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !modalBackdrop.classList.contains('hidden')) closeModal();
     });
 
     switchView('chart');
