@@ -332,30 +332,60 @@ document.addEventListener('DOMContentLoaded', () => {
             showNotification('Please enter a Roblox Username.', 'error');
             return;
         }
+
         const searchIcon = document.getElementById('searchIcon');
         const searchLoadingIndicator = document.getElementById('searchLoadingIndicator');
         searchIcon.classList.add('hidden');
         searchLoadingIndicator.classList.remove('hidden');
         statsContainer.style.display = 'none';
+        
         try {
+            const submitResponse = await fetch(`${API_BASE_URL}/api/submit_player_job`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, force_refresh: forceRefresh }),
+            });
+
+            if (!submitResponse.ok) {
+                const errorResult = await submitResponse.json();
+                throw new Error(errorResult.error || 'Failed to submit job.');
+            }
+
+            const { job_id } = await submitResponse.json();
+            showNotification('Processing data... This may take a moment.', 'success');
+
+            const pollInterval = 2000;
+            const timeout = 20000;
+            const startTime = Date.now();
+
+            const poll = async (resolve, reject) => {
+                if (Date.now() - startTime > timeout) {
+                    return reject(new Error('Request timed out. The server is busy, please try again.'));
+                }
+
+                const resultResponse = await fetch(`${API_BASE_URL}/api/get_job_result?id=${job_id}`);
+                if (!resultResponse.ok) {
+                    return reject(new Error('Server error while checking job status.'));
+                }
+
+                const result = await resultResponse.json();
+
+                if (result.status === 'pending') {
+                    setTimeout(() => poll(resolve, reject), pollInterval);
+                } else if (result.success) {
+                    resolve(result);
+                } else {
+                    reject(new Error(result.error || 'An unknown error occurred.'));
+                }
+            };
+            
+            const finalResult = await new Promise(poll);
+
             const cacheKey = `etoh_profile_${username.toLowerCase()}`;
-            const cachedData = sessionStorage.getItem(cacheKey);
-            let apiUrl = `${API_BASE_URL}/api/get_player_data?username=${username}`;
-            if (forceRefresh) {
-                apiUrl += '&force_refresh=true';
-            }
-            const response = await fetch(apiUrl);
-            if (response.status === 429) {
-                throw new Error('Rate limit exceeded. Please wait a moment.');
-            }
-            const result = await response.json();
-            if (result.success) {
-                sessionStorage.setItem(cacheKey, JSON.stringify(result));
-                renderProfile(result);
-                showNotification(`Successfully loaded stats for ${username}.`, 'success');
-            } else {
-                throw new Error(result.error);
-            }
+            sessionStorage.setItem(cacheKey, JSON.stringify(finalResult));
+            renderProfile(finalResult);
+            showNotification(`Successfully loaded stats for ${username}.`, 'success');
+
         } catch (error) {
             showNotification(error.message, 'error');
         } finally {
