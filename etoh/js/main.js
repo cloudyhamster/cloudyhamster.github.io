@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const API_BASE_URL = 'https://etoh-thing.onrender.com';
+    const API_BASE_URL = 'https://etoh-thing-w1v8.onrender.com';
 
     let completionChart = null;
     let currentView = 'chart';
