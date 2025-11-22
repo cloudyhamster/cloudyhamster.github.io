@@ -22,7 +22,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <link rel="icon" href="icon.jpg">
-    <link rel="stylesheet" href="./css/style.css?v=1.4.2">
+    <link rel="stylesheet" href="./css/style.css?v=1.5.0">
 </head>
 <body class="text-[#EAEAEA]">
     <div class="relative flex h-auto min-h-screen w-full flex-col overflow-hidden">
@@ -42,7 +42,7 @@
             </div>
         </header>
 
-        <main class="flex h-full min-h-screen w-full grow flex-row pt-20 pb-3 px-3 gap-3">
+        <main class="flex h-full min-h-screen w-full grow flex-row pt-20 pb-3 px-3 gap-3 w-[70%] mx-auto">
             <aside class="sticky top-20 self-start flex w-full max-w-[280px] flex-col gap-3" style="height: calc(100vh - 80px - 12px);">
                 <div class="glass-panel rounded-lg p-3">
                     <div class="flex flex-col min-w-40 h-10 w-full">
@@ -62,7 +62,7 @@
 
                 <div class="glass-panel flex-grow rounded-lg p-3">
                     <div class="flex flex-col gap-3">
-                        <h1 class="text-sm font-medium leading-normal px-2">Visualization Options</h1>
+                        <h1 class="text-sm font-medium leading-normal px-2">Visualization</h1>
                         <div id="nav-links" class="flex flex-col gap-1">
                             <a data-view="chart" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md" href="#">
                                 <span class="material-symbols-outlined fill text-xl">stacked_line_chart</span>
@@ -75,6 +75,10 @@
                             <a data-view="table" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md" href="#">
                                 <span class="material-symbols-outlined text-xl">grid_view</span>
                                 <p class="text-xs font-medium leading-normal">Area Completion</p>
+                            </a>
+                            <a data-view="library" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md" href="#">
+                                <span class="material-symbols-outlined text-xl">filter_alt</span>
+                                <p class="text-xs font-medium leading-normal">Tower Library</p>
                             </a>
                         </div>
                     </div>
@@ -174,8 +178,15 @@
                             </div>
                         </div>
                     </div>
+
+                    <div id="library-view" class="flex-grow w-full h-full overflow-y-auto hidden">
+                        <div id="library-container" class="w-full bg-black/20 border border-white/5 rounded-md overflow-hidden h-fit">
+                            <div class="p-8 text-center text-gray-500 text-sm">Loading library data...</div>
+                        </div>
+                    </div>
                 </div>
             </section>
+
             <aside id="game-stats-sidebar" class="hidden sticky top-20 self-start w-full max-w-[240px] flex-col gap-3" style="height: calc(100vh - 80px - 12px);">
                 <div class="glass-panel flex-grow rounded-lg p-3">
                     <h2 class="text-sm font-medium leading-normal mb-3 border-b border-white/10 pb-2">Session Stats</h2>
@@ -199,6 +210,89 @@
                     </div>
                 </div>
             </aside>
+            
+            <aside id="library-filters-sidebar" class="hidden sticky top-20 self-start w-full max-w-[420px] flex-col gap-3" style="height: calc(100vh - 80px - 12px);">
+                <div class="glass-panel flex-grow rounded-lg p-5 flex flex-col gap-6 overflow-hidden">
+                    <div class="flex justify-between items-center border-b border-white/10 pb-3 flex-shrink-0">
+                        <h3 class="text-sm font-bold text-white">Library Filters</h3>
+                    </div>
+
+                    <div class="flex-grow overflow-y-auto flex flex-col gap-6 pr-1 custom-scrollbar">
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Name</label>
+                            <div class="relative">
+                                <span class="material-symbols-outlined absolute left-3 top-2.5 text-gray-500 text-lg">search</span>
+                                <input id="lib-search" type="text" placeholder="Search towers..." 
+                                    class="w-full bg-black/30 border border-white/10 rounded-md pl-10 pr-3 py-2.5 text-sm text-white focus:border-[#BE00FF] focus:outline-none transition-all">
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Sort Order</label>
+                            <button id="lib-sort-btn" class="w-full flex justify-between items-center bg-black/30 border border-white/10 rounded-md px-3 py-2.5 text-sm text-gray-300 focus:border-[#BE00FF] hover:bg-white/5 transition-colors text-left">
+                                <span id="lib-sort-text">Hardest First (Descending)</span>
+                                <span id="lib-sort-icon" class="material-symbols-outlined text-sm text-gray-500">arrow_downward</span>
+                            </button>
+                        </div>
+
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Status</label>
+                            <div class="grid grid-cols-3 gap-1 bg-black/30 p-1 rounded-md border border-white/10">
+                                <button class="status-filter-btn px-2 py-1.5 text-xs font-bold rounded transition-all bg-[#BE00FF] text-white" data-value="All">All</button>
+                                <button class="status-filter-btn px-2 py-1.5 text-xs font-bold rounded transition-all text-gray-400 hover:text-white" data-value="Completed">Completed</button>
+                                <button class="status-filter-btn px-2 py-1.5 text-xs font-bold rounded transition-all text-gray-400 hover:text-white" data-value="Incomplete">Incomplete</button>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-1.5 relative">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Area</label>
+                            <button id="area-dropdown-btn" class="w-full flex justify-between items-center bg-black/30 border border-white/10 rounded-md px-3 py-2.5 text-sm text-gray-300 focus:border-[#BE00FF] hover:bg-white/5 transition-colors text-left">
+                                <span class="truncate">All Areas</span>
+                                <span class="material-symbols-outlined text-sm text-gray-500">expand_more</span>
+                            </button>
+                            <div id="area-dropdown-menu" class="hidden absolute top-full left-0 right-0 mt-1 bg-[#1C1C22] border border-white/10 rounded-md shadow-2xl z-50 flex flex-col max-h-[400px]">
+                                <div id="area-list-container" class="p-2 overflow-y-auto">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-2 relative mt-1">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Difficulty</label>
+                            
+                            <div class="grid grid-cols-2 gap-1 bg-black/30 p-1 rounded-md border border-white/10 w-full">
+                                <button id="btn-mode-range" class="px-2 py-1.5 text-xs font-bold rounded transition-all bg-[#BE00FF] text-white">Range</button>
+                                <button id="btn-mode-select" class="px-2 py-1.5 text-xs font-bold rounded transition-all text-gray-400 hover:text-white">Select</button>
+                            </div>
+
+                            <div id="diff-ui-range" class="w-full flex items-center gap-3 mt-1">
+                                <div class="flex-1 flex flex-col gap-1">
+                                    <label class="text-[10px] text-gray-500 font-bold">MIN</label>
+                                    <input id="diff-min-input" type="number" step="0.01" min="0" max="12" value="1.00" 
+                                        class="w-full bg-black/30 border border-white/10 rounded-md px-2 py-2 text-sm text-white focus:border-[#BE00FF] focus:outline-none font-mono text-center">
+                                </div>
+                                <div class="pt-4 text-gray-400 font-bold text-lg">-</div>
+                                <div class="flex-1 flex flex-col gap-1">
+                                    <label class="text-[10px] text-gray-500 font-bold">MAX</label>
+                                    <input id="diff-max-input" type="number" step="0.01" min="0" max="12" value="12.00" 
+                                        class="w-full bg-black/30 border border-white/10 rounded-md px-2 py-2 text-sm text-white focus:border-[#BE00FF] focus:outline-none font-mono text-center">
+                                </div>
+                            </div>
+
+                            <div id="diff-ui-select" class="hidden relative w-full mt-1">
+                                <button id="diff-dropdown-btn" class="w-full flex justify-between items-center bg-black/30 border border-white/10 rounded-md px-3 py-2.5 text-sm text-gray-300 focus:border-[#BE00FF] hover:bg-white/5 transition-colors text-left">
+                                    <span class="truncate">All Difficulties</span>
+                                    <span class="material-symbols-outlined text-sm text-gray-500">expand_more</span>
+                                </button>
+                                <div id="diff-dropdown-menu" class="hidden absolute top-full left-0 right-0 mt-1 bg-[#1C1C22] border border-white/10 rounded-md shadow-2xl z-50 flex flex-col max-h-[300px]">
+                                    <div id="diff-list-container" class="p-2 overflow-y-auto flex flex-col">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
         </main>
     </div>
     
@@ -223,6 +317,6 @@
         </div>
     </div>
 
-    <script src="./js/main.js?v=1.4.2"></script>
+    <script src="./js/main.js?v=1.5.0"></script>
 </body>
 </html>

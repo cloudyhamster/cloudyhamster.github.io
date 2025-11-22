@@ -18,6 +18,14 @@ document.addEventListener('DOMContentLoaded', () => {
         bestGame: null
     };
 
+    let libFilterMode = 'range';
+    let libMinDiff = 1.0;
+    let libMaxDiff = 12.0;
+    let libSelectedDiffs = new Set();
+    let libSelectedAreas = new Set();
+    let libStatusValue = 'All';
+    let libSortOrder = 'desc';
+
     const NON_CANON_TOWERS = new Set([
         "Tower Not Found", "Not Even A Tower", "This Is Probably A Tower",
         "Maybe A Tower", "Totally A Tower", "Will Be A Tower", "Likely A Tower",
@@ -145,9 +153,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const listView = document.getElementById('list-view');
     const leaderboardView = document.getElementById('leaderboard-view');
     const gamesView = document.getElementById('games-view');
+    const libraryView = document.getElementById('library-view');
     const areaHistoryContainer = document.getElementById('area-history-container');
     const fullHistoryContainer = document.getElementById('full-history-container');
     const leaderboardContainer = document.getElementById('leaderboard-container');
+    const libraryContainer = document.getElementById('library-container');
+    const libraryFiltersSidebar = document.getElementById('library-filters-sidebar');
     const gameGuessInput = document.getElementById('game-guess-input');
     const gameAutocompleteList = document.getElementById('game-autocomplete-list');
     const gameGrid = document.getElementById('game-grid');
@@ -169,6 +180,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalWarnings = document.getElementById('modal-warnings');
     const modalArea = document.getElementById('modal-area');
     const modalDate = document.getElementById('modal-date');
+    const libSearch = document.getElementById('lib-search');
+    const libSortBtn = document.getElementById('lib-sort-btn');
+    const libSortText = document.getElementById('lib-sort-text');
+    const libSortIcon = document.getElementById('lib-sort-icon');
+    const btnModeRange = document.getElementById('btn-mode-range');
+    const btnModeSelect = document.getElementById('btn-mode-select');
+    const diffUiRange = document.getElementById('diff-ui-range');
+    const diffUiSelect = document.getElementById('diff-ui-select');
+    const diffMinInput = document.getElementById('diff-min-input');
+    const diffMaxInput = document.getElementById('diff-max-input');
+    const diffDropdownBtn = document.getElementById('diff-dropdown-btn');
+    const diffDropdownMenu = document.getElementById('diff-dropdown-menu');
+    const diffListContainer = document.getElementById('diff-list-container');
+    const areaDropdownBtn = document.getElementById('area-dropdown-btn');
+    const areaDropdownMenu = document.getElementById('area-dropdown-menu');
+    const areaListContainer = document.getElementById('area-list-container');
+    const statusDropdownBtn = document.getElementById('status-dropdown-btn');
+    const statusDropdownMenu = document.getElementById('status-dropdown-menu');
 
     const titleCase = (str) => str ? str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : '';
     const showNotification = (message, type = 'success') => {
@@ -203,6 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentView = viewName;
         const activeClasses = ['bg-[#BE00FF]/20', 'border', 'border-[#BE00FF]/50', 'text-[#BE00FF]'];
         const inactiveClasses = ['text-gray-300', 'transition-colors', 'hover:bg-white/5', 'hover:text-white'];
+
         const views = {
             chart: {
                 title: 'Completion Chart',
@@ -216,6 +246,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 title: 'Area Completion',
                 element: tableView
             },
+            library: {
+                title: 'Tower Library',
+                element: libraryView
+            },
             leaderboard: {
                 title: 'Leaderboard',
                 element: leaderboardView
@@ -228,19 +262,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (viewName === 'games') {
             mainContentTitle.classList.add('hidden');
-            gameStatsSidebar.classList.remove('hidden');
-            gameStatsSidebar.classList.add('flex');
         } else {
             mainContentTitle.textContent = views[viewName].title;
             mainContentTitle.classList.remove('hidden');
+        }
+
+        if (viewName === 'games') {
+            gameStatsSidebar.classList.remove('hidden');
+            gameStatsSidebar.classList.add('flex');
+        } else {
             gameStatsSidebar.classList.add('hidden');
             gameStatsSidebar.classList.remove('flex');
         }
 
+        if (viewName === 'library') {
+            libraryFiltersSidebar.classList.remove('hidden');
+            libraryFiltersSidebar.classList.add('flex');
+        } else {
+            libraryFiltersSidebar.classList.add('hidden');
+            libraryFiltersSidebar.classList.remove('flex');
+        }
+
+
         Object.values(views).forEach(view => view.element.classList.add('hidden'));
         if (views[viewName]) views[viewName].element.classList.remove('hidden');
+
         if (viewName === 'leaderboard' && !leaderboardData) fetchAndRenderLeaderboard();
         if (viewName === 'games' && !targetTower) initGame();
+        if (viewName === 'library') {
+            if (areaListContainer.children.length === 0) initLibraryComponents();
+            renderLibrary();
+        }
 
         [...navLinksContainer.querySelectorAll('a'), ...gamesNavLinksContainer.querySelectorAll('a'), ...miscNavLinksContainer.querySelectorAll('a')].forEach(link => {
             if (link.dataset.view === viewName) {
@@ -253,15 +305,264 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const lengthMap = {
-        '<20 minutes': 1,
-        '20+ minutes': 2,
-        '30+ minutes': 3,
-        '45+ minutes': 4,
-        '60+ minutes': 5,
-        '90+ minutes': 6
+    const initLibraryComponents = () => {
+        const areaMenu = document.getElementById('area-dropdown-menu');
+        const diffMenu = document.getElementById('diff-dropdown-menu');
+        const menus = [areaMenu, diffMenu];
+
+        const toggleDropdown = (targetMenu) => {
+            const isHidden = targetMenu.classList.contains('hidden');
+            menus.forEach(m => m.classList.add('hidden'));
+            if (isHidden) targetMenu.classList.remove('hidden');
+        };
+
+        const statusBtns = document.querySelectorAll('.status-filter-btn');
+        statusBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                libStatusValue = btn.dataset.value;
+                statusBtns.forEach(b => {
+                    b.classList.remove('bg-[#BE00FF]', 'text-white');
+                    b.classList.add('text-gray-400', 'hover:text-white');
+                });
+                btn.classList.remove('text-gray-400', 'hover:text-white');
+                btn.classList.add('bg-[#BE00FF]', 'text-white');
+                renderLibrary();
+            });
+        });
+
+        const areas = Array.from(new Set(allTowersData.map(t => t.area).filter(Boolean)));
+        libSelectedAreas = new Set(areas);
+
+        const hierarchyMap = {
+            "Ring 1": ["Forgotten Ridge"],
+            "Ring 2": ["Garden Of Eesh%C3%B6L"],
+            "Ring 4": ["Silent Abyss"],
+            "Ring 5": ["Lost River"],
+            "Ring 6": ["Ashen Towerworks"],
+            "Ring 8": ["The Starlit Archives"],
+            "Zone 2": ["Arcane Area"],
+            "Zone 3": ["Paradise Atoll"]
+        };
+
+        let sortedAreaList = [];
+        for (let i = 0; i <= 9; i++) {
+            const ring = `Ring ${i}`;
+            if (areas.includes(ring)) sortedAreaList.push({
+                name: ring,
+                isSub: false
+            });
+            if (hierarchyMap[ring]) hierarchyMap[ring].forEach(sub => {
+                if (areas.includes(sub)) sortedAreaList.push({
+                    name: sub,
+                    isSub: true
+                });
+            });
+        }
+        for (let i = 1; i <= 10; i++) {
+            const zone = `Zone ${i}`;
+            if (areas.includes(zone)) sortedAreaList.push({
+                name: zone,
+                isSub: false
+            });
+            if (hierarchyMap[zone]) hierarchyMap[zone].forEach(sub => {
+                if (areas.includes(sub)) sortedAreaList.push({
+                    name: sub,
+                    isSub: true
+                });
+            });
+        }
+        const caughtSet = new Set(sortedAreaList.map(x => x.name));
+        areas.forEach(a => {
+            if (!caughtSet.has(a)) sortedAreaList.push({
+                name: a,
+                isSub: false
+            });
+        });
+
+        const renderAreaList = () => {
+            areaListContainer.innerHTML = '';
+            sortedAreaList.forEach(item => {
+                const hex = areaColors[item.name] || '#808080';
+                const rgb = hexToRgb(hex) || [128, 128, 128];
+                const bgStyle = `background: linear-gradient(90deg, rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.04) 0%, rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.01) 100%); border-left: 3px solid ${hex};`;
+
+                const label = document.createElement('label');
+                const containerClass = item.isSub ? 'subrealm-item dropdown-check-item' : 'dropdown-check-item';
+                label.className = `${containerClass} text-xs text-gray-300`;
+                label.style = bgStyle;
+                label.style.color = hex;
+
+                const isChecked = libSelectedAreas.has(item.name) ? 'checked' : '';
+                label.innerHTML = `<input type="checkbox" value="${item.name}" ${isChecked}><span class="text-gray-200 font-medium">${areaDisplayNames[item.name]||item.name}</span>`;
+
+                label.querySelector('input').addEventListener('change', (e) => {
+                    if (e.target.checked) libSelectedAreas.add(item.name);
+                    else libSelectedAreas.delete(item.name);
+                    updateAreaButtonText(areas.length);
+                    renderLibrary();
+                });
+                areaListContainer.appendChild(label);
+            });
+        };
+        renderAreaList();
+
+        const difficulties = Object.keys(difficultyColors);
+        libSelectedDiffs = new Set(difficulties);
+        diffListContainer.innerHTML = '';
+        difficulties.forEach(diff => {
+            const hex = difficultyColors[diff];
+            const rgb = hexToRgb(hex);
+            const bgStyle = `background: linear-gradient(90deg, rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.04) 0%, rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.01) 100%); border-left: 3px solid ${hex};`;
+
+            const label = document.createElement('label');
+            label.className = 'dropdown-check-item text-xs text-gray-200';
+            label.style = bgStyle;
+            label.style.color = hex;
+            label.innerHTML = `<input type="checkbox" value="${diff}" checked><span class="text-gray-200 font-medium">${diff}</span>`;
+            label.querySelector('input').addEventListener('change', (e) => {
+                if (e.target.checked) libSelectedDiffs.add(diff);
+                else libSelectedDiffs.delete(diff);
+                updateDiffButtonText(difficulties.length);
+                renderLibrary();
+            });
+            diffListContainer.appendChild(label);
+        });
+
+        libSortBtn.addEventListener('click', () => {
+            if (libSortOrder === 'desc') {
+                libSortOrder = 'asc';
+                libSortText.textContent = 'Easiest First (Ascending)';
+                libSortIcon.textContent = 'arrow_upward';
+            } else {
+                libSortOrder = 'desc';
+                libSortText.textContent = 'Hardest First (Descending)';
+                libSortIcon.textContent = 'arrow_downward';
+            }
+            renderLibrary();
+        });
+
+        areaDropdownBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleDropdown(areaMenu);
+        });
+        diffDropdownBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleDropdown(diffMenu);
+        });
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.relative')) menus.forEach(m => m.classList.add('hidden'));
+        });
     };
-    const getLengthValue = (str) => lengthMap[str.replace(' long', '')] || 0;
+
+    const updateAreaButtonText = (total) => {
+        const btn = areaDropdownBtn.querySelector('span');
+        if (libSelectedAreas.size === 0) btn.textContent = "None Selected";
+        else if (libSelectedAreas.size === total) btn.textContent = "All Areas";
+        else btn.textContent = `${libSelectedAreas.size} Areas Selected`;
+    };
+    const updateDiffButtonText = (total) => {
+        const btn = diffDropdownBtn.querySelector('span');
+        if (libSelectedDiffs.size === 0) btn.textContent = "None Selected";
+        else if (libSelectedDiffs.size === total) btn.textContent = "All Difficulties";
+        else btn.textContent = `${libSelectedDiffs.size} Difficulties Selected`;
+    };
+
+    const renderLibrary = () => {
+        libraryContainer.innerHTML = '';
+        if (!allTowersData || allTowersData.length === 0) {
+            libraryContainer.innerHTML = '<div class="p-8 text-center text-gray-500 text-sm">No tower data loaded. Please search a user first.</div>';
+            return;
+        }
+
+        const searchVal = libSearch.value.toLowerCase();
+        const beatenSet = new Set(beatenTowersData.map(t => t.name));
+        const beatenMap = new Map(beatenTowersData.map(t => [t.name, t]));
+
+        const filteredTowers = allTowersData.filter(t => {
+            if (NON_CANON_TOWERS.has(t.name)) return false;
+            if (searchVal && !t.name.toLowerCase().includes(searchVal)) return false;
+            if (libFilterMode === 'range') {
+                const num = t.number_difficulty || 0;
+                if (num < libMinDiff || num > libMaxDiff) return false;
+            } else {
+                if (!libSelectedDiffs.has(t.difficulty)) return false;
+            }
+            if (!libSelectedAreas.has(t.area)) return false;
+            const isCompleted = beatenSet.has(t.name);
+            if (libStatusValue === 'Completed' && !isCompleted) return false;
+            if (libStatusValue === 'Incomplete' && isCompleted) return false;
+            return true;
+        });
+
+        if (filteredTowers.length === 0) {
+            libraryContainer.innerHTML = '<div class="p-8 text-center text-gray-500 text-sm">No towers match your filters.</div>';
+            return;
+        }
+
+        filteredTowers.sort((a, b) => {
+            const diffA = a.number_difficulty || 0;
+            const diffB = b.number_difficulty || 0;
+            return libSortOrder === 'desc' ? diffB - diffA : diffA - diffB;
+        });
+
+        let rowsHtml = '';
+        filteredTowers.forEach((tower, index) => {
+            const beatenVersion = beatenMap.get(tower.name);
+            const isCompleted = !!beatenVersion;
+            const completionRgb = isCompleted ? '67, 255, 129' : '255, 50, 50';
+            const diffRgb = (hexToRgb(difficultyColors[tower.difficulty] || '#808080') || [128, 128, 128]).join(', ');
+            const dateStr = isCompleted ? new Date(beatenVersion.awarded_unix * 1000).toLocaleDateString() : '--';
+            const areaClass = areaPillClasses[tower.area] || areaPillClasses.Default;
+            const diffClass = difficultyPillClasses[tower.difficulty] || difficultyPillClasses.nil;
+            const diffContent = `${tower.modifier||''} ${tower.difficulty||''} [${(tower.number_difficulty||0).toFixed(2)}]`.trim();
+
+            rowsHtml += `<tr class="tower-row ${isCompleted?'status-outline-completed':'status-outline-incomplete'}" style="--difficulty-rgb: ${completionRgb}; --area-rgb: ${diffRgb}; padding-left: 12px;" data-tower-name="${tower.name}"><td class="py-1 px-1 text-xs text-gray-600 font-mono w-6 text-center flex-shrink-0">${index + 1}</td><td class="py-1 px-3 text-left ${isCompleted?'text-gray-200':'text-gray-500'} flex-1 truncate">${tower.name}</td><td class="py-1 px-3 text-right flex-shrink-0"><div class="flex justify-end items-center gap-2 flex-wrap"><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 ${isCompleted?'text-gray-300 bg-gray-500/10':'text-gray-600 bg-gray-500/10'}">${dateStr}</span><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${diffClass}">${diffContent}</span><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${areaClass}">${areaDisplayNames[tower.area]||tower.area}</span></div></td></tr>`;
+        });
+        libraryContainer.innerHTML = `<table class="w-full text-sm"><tbody>${rowsHtml}</tbody></table>`;
+    };
+
+    libraryContainer.addEventListener('click', (e) => {
+        const r = e.target.closest('.tower-row');
+        if (r && r.dataset.towerName) openModalWithTower(r.dataset.towerName);
+    });
+    libSearch.addEventListener('input', renderLibrary);
+    diffMinInput.addEventListener('input', (e) => {
+        libMinDiff = parseFloat(e.target.value) || 0;
+        renderLibrary();
+    });
+    diffMaxInput.addEventListener('input', (e) => {
+        libMaxDiff = parseFloat(e.target.value) || 12;
+        renderLibrary();
+    });
+
+    btnModeRange.addEventListener('click', () => {
+        libFilterMode = 'range';
+
+        btnModeRange.classList.remove('text-gray-400', 'hover:text-white');
+        btnModeRange.classList.add('bg-[#BE00FF]', 'text-white');
+
+        btnModeSelect.classList.remove('bg-[#BE00FF]', 'text-white');
+        btnModeSelect.classList.add('text-gray-400', 'hover:text-white');
+
+        diffUiRange.classList.remove('hidden');
+        diffUiSelect.classList.add('hidden');
+        renderLibrary();
+    });
+
+    btnModeSelect.addEventListener('click', () => {
+        libFilterMode = 'select';
+
+        btnModeSelect.classList.remove('text-gray-400', 'hover:text-white');
+        btnModeSelect.classList.add('bg-[#BE00FF]', 'text-white');
+
+        btnModeRange.classList.remove('bg-[#BE00FF]', 'text-white');
+        btnModeRange.classList.add('text-gray-400', 'hover:text-white');
+
+        diffUiRange.classList.add('hidden');
+        diffUiSelect.classList.remove('hidden');
+        renderLibrary();
+    });
+
     const getTowerType = (name) => name.includes("Citadel") ? "Citadel" : name.includes("Steeple") ? "Steeple" : "Tower";
     const getAreaInfo = (areaName) => {
         const subrealms = {
@@ -323,6 +624,17 @@ document.addEventListener('DOMContentLoaded', () => {
             isSub: false
         };
     };
+    const getLengthValue = (str) => {
+        const m = {
+            '<20 minutes': 1,
+            '20+ minutes': 2,
+            '30+ minutes': 3,
+            '45+ minutes': 4,
+            '60+ minutes': 5,
+            '90+ minutes': 6
+        };
+        return m[str.replace(' long', '')] || 0;
+    };
 
     const ensureGameData = async () => {
         if (allTowersData.length > 0) return true;
@@ -338,7 +650,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return true;
             }
         } catch (e) {
-            console.error("Failed to fetch game data", e);
+            console.error(e);
             showNotification("Failed to load game data.", "error");
         }
         return false;
@@ -349,6 +661,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!hasData) return;
         const canonTowers = allTowersData.filter(t => !NON_CANON_TOWERS.has(t.name));
         targetTower = canonTowers[Math.floor(Math.random() * canonTowers.length)];
+        console.log("Target:", targetTower.name);
         guesses = [];
         isGameActive = true;
         gameGuessInput.value = '';
@@ -365,23 +678,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const nameHtml = `<div class="${guess.name === targetTower.name ? 'status-correct font-bold' : 'text-white'}">${guess.name}</div>`;
 
-            const guessDiff = guess.number_difficulty || 0;
-            const targetDiff = targetTower.number_difficulty || 0;
-            let diffClass = 'status-wrong';
-            let diffIcon = '';
-            if (guess.difficulty === targetTower.difficulty) {
-                diffClass = 'status-correct';
-            }
-
-            if (Math.abs(guessDiff - targetDiff) < 0.01) {
+            let diffClass = 'status-wrong',
+                diffIcon = '';
+            if (guess.difficulty === targetTower.difficulty) diffClass = 'status-correct';
+            if (Math.abs(guess.number_difficulty - targetTower.number_difficulty) < 0.01) {
                 diffIcon = 'check';
                 diffClass = 'status-correct';
-            } else if (guessDiff < targetDiff) {
-                diffIcon = 'arrow_upward';
-            } else {
-                diffIcon = 'arrow_downward';
-            }
-
+            } else if (guess.number_difficulty < targetTower.number_difficulty) diffIcon = 'arrow_upward';
+            else diffIcon = 'arrow_downward';
             const diffPill = `<span class="inline-flex items-center gap-1 ${diffClass}">${guess.difficulty} <span class="material-symbols-outlined feedback-icon">${diffIcon}</span></span>`;
 
             const safeGuessLen = guess.length || '<20 minutes';
@@ -394,53 +698,44 @@ document.addEventListener('DOMContentLoaded', () => {
                 lenClass = 'status-correct';
                 lenIcon = 'check';
             } else lenIcon = guessLenVal < targetLenVal ? 'arrow_upward' : 'arrow_downward';
-            const lenStr = safeGuessLen.replace(' long', '');
-            const lenHtml = `<span class="inline-flex items-center gap-1 ${lenClass}">${lenStr} <span class="material-symbols-outlined feedback-icon">${lenIcon}</span></span>`;
+            const lenHtml = `<span class="inline-flex items-center gap-1 ${lenClass}">${safeGuessLen.replace(' long', '')} <span class="material-symbols-outlined feedback-icon">${lenIcon}</span></span>`;
 
-            const guessType = getTowerType(guess.name);
-            const targetType = getTowerType(targetTower.name);
-            const typeClass = guessType === targetType ? 'status-correct' : 'status-wrong';
-            const typeHtml = `<span class="${typeClass}">${guessType}</span>`;
+            const typeClass = getTowerType(guess.name) === getTowerType(targetTower.name) ? 'status-correct' : 'status-wrong';
+            const typeHtml = `<span class="${typeClass}">${getTowerType(guess.name)}</span>`;
 
-            const guessArea = getAreaInfo(guess.area); 
+            const guessArea = getAreaInfo(guess.area);
             const targetArea = getAreaInfo(targetTower.area);
-            let areaClass = 'status-wrong';
-            let areaIcon = '';
-
-            if (guessArea.r !== targetArea.r) {
-                areaClass = 'status-wrong'; 
-            } else {
+            let areaClass = 'status-wrong',
+                areaIcon = '';
+            if (guessArea.r !== targetArea.r) areaClass = 'status-wrong';
+            else {
                 if (guessArea.i === targetArea.i) {
                     if (guessArea.isSub === targetArea.isSub) {
                         areaClass = 'status-correct';
                         areaIcon = 'check';
                     } else {
                         areaClass = 'status-partial';
-                        areaIcon = 'location_searching'; 
+                        areaIcon = 'location_searching';
                     }
                 } else {
                     areaClass = 'status-wrong';
                     areaIcon = guessArea.i < targetArea.i ? 'arrow_upward' : 'arrow_downward';
                 }
             }
-
-            const areaDisplay = areaDisplayNames[guess.area] || guess.area;
-            const areaHtml = `<span class="inline-flex items-center gap-1 ${areaClass}">${areaDisplay} <span class="material-symbols-outlined feedback-icon">${areaIcon}</span></span>`;
+            const areaHtml = `<span class="inline-flex items-center gap-1 ${areaClass}">${areaDisplayNames[guess.area]||guess.area} <span class="material-symbols-outlined feedback-icon">${areaIcon}</span></span>`;
 
             const guessCreators = new Set((Array.isArray(guess.creators) ? guess.creators : []).flatMap(c => c.split(',').map(x => x.trim())));
             const targetCreators = new Set((Array.isArray(targetTower.creators) ? targetTower.creators : []).flatMap(c => c.split(',').map(x => x.trim())));
-            const areSetsEqual = (a, b) => a.size === b.size && [...a].every(value => b.has(value));
+            const areSetsEqual = (a, b) => a.size === b.size && [...a].every(v => b.has(v));
             const isSubset = [...guessCreators].every(c => targetCreators.has(c));
             let creatorClass = 'status-wrong';
             if (areSetsEqual(guessCreators, targetCreators)) creatorClass = 'status-correct';
             else if (isSubset && guessCreators.size > 0) creatorClass = 'status-partial';
-            const creatorsStr = [...guessCreators].join(', ');
-            const creatorHtml = `<div class="truncate ${creatorClass}" title="${creatorsStr}">${creatorsStr || 'Unknown'}</div>`;
+            const creatorHtml = `<div class="truncate ${creatorClass}" title="${[...guessCreators].join(', ')}">${[...guessCreators].join(', ')||'Unknown'}</div>`;
 
             row.innerHTML = nameHtml + diffPill + lenHtml + typeHtml + areaHtml + creatorHtml;
             gameGrid.appendChild(row);
         });
-
         for (let i = guesses.length; i < maxGuesses; i++) {
             const row = document.createElement('div');
             row.className = 'game-row opacity-30';
@@ -651,82 +946,131 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderAreaTable = (allTowers, beatenTowers, unlockedAreas) => {
         areaHistoryContainer.innerHTML = '';
         if (!allTowers || allTowers.length === 0) return;
-        
-        const ringAreas = [ { key: 'Ring 0', name: 'Ring 0: Purgatorio' }, { key: 'Ring 1', name: 'Ring 1: Limbo' }, { key: 'Forgotten Ridge', name: 'Forgotten Ridge' }, { key: 'Ring 2', name: 'Ring 2: Desire' }, { key: 'Garden Of Eesh%C3%B6L', name: 'Garden Of Eeshöl' }, { key: 'Ring 3', name: 'Ring 3: Gluttony' }, { key: 'Ring 4', name: 'Ring 4: Greed' }, { key: 'Silent Abyss', name: 'Silent Abyss' }, { key: 'Ring 5', name: 'Ring 5: Wrath' }, { key: 'Lost River', name: 'Lost River' }, { key: 'Ring 6', name: 'Ring 6: Heresy' }, { key: 'Ashen Towerworks', name: 'Ashen Towerworks' }, { key: 'Ring 7', name: 'Ring 7: Violence' }, { key: 'Ring 8', name: 'Ring 8: Fraud' }, { key: 'The Starlit Archives', name: 'The Starlit Archives' }, { key: 'Ring 9', name: 'Ring 9: Treachery' }, ];
-        const zoneAreas = [ { key: 'Zone 1', name: 'Zone 1: Sea' }, { key: 'Zone 2', name: 'Zone 2: Surface' }, { key: 'Arcane Area', name: 'Arcane Area' }, { key: 'Zone 3', name: 'Zone 3: Sky' }, { key: 'Paradise Atoll', name: 'Paradise Atoll' }, { key: 'Zone 4', name: 'Zone 4: Exosphere' }, { key: 'Zone 5', name: 'Zone 5: The Moon' }, { key: 'Zone 6', name: 'Zone 6: Mars' }, { key: 'Zone 7', name: 'Zone 7: Asteroid Belt' }, { key: 'Zone 8', name: 'Zone 8: Pluto' }, { key: 'Zone 9', name: 'Zone 9: Singularity' }, { key: 'Zone 10', name: 'Zone 10: Interstellar Shore' }, ];
-
+        const ringAreas = [{
+            key: 'Ring 0',
+            name: 'Ring 0: Purgatorio'
+        }, {
+            key: 'Ring 1',
+            name: 'Ring 1: Limbo'
+        }, {
+            key: 'Forgotten Ridge',
+            name: 'Forgotten Ridge'
+        }, {
+            key: 'Ring 2',
+            name: 'Ring 2: Desire'
+        }, {
+            key: 'Garden Of Eesh%C3%B6L',
+            name: 'Garden Of Eeshöl'
+        }, {
+            key: 'Ring 3',
+            name: 'Ring 3: Gluttony'
+        }, {
+            key: 'Ring 4',
+            name: 'Ring 4: Greed'
+        }, {
+            key: 'Silent Abyss',
+            name: 'Silent Abyss'
+        }, {
+            key: 'Ring 5',
+            name: 'Ring 5: Wrath'
+        }, {
+            key: 'Lost River',
+            name: 'Lost River'
+        }, {
+            key: 'Ring 6',
+            name: 'Ring 6: Heresy'
+        }, {
+            key: 'Ashen Towerworks',
+            name: 'Ashen Towerworks'
+        }, {
+            key: 'Ring 7',
+            name: 'Ring 7: Violence'
+        }, {
+            key: 'Ring 8',
+            name: 'Ring 8: Fraud'
+        }, {
+            key: 'The Starlit Archives',
+            name: 'The Starlit Archives'
+        }, {
+            key: 'Ring 9',
+            name: 'Ring 9: Treachery'
+        }, ];
+        const zoneAreas = [{
+            key: 'Zone 1',
+            name: 'Zone 1: Sea'
+        }, {
+            key: 'Zone 2',
+            name: 'Zone 2: Surface'
+        }, {
+            key: 'Arcane Area',
+            name: 'Arcane Area'
+        }, {
+            key: 'Zone 3',
+            name: 'Zone 3: Sky'
+        }, {
+            key: 'Paradise Atoll',
+            name: 'Paradise Atoll'
+        }, {
+            key: 'Zone 4',
+            name: 'Zone 4: Exosphere'
+        }, {
+            key: 'Zone 5',
+            name: 'Zone 5: The Moon'
+        }, {
+            key: 'Zone 6',
+            name: 'Zone 6: Mars'
+        }, {
+            key: 'Zone 7',
+            name: 'Zone 7: Asteroid Belt'
+        }, {
+            key: 'Zone 8',
+            name: 'Zone 8: Pluto'
+        }, {
+            key: 'Zone 9',
+            name: 'Zone 9: Singularity'
+        }, {
+            key: 'Zone 10',
+            name: 'Zone 10: Interstellar Shore'
+        }, ];
         const beatenTowerMap = new Map(beatenTowers.map(tower => [tower.name, tower]));
-
         const generateColumnHtml = (areaList) => {
             let columnHtml = '';
             for (const area of areaList) {
                 const towersInArea = allTowers.filter(t => t.area === area.key);
                 if (towersInArea.length === 0) continue;
-
                 const isUnlocked = unlockedAreas.has(area.key);
                 const captionClasses = ['clickable-caption', !isUnlocked ? 'locked-caption' : ''].join(' ');
                 const captionIcon = !isUnlocked ? 'expand_more' : 'expand_less';
                 const tbodyClass = !isUnlocked ? 'hidden' : '';
+                const areaRgb = (hexToRgb(areaColors[area.key] || '#808080') || [128, 128, 128]).join(', ');
 
                 const totalCount = towersInArea.length;
                 const completedCount = towersInArea.filter(t => beatenTowerMap.has(t.name)).length;
                 const percent = (completedCount / totalCount) * 100;
-                
-                let fillColor = 'rgba(255, 255, 255, 0.15)';
-                let textColorClass = 'text-gray-400';
-                let borderClass = 'border-white/10';
-
+                let fillColor = 'rgba(255, 255, 255, 0.15)',
+                    textColorClass = 'text-gray-400',
+                    borderClass = 'border-white/10';
                 if (percent === 100) {
-                    fillColor = 'rgba(255, 215, 0, 0.15)'; 
+                    fillColor = 'rgba(255, 215, 0, 0.15)';
                     textColorClass = 'text-yellow-300 font-bold';
                     borderClass = 'border-yellow-500/50';
-                } else if (percent > 0) {
-                    textColorClass = 'text-gray-200';
-                }
-
+                } else if (percent > 0) textColorClass = 'text-gray-200';
                 const progressStyle = `background: linear-gradient(to right, ${fillColor} 0%, ${fillColor} ${percent}%, transparent ${percent}%, transparent 100%);`;
-                
-                const countPill = `<span class="inline-block py-0.5 px-5 rounded-full text-xs font-medium border ${borderClass} ${textColorClass}" style="${progressStyle}">${completedCount}/${totalCount}</span>`;
+                const countPill = `<span class="inline-block py-0.5 px-5 rounded-full text-xs font-mono border ${borderClass} ${textColorClass}" style="${progressStyle}">${completedCount}/${totalCount}</span>`;
 
                 let towerRowsHtml = '';
-                towersInArea.sort((a,b) => a.number_difficulty - b.number_difficulty).forEach(tower => {
+                towersInArea.sort((a, b) => a.number_difficulty - b.number_difficulty).forEach(tower => {
                     const beatenVersion = beatenTowerMap.get(tower.name);
                     const isCompleted = !!beatenVersion;
                     const completionRgb = isCompleted ? '67, 255, 129' : '255, 50, 50';
                     const diffRgb = (hexToRgb(difficultyColors[tower.difficulty] || '#808080') || [128, 128, 128]).join(', ');
-                    
-                    towerRowsHtml += `
-                        <tr class="tower-row ${isCompleted?'status-outline-completed':'status-outline-incomplete'}" style="--difficulty-rgb: ${completionRgb}; --area-rgb: ${diffRgb};" data-tower-name="${tower.name}">
-                            <td class="py-1 px-3 ${isCompleted?'text-gray-200':'text-gray-500'}">${tower.name}</td>
-                            <td class="py-1 px-3 text-right">
-                                <div class="flex justify-end items-center gap-2">
-                                    <span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 ${isCompleted?'text-gray-300 bg-gray-500/10':'text-gray-600 bg-gray-500/10'}">${isCompleted?new Date(beatenVersion.awarded_unix*1000).toLocaleDateString():'--'}</span>
-                                    <span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${difficultyPillClasses[tower.difficulty]||difficultyPillClasses.nil}">${tower.modifier||''} ${tower.difficulty||''} [${(tower.number_difficulty||0).toFixed(2)}]</span>
-                                </div>
-                            </td>
-                        </tr>`;
-                });
 
-                columnHtml += `
-                    <div class="bg-black/20 rounded-md overflow-hidden">
-                        <table class="w-full text-sm">
-                            <caption class="py-2.5 px-4 text-left font-bold text-base bg-black/10">
-                                <div class="${captionClasses} select-none flex justify-between items-center">
-                                    <span class="caption-text">${area.name}</span>
-                                    <div class="flex items-center gap-3">
-                                        ${countPill}
-                                        <span class="material-symbols-outlined caption-icon dropdown-arrow">${captionIcon}</span>
-                                    </div>
-                                </div>
-                            </caption>
-                            <tbody class="${tbodyClass}">${towerRowsHtml}</tbody>
-                        </table>
-                    </div>
-                `;
+                    towerRowsHtml += `<tr class="tower-row ${isCompleted?'status-outline-completed':'status-outline-incomplete'}" style="--difficulty-rgb: ${completionRgb}; --area-rgb: ${diffRgb};" data-tower-name="${tower.name}"><td class="py-1 px-3 ${isCompleted?'text-gray-200':'text-gray-500'}">${tower.name}</td><td class="py-1 px-3 text-right"><div class="flex justify-end items-center gap-2"><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 ${isCompleted?'text-gray-300 bg-gray-500/10':'text-gray-600 bg-gray-500/10'}">${isCompleted?new Date(beatenVersion.awarded_unix*1000).toLocaleDateString():'--'}</span><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${difficultyPillClasses[tower.difficulty]||difficultyPillClasses.nil}">${tower.modifier||''} ${tower.difficulty||''} [${(tower.number_difficulty||0).toFixed(2)}]</span></div></td></tr>`;
+                });
+                columnHtml += `<div class="bg-black/20 rounded-md overflow-hidden"><table class="w-full text-sm"><caption class="py-2.5 px-4 text-left font-bold text-base bg-black/10"><div class="${captionClasses} select-none flex justify-between items-center"><span class="caption-text">${area.name}</span><div class="flex items-center gap-3">${countPill}<span class="material-symbols-outlined caption-icon dropdown-arrow">${captionIcon}</span></div></div></caption><tbody class="${tbodyClass}">${towerRowsHtml}</tbody></table></div>`;
             }
             return `<div class="flex flex-col gap-4">${columnHtml}</div>`;
         };
-        
         areaHistoryContainer.innerHTML = generateColumnHtml(ringAreas) + generateColumnHtml(zoneAreas);
     };
 
@@ -840,9 +1184,11 @@ document.addEventListener('DOMContentLoaded', () => {
         modalDifficulty.textContent = `${tower.modifier||''} ${tower.difficulty||''} [${(tower.number_difficulty||0).toFixed(2)}]`;
         modalArea.className = `inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${areaPillClasses[tower.area]||areaPillClasses.Default}`;
         modalArea.textContent = areaDisplayNames[tower.area] || tower.area;
+
         const lengthText = tower.length || '<20 minutes';
         modalLength.textContent = lengthText.replace(' long', '');
         modalLength.className = 'inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-orange-400/50 text-orange-300 bg-orange-400/10';
+
         modalFloors.innerHTML = `<span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 text-gray-300 bg-gray-500/10">${tower.floors??10}</span>`;
         modalCreator.innerHTML = '';
         (Array.isArray(tower.creators) ? tower.creators : ["Unknown"]).flatMap(c => c.split(',').map(x => x.trim())).filter(Boolean).forEach(c => {
