@@ -248,6 +248,17 @@ body {
     border-top: 1px solid rgba(255, 255, 255, 0.05);
     transition: background-color 0.2s ease-in-out;
     gap: 12px;
+    min-width: 600px;
+}
+
+.tower-row, .leaderboard-row {
+    min-width: 500px;
+}
+
+#library-container table,
+#full-history-container table,
+#leaderboard-container table {
+    min-width: 500px;
 }
 
 .game-header {
@@ -328,8 +339,20 @@ select {
 
 .subrealm-item {
     position: relative;
-    margin-left: 24px !important;
-    width: calc(100% - 24px) !important;
+    margin-left: 34px;
+}
+
+.subrealm-item::before {
+    content: '';
+    position: absolute;
+    left: -15px; 
+    top: -22px; 
+    width: 25px; 
+    height: 40px; 
+    border-left: 2px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+    border-bottom-left-radius: 12px;
+    pointer-events: none;
 }
 
 .dropdown-check-item {
@@ -390,4 +413,58 @@ select {
 #diff-dropdown-menu::-webkit-scrollbar-thumb {
     background-color: rgba(255, 255, 255, 0.2);
     border-radius: 4px;
+}
+
+@media (max-width: 1023px) {
+    .tower-row, .leaderboard-row, .game-row, .game-header {
+        padding: 3px 6px !important;
+        min-height: 30px !important;
+    }
+    .tower-row td, .leaderboard-row div, .game-row div {
+        font-size: 0.65rem !important; 
+    }
+    .game-cell {
+        min-height: 30px !important;
+        padding: 2px !important;
+        font-size: 0.6rem !important;
+    }
+    .inline-block.rounded-full {
+        padding-top: 0px !important;
+        padding-bottom: 0px !important;
+        padding-left: 5px !important;
+        padding-right: 5px !important;
+        font-size: 0.6rem !important;
+        height: auto !important;
+        line-height: 1.4 !important;
+    }
+    .dropdown-check-item {
+        padding: 6px 8px !important;
+        font-size: 0.7rem !important;
+    }
+    .dropdown-check-item input {
+        width: 14px !important;
+        height: 14px !important;
+    }
+    .dropdown-check-item input:checked {
+        background-size: 10px 10px !important;
+    }
+    .modal-panel {
+        padding: 1rem !important;
+        width: 95% !important;
+    }
+    #modal-tower-name {
+        font-size: 1rem !important;
+    }
+    .modal-panel .text-sm {
+        font-size: 0.7rem !important;
+    }
+    .subrealm-item {
+        margin-left: 16px !important;
+        width: calc(100% - 16px) !important;
+    }
+    .subrealm-item::before {
+        left: -10px !important;
+        width: 15px !important;
+        top: -18px !important;
+    }
 }

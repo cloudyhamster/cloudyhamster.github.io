@@ -144,21 +144,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const hardestTowerStat = document.getElementById('hardestTowerStat');
     const hardestDifficultyStat = document.getElementById('hardestDifficultyStat');
     const notificationContainer = document.getElementById('notification-container');
+
     const navLinksContainer = document.getElementById('nav-links');
     const gamesNavLinksContainer = document.getElementById('games-nav-links');
     const miscNavLinksContainer = document.getElementById('misc-nav-links');
     const mainContentTitle = document.getElementById('main-content-title');
+
     const chartView = document.getElementById('chart-view');
     const tableView = document.getElementById('table-view');
     const listView = document.getElementById('list-view');
     const leaderboardView = document.getElementById('leaderboard-view');
     const gamesView = document.getElementById('games-view');
     const libraryView = document.getElementById('library-view');
+
     const areaHistoryContainer = document.getElementById('area-history-container');
     const fullHistoryContainer = document.getElementById('full-history-container');
     const leaderboardContainer = document.getElementById('leaderboard-container');
     const libraryContainer = document.getElementById('library-container');
-    const libraryFiltersSidebar = document.getElementById('library-filters-sidebar');
+
     const gameGuessInput = document.getElementById('game-guess-input');
     const gameAutocompleteList = document.getElementById('game-autocomplete-list');
     const gameGrid = document.getElementById('game-grid');
@@ -169,6 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const statWinRate = document.getElementById('stat-win-rate');
     const statBestGame = document.getElementById('stat-best-game');
     const statAvgGuesses = document.getElementById('stat-avg-guesses');
+
     const modalBackdrop = document.getElementById('tower-modal-backdrop');
     const modalPanel = document.getElementById('tower-modal-panel');
     const modalCloseButton = document.getElementById('modal-close-button');
@@ -180,24 +184,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalWarnings = document.getElementById('modal-warnings');
     const modalArea = document.getElementById('modal-area');
     const modalDate = document.getElementById('modal-date');
+
     const libSearch = document.getElementById('lib-search');
     const libSortBtn = document.getElementById('lib-sort-btn');
     const libSortText = document.getElementById('lib-sort-text');
     const libSortIcon = document.getElementById('lib-sort-icon');
+
     const btnModeRange = document.getElementById('btn-mode-range');
     const btnModeSelect = document.getElementById('btn-mode-select');
     const diffUiRange = document.getElementById('diff-ui-range');
     const diffUiSelect = document.getElementById('diff-ui-select');
+
     const diffMinInput = document.getElementById('diff-min-input');
     const diffMaxInput = document.getElementById('diff-max-input');
+
     const diffDropdownBtn = document.getElementById('diff-dropdown-btn');
     const diffDropdownMenu = document.getElementById('diff-dropdown-menu');
     const diffListContainer = document.getElementById('diff-list-container');
+
     const areaDropdownBtn = document.getElementById('area-dropdown-btn');
     const areaDropdownMenu = document.getElementById('area-dropdown-menu');
     const areaListContainer = document.getElementById('area-list-container');
-    const statusDropdownBtn = document.getElementById('status-dropdown-btn');
-    const statusDropdownMenu = document.getElementById('status-dropdown-menu');
+
+    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+    const mobileFilterToggle = document.getElementById('mobile-filter-toggle');
+    const mobileBackdrop = document.getElementById('mobile-backdrop');
+    const leftSidebar = document.getElementById('left-sidebar');
+    const mobileCloseFilters = document.getElementById('mobile-close-filters');
+    const libraryFiltersSidebar = document.getElementById('library-filters-sidebar');
 
     const titleCase = (str) => str ? str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') : '';
     const showNotification = (message, type = 'success') => {
@@ -232,7 +246,6 @@ document.addEventListener('DOMContentLoaded', () => {
         currentView = viewName;
         const activeClasses = ['bg-[#BE00FF]/20', 'border', 'border-[#BE00FF]/50', 'text-[#BE00FF]'];
         const inactiveClasses = ['text-gray-300', 'transition-colors', 'hover:bg-white/5', 'hover:text-white'];
-
         const views = {
             chart: {
                 title: 'Completion Chart',
@@ -283,16 +296,16 @@ document.addEventListener('DOMContentLoaded', () => {
             libraryFiltersSidebar.classList.remove('flex');
         }
 
-
         Object.values(views).forEach(view => view.element.classList.add('hidden'));
         if (views[viewName]) views[viewName].element.classList.remove('hidden');
-
         if (viewName === 'leaderboard' && !leaderboardData) fetchAndRenderLeaderboard();
         if (viewName === 'games' && !targetTower) initGame();
         if (viewName === 'library') {
             if (areaListContainer.children.length === 0) initLibraryComponents();
             renderLibrary();
         }
+        if (viewName === 'games' || viewName === 'library') mobileFilterToggle.classList.remove('hidden');
+        else mobileFilterToggle.classList.add('hidden');
 
         [...navLinksContainer.querySelectorAll('a'), ...gamesNavLinksContainer.querySelectorAll('a'), ...miscNavLinksContainer.querySelectorAll('a')].forEach(link => {
             if (link.dataset.view === viewName) {
@@ -304,6 +317,31 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     };
+
+    const toggleSidebar = (sidebar, show) => {
+        if (show) {
+            sidebar.classList.remove('-translate-x-full', 'translate-x-full');
+            sidebar.classList.add('translate-x-0');
+            mobileBackdrop.classList.remove('hidden');
+        } else {
+            if (sidebar === leftSidebar) sidebar.classList.add('-translate-x-full');
+            else sidebar.classList.add('translate-x-full');
+            sidebar.classList.remove('translate-x-0');
+            mobileBackdrop.classList.add('hidden');
+        }
+    };
+
+    mobileMenuToggle.addEventListener('click', () => toggleSidebar(leftSidebar, !leftSidebar.classList.contains('translate-x-0')));
+    mobileFilterToggle.addEventListener('click', () => {
+        const activeRightSidebar = !gameStatsSidebar.classList.contains('hidden') ? gameStatsSidebar : libraryFiltersSidebar;
+        if (!activeRightSidebar.classList.contains('hidden')) toggleSidebar(activeRightSidebar, !activeRightSidebar.classList.contains('translate-x-0'));
+    });
+    if (mobileCloseFilters) mobileCloseFilters.addEventListener('click', () => toggleSidebar(libraryFiltersSidebar, false));
+    mobileBackdrop.addEventListener('click', () => {
+        toggleSidebar(leftSidebar, false);
+        toggleSidebar(gameStatsSidebar, false);
+        toggleSidebar(libraryFiltersSidebar, false);
+    });
 
     const initLibraryComponents = () => {
         const areaMenu = document.getElementById('area-dropdown-menu');
@@ -413,7 +451,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const hex = difficultyColors[diff];
             const rgb = hexToRgb(hex);
             const bgStyle = `background: linear-gradient(90deg, rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.04) 0%, rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.01) 100%); border-left: 3px solid ${hex};`;
-
             const label = document.createElement('label');
             label.className = 'dropdown-check-item text-xs text-gray-200';
             label.style = bgStyle;
@@ -537,27 +574,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnModeRange.addEventListener('click', () => {
         libFilterMode = 'range';
-
-        btnModeRange.classList.remove('text-gray-400', 'hover:text-white');
-        btnModeRange.classList.add('bg-[#BE00FF]', 'text-white');
-
-        btnModeSelect.classList.remove('bg-[#BE00FF]', 'text-white');
-        btnModeSelect.classList.add('text-gray-400', 'hover:text-white');
-
+        btnModeRange.classList.replace('text-gray-400', 'text-white');
+        btnModeRange.classList.add('bg-[#BE00FF]');
+        btnModeRange.classList.remove('hover:text-white');
+        btnModeSelect.classList.replace('text-white', 'text-gray-400');
+        btnModeSelect.classList.remove('bg-[#BE00FF]');
+        btnModeSelect.classList.add('hover:text-white');
         diffUiRange.classList.remove('hidden');
         diffUiSelect.classList.add('hidden');
         renderLibrary();
     });
-
     btnModeSelect.addEventListener('click', () => {
         libFilterMode = 'select';
-
-        btnModeSelect.classList.remove('text-gray-400', 'hover:text-white');
-        btnModeSelect.classList.add('bg-[#BE00FF]', 'text-white');
-
-        btnModeRange.classList.remove('bg-[#BE00FF]', 'text-white');
-        btnModeRange.classList.add('text-gray-400', 'hover:text-white');
-
+        btnModeSelect.classList.replace('text-gray-400', 'text-white');
+        btnModeSelect.classList.add('bg-[#BE00FF]');
+        btnModeSelect.classList.remove('hover:text-white');
+        btnModeRange.classList.replace('text-white', 'text-gray-400');
+        btnModeRange.classList.remove('bg-[#BE00FF]');
+        btnModeRange.classList.add('hover:text-white');
         diffUiRange.classList.add('hidden');
         diffUiSelect.classList.remove('hidden');
         renderLibrary();
@@ -661,7 +695,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!hasData) return;
         const canonTowers = allTowersData.filter(t => !NON_CANON_TOWERS.has(t.name));
         targetTower = canonTowers[Math.floor(Math.random() * canonTowers.length)];
-        console.log("Target:", targetTower.name);
+        // console.log("Target:", targetTower.name);
         guesses = [];
         isGameActive = true;
         gameGuessInput.value = '';
@@ -823,13 +857,15 @@ document.addEventListener('DOMContentLoaded', () => {
     newGameBtn.addEventListener('click', initGame);
 
     const fetchAndRenderLeaderboard = async () => {
-        leaderboardContainer.innerHTML = `<div class="flex items-center justify-center p-8">Loading leaderboard...</div>`;
+        leaderboardContainer.innerHTML = `<div class="flex items-center justify-center p-8 bg-black/20 text-gray-400">Loading leaderboard...</div>`;
         try {
             const response = await fetch(`${API_BASE_URL}/api/get_leaderboard`);
             const result = await response.json();
             if (!result.success) throw new Error(result.error);
             leaderboardData = result.leaderboard;
-            let headerHtml = `<div class="leaderboard-header"><div class="w-16 text-center">#</div><div class="w-64 text-left">Player</div><div class="flex-1 text-left">Hardest Tower</div><div class="w-56 text-left">Difficulty</div><div class="w-24 text-center">Towers</div></div>`;
+
+            let headerHtml = `<div class="leaderboard-header whitespace-nowrap"><div class="w-16 text-center">#</div><div class="w-64 text-left">Player</div><div class="flex-1 text-left">Hardest Tower</div><div class="w-56 text-left">Difficulty</div><div class="w-24 text-center">Towers</div></div>`;
+
             let rowsHtml = '';
             leaderboardData.forEach((player, index) => {
                 const rank = index + 1;
@@ -848,14 +884,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     rankClass = 'rank-top10';
                     rankRgb = rankColors.top10;
                 }
+
                 const difficultyText = `${player.hardest_tower_modifier || ''} ${player.hardest_tower_difficulty || ''}`.trim();
                 const diffPillClass = difficultyPillClasses[player.hardest_tower_difficulty] || difficultyPillClasses.nil;
                 const numericDifficulty = (player.number_difficulty || 0).toFixed(2);
-                rowsHtml += `<div class="leaderboard-row ${rankClass}" style="--rank-rgb: ${rankRgb};"><div class="w-16 text-center text-lg font-bold text-gray-400">${rank}</div><div class="w-64"><div class="flex items-center gap-3"><img src="${player.avatar_url || 'icon.jpg'}" class="leaderboard-avatar" alt="avatar"><div class="flex flex-col"><span class="font-bold text-white truncate">${player.display_name || player.user_name}</span><span class="text-xs text-gray-400">@${player.user_name || 'null'}</span></div></div></div><div class="flex-1 text-gray-300 text-sm text-left truncate pr-4">${player.hardest_tower_name}</div><div class="w-56 text-left"><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${diffPillClass}">${difficultyText} [${numericDifficulty}]</span></div><div class="w-24 text-center text-lg font-bold">${player.total_towers}</div></div>`;
+
+                rowsHtml += `<div class="leaderboard-row ${rankClass}" style="--rank-rgb: ${rankRgb};"><div class="w-16 text-center text-lg font-bold text-gray-400">${rank}</div><div class="w-64"><div class="flex items-center gap-3"><img src="${player.avatar_url || 'icon.jpg'}" class="leaderboard-avatar" alt="avatar"><div class="flex flex-col"><span class="font-bold text-white truncate">${player.display_name || player.user_name}</span><span class="text-xs text-gray-400">@${player.user_name || 'null'}</span></div></div></div><div class="flex-1 text-gray-300 text-sm text-left truncate pr-4">${player.hardest_tower_name}</div><div class="w-56 text-left"><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${diffPillClass}">${difficultyText} [${numericDifficulty}]</span></div><div class="w-24 text-center text-lg font-bold text-white">${player.total_towers}</div></div>`;
             });
-            leaderboardContainer.innerHTML = headerHtml + rowsHtml;
+
+            leaderboardContainer.innerHTML = `<div class="min-w-[900px] bg-black/20">${headerHtml + rowsHtml}</div>`;
+
         } catch (error) {
-            leaderboardContainer.innerHTML = `<div class="flex items-center justify-center p-8 text-red-400">Failed to load leaderboard.</div>`;
+            leaderboardContainer.innerHTML = `<div class="flex items-center justify-center p-8 text-red-400 bg-black/20">Failed to load leaderboard.</div>`;
             showNotification(error.message, 'error');
         }
     };
@@ -1065,9 +1105,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     const completionRgb = isCompleted ? '67, 255, 129' : '255, 50, 50';
                     const diffRgb = (hexToRgb(difficultyColors[tower.difficulty] || '#808080') || [128, 128, 128]).join(', ');
 
-                    towerRowsHtml += `<tr class="tower-row ${isCompleted?'status-outline-completed':'status-outline-incomplete'}" style="--difficulty-rgb: ${completionRgb}; --area-rgb: ${diffRgb};" data-tower-name="${tower.name}"><td class="py-1 px-3 ${isCompleted?'text-gray-200':'text-gray-500'}">${tower.name}</td><td class="py-1 px-3 text-right"><div class="flex justify-end items-center gap-2"><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 ${isCompleted?'text-gray-300 bg-gray-500/10':'text-gray-600 bg-gray-500/10'}">${isCompleted?new Date(beatenVersion.awarded_unix*1000).toLocaleDateString():'--'}</span><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${difficultyPillClasses[tower.difficulty]||difficultyPillClasses.nil}">${tower.modifier||''} ${tower.difficulty||''} [${(tower.number_difficulty||0).toFixed(2)}]</span></div></td></tr>`;
+                    towerRowsHtml += `<tr class="tower-row ${isCompleted?'status-outline-completed':'status-outline-incomplete'}" style="--difficulty-rgb: ${completionRgb}; --area-rgb: ${diffRgb};" data-tower-name="${tower.name}"><td class="py-0.5 px-2 ${isCompleted?'text-gray-200':'text-gray-500'}">${tower.name}</td><td class="py-0.5 px-2 text-right"><div class="flex justify-end items-center gap-2"><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 ${isCompleted?'text-gray-300 bg-gray-500/10':'text-gray-600 bg-gray-500/10'}">${isCompleted?new Date(beatenVersion.awarded_unix*1000).toLocaleDateString():'--'}</span><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${difficultyPillClasses[tower.difficulty]||difficultyPillClasses.nil}">${tower.modifier||''} ${tower.difficulty||''} [${(tower.number_difficulty||0).toFixed(2)}]</span></div></td></tr>`;
                 });
-                columnHtml += `<div class="bg-black/20 rounded-md overflow-hidden"><table class="w-full text-sm"><caption class="py-2.5 px-4 text-left font-bold text-base bg-black/10"><div class="${captionClasses} select-none flex justify-between items-center"><span class="caption-text">${area.name}</span><div class="flex items-center gap-3">${countPill}<span class="material-symbols-outlined caption-icon dropdown-arrow">${captionIcon}</span></div></div></caption><tbody class="${tbodyClass}">${towerRowsHtml}</tbody></table></div>`;
+
+                const wrapperStyle = area.isSub ? 'margin-left: 2.5rem; position: relative; width: calc(100% - 2.5rem);' : '';
+                const connectorHtml = area.isSub ? '<div class="subrealm-connector"></div>' : '';
+
+                columnHtml += `<div style="${wrapperStyle}">${connectorHtml}<div class="bg-black/20 rounded-md overflow-x-auto"><table class="w-full text-sm min-w-[500px]"><caption class="py-1.5 px-4 text-left font-bold text-base bg-black/20 border-b border-white/5"><div class="${captionClasses} select-none flex justify-between items-center"><span class="caption-text">${area.name}</span><div class="flex items-center gap-3">${countPill}<span class="material-symbols-outlined caption-icon dropdown-arrow">${captionIcon}</span></div></div></caption><tbody class="${tbodyClass}">${towerRowsHtml}</tbody></table></div></div>`;
             }
             return `<div class="flex flex-col gap-4">${columnHtml}</div>`;
         };
