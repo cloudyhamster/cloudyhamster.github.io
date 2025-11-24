@@ -26,6 +26,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let libStatusValue = 'All';
     let libSortOrder = 'desc';
 
+    let libSelectedTypes = new Set(['Tower', 'Citadel', 'Steeple']);
+
+    let libSelectedLengths = new Set();
+    let libMinFloors = null;
+    let libMaxFloors = null;
+    let libSelectedCreators = new Set();
+    let libSelectedWarnings = new Set();
+
     const NON_CANON_TOWERS = new Set([
         "Tower Not Found", "Not Even A Tower", "This Is Probably A Tower",
         "Maybe A Tower", "Totally A Tower", "Will Be A Tower", "Likely A Tower",
@@ -79,6 +87,10 @@ document.addEventListener('DOMContentLoaded', () => {
         'Default': '#6b7280'
     };
 
+    const areaDisplayNames = {
+        'Garden Of Eesh%C3%B6L': 'Garden Of Eeshöl'
+    };
+
     const difficultyPillClasses = {
         "Easy": "border-green-500/50 text-green-300 bg-green-500/10",
         "Medium": "border-yellow-500/50 text-yellow-300 bg-yellow-500/10",
@@ -125,9 +137,6 @@ document.addEventListener('DOMContentLoaded', () => {
         'Default': 'border-gray-500/50 text-gray-300 bg-gray-500/10',
     };
 
-    const areaDisplayNames = {
-        'Garden Of Eesh%C3%B6L': 'Garden Of Eeshöl'
-    };
     const rankColors = {
         "gold": "255, 215, 0",
         "silver": "192, 192, 192",
@@ -197,6 +206,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const diffMinInput = document.getElementById('diff-min-input');
     const diffMaxInput = document.getElementById('diff-max-input');
+    const floorMinInput = document.getElementById('floor-min-input');
+    const floorMaxInput = document.getElementById('floor-max-input');
 
     const diffDropdownBtn = document.getElementById('diff-dropdown-btn');
     const diffDropdownMenu = document.getElementById('diff-dropdown-menu');
@@ -205,6 +216,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const areaDropdownBtn = document.getElementById('area-dropdown-btn');
     const areaDropdownMenu = document.getElementById('area-dropdown-menu');
     const areaListContainer = document.getElementById('area-list-container');
+
+    const statusDropdownBtn = document.getElementById('status-dropdown-btn');
+    const statusDropdownMenu = document.getElementById('status-dropdown-menu');
+
+    const lengthDropdownBtn = document.getElementById('length-dropdown-btn');
+    const lengthDropdownMenu = document.getElementById('length-dropdown-menu');
+    const lengthListContainer = document.getElementById('length-list-container');
+
+    const creatorDropdownBtn = document.getElementById('creator-dropdown-btn');
+    const creatorDropdownMenu = document.getElementById('creator-dropdown-menu');
+    const creatorListContainer = document.getElementById('creator-list-container');
+    const creatorSearchInput = document.getElementById('creator-search-input');
 
     const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
     const mobileFilterToggle = document.getElementById('mobile-filter-toggle');
@@ -346,7 +369,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const initLibraryComponents = () => {
         const areaMenu = document.getElementById('area-dropdown-menu');
         const diffMenu = document.getElementById('diff-dropdown-menu');
-        const menus = [areaMenu, diffMenu];
+        const lengthMenu = document.getElementById('length-dropdown-menu');
+        const creatorMenu = document.getElementById('creator-dropdown-menu');
+        const menus = [areaMenu, diffMenu, lengthMenu, creatorMenu];
 
         const toggleDropdown = (targetMenu) => {
             const isHidden = targetMenu.classList.contains('hidden');
@@ -368,9 +393,26 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
+        const typeBtns = document.querySelectorAll('.type-filter-btn');
+        typeBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const val = btn.dataset.value;
+                if (libSelectedTypes.has(val)) {
+                    libSelectedTypes.delete(val);
+                    btn.classList.remove('bg-[#BE00FF]', 'text-white');
+                    btn.classList.add('text-gray-400', 'hover:text-white');
+                } else {
+                    libSelectedTypes.add(val);
+                    btn.classList.remove('text-gray-400', 'hover:text-white');
+                    btn.classList.add('bg-[#BE00FF]', 'text-white');
+                }
+                renderLibrary();
+            });
+        });
+
         const areas = Array.from(new Set(allTowersData.map(t => t.area).filter(Boolean)));
         libSelectedAreas = new Set(areas);
-
         const hierarchyMap = {
             "Ring 1": ["Forgotten Ridge"],
             "Ring 2": ["Garden Of Eesh%C3%B6L"],
@@ -429,10 +471,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 label.className = `${containerClass} text-xs text-gray-300`;
                 label.style = bgStyle;
                 label.style.color = hex;
-
                 const isChecked = libSelectedAreas.has(item.name) ? 'checked' : '';
                 label.innerHTML = `<input type="checkbox" value="${item.name}" ${isChecked}><span class="text-gray-200 font-medium">${areaDisplayNames[item.name]||item.name}</span>`;
-
                 label.querySelector('input').addEventListener('change', (e) => {
                     if (e.target.checked) libSelectedAreas.add(item.name);
                     else libSelectedAreas.delete(item.name);
@@ -465,6 +505,61 @@ document.addEventListener('DOMContentLoaded', () => {
             diffListContainer.appendChild(label);
         });
 
+        const lengths = ['<20 minutes', '20+ minutes', '30+ minutes', '45+ minutes', '60+ minutes', '90+ minutes'];
+        libSelectedLengths = new Set(lengths);
+        lengthListContainer.innerHTML = '';
+        lengths.forEach(len => {
+            const label = document.createElement('label');
+            label.className = 'dropdown-check-item text-xs text-gray-200';
+            label.style.color = '#FFA500';
+            label.innerHTML = `<input type="checkbox" value="${len}" checked><span class="text-gray-200 font-medium">${len}</span>`;
+            label.querySelector('input').addEventListener('change', (e) => {
+                if (e.target.checked) libSelectedLengths.add(len);
+                else libSelectedLengths.delete(len);
+                updateLengthButtonText(lengths.length);
+                renderLibrary();
+            });
+            lengthListContainer.appendChild(label);
+        });
+
+        const creators = Array.from(new Set(allTowersData.flatMap(t => Array.isArray(t.creators) ? t.creators.flatMap(c => c.split(',')) : []).map(c => c.trim()).filter(Boolean))).sort();
+        libSelectedCreators = new Set(creators);
+        const renderCreatorList = (filter = "") => {
+            creatorListContainer.innerHTML = '';
+            const filtered = creators.filter(c => c.toLowerCase().includes(filter.toLowerCase()));
+            filtered.forEach(c => {
+                const label = document.createElement('label');
+                label.className = 'dropdown-check-item text-xs text-gray-200';
+                label.style.color = '#EAEAEA';
+                const isChecked = libSelectedCreators.has(c) ? 'checked' : '';
+                label.innerHTML = `<input type="checkbox" value="${c}" ${isChecked}><span class="text-gray-200 font-medium truncate">${c}</span>`;
+                label.querySelector('input').addEventListener('change', (e) => {
+                    if (e.target.checked) libSelectedCreators.add(c);
+                    else libSelectedCreators.delete(c);
+                    updateCreatorButtonText(creators.length);
+                    renderLibrary();
+                });
+                creatorListContainer.appendChild(label);
+            });
+        };
+        renderCreatorList();
+        creatorSearchInput.addEventListener('input', (e) => renderCreatorList(e.target.value));
+
+        document.getElementById('btn-select-all-creators').addEventListener('click', (e) => {
+            e.stopPropagation();
+            libSelectedCreators = new Set(creators);
+            renderCreatorList(creatorSearchInput.value);
+            updateCreatorButtonText(creators.length);
+            renderLibrary();
+        });
+        document.getElementById('btn-deselect-all-creators').addEventListener('click', (e) => {
+            e.stopPropagation();
+            libSelectedCreators.clear();
+            renderCreatorList(creatorSearchInput.value);
+            updateCreatorButtonText(creators.length);
+            renderLibrary();
+        });
+
         libSortBtn.addEventListener('click', () => {
             if (libSortOrder === 'desc') {
                 libSortOrder = 'asc';
@@ -486,6 +581,14 @@ document.addEventListener('DOMContentLoaded', () => {
             e.stopPropagation();
             toggleDropdown(diffMenu);
         });
+        lengthDropdownBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleDropdown(lengthMenu);
+        });
+        creatorDropdownBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleDropdown(creatorMenu);
+        });
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.relative')) menus.forEach(m => m.classList.add('hidden'));
         });
@@ -502,6 +605,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (libSelectedDiffs.size === 0) btn.textContent = "None Selected";
         else if (libSelectedDiffs.size === total) btn.textContent = "All Difficulties";
         else btn.textContent = `${libSelectedDiffs.size} Difficulties Selected`;
+    };
+    const updateLengthButtonText = (total) => {
+        const btn = lengthDropdownBtn.querySelector('span');
+        if (libSelectedLengths.size === 0) btn.textContent = "None Selected";
+        else if (libSelectedLengths.size === total) btn.textContent = "All Lengths";
+        else btn.textContent = `${libSelectedLengths.size} Lengths Selected`;
+    };
+    const updateCreatorButtonText = (total) => {
+        const btn = creatorDropdownBtn.querySelector('span');
+        if (libSelectedCreators.size === 0) btn.textContent = "None Selected";
+        else if (libSelectedCreators.size === total) btn.textContent = "All Creators";
+        else btn.textContent = `${libSelectedCreators.size} Creators Selected`;
     };
 
     const renderLibrary = () => {
@@ -525,6 +640,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!libSelectedDiffs.has(t.difficulty)) return false;
             }
             if (!libSelectedAreas.has(t.area)) return false;
+            if (libSelectedTypes.size > 0 && !libSelectedTypes.has(getTowerType(t.name))) return false;
+
+            const rawLen = t.length || '<20 minutes';
+            const cleanLen = rawLen.replace(' long', '').trim();
+            if (!libSelectedLengths.has(cleanLen)) return false;
+
+            const floors = t.floors ?? 10;
+            if (libMinFloors !== null && floors < libMinFloors) return false;
+            if (libMaxFloors !== null && floors > libMaxFloors) return false;
+
+            const creators = Array.isArray(t.creators) ? t.creators.flatMap(c => c.split(',').map(x => x.trim())) : [];
+            const hasSelectedCreator = creators.length === 0 ? libSelectedCreators.has("Unknown") : creators.some(c => libSelectedCreators.has(c));
+            if (!hasSelectedCreator) return false;
+
             const isCompleted = beatenSet.has(t.name);
             if (libStatusValue === 'Completed' && !isCompleted) return false;
             if (libStatusValue === 'Incomplete' && isCompleted) return false;
@@ -569,6 +698,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     diffMaxInput.addEventListener('input', (e) => {
         libMaxDiff = parseFloat(e.target.value) || 12;
+        renderLibrary();
+    });
+    floorMinInput.addEventListener('input', (e) => {
+        libMinFloors = e.target.value ? parseInt(e.target.value) : null;
+        renderLibrary();
+    });
+    floorMaxInput.addEventListener('input', (e) => {
+        libMaxFloors = e.target.value ? parseInt(e.target.value) : null;
         renderLibrary();
     });
 
@@ -695,7 +832,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!hasData) return;
         const canonTowers = allTowersData.filter(t => !NON_CANON_TOWERS.has(t.name));
         targetTower = canonTowers[Math.floor(Math.random() * canonTowers.length)];
-        // console.log("Target:", targetTower.name);
         guesses = [];
         isGameActive = true;
         gameGuessInput.value = '';
@@ -857,14 +993,14 @@ document.addEventListener('DOMContentLoaded', () => {
     newGameBtn.addEventListener('click', initGame);
 
     const fetchAndRenderLeaderboard = async () => {
-        leaderboardContainer.innerHTML = `<div class="flex items-center justify-center p-8 bg-black/20 text-gray-400">Loading leaderboard...</div>`;
+        leaderboardContainer.innerHTML = `<div class="flex items-center justify-center p-8 text-gray-400">Loading leaderboard...</div>`;
         try {
             const response = await fetch(`${API_BASE_URL}/api/get_leaderboard`);
             const result = await response.json();
             if (!result.success) throw new Error(result.error);
             leaderboardData = result.leaderboard;
 
-            let headerHtml = `<div class="leaderboard-header whitespace-nowrap"><div class="w-16 text-center">#</div><div class="w-64 text-left">Player</div><div class="flex-1 text-left">Hardest Tower</div><div class="w-56 text-left">Difficulty</div><div class="w-24 text-center">Towers</div></div>`;
+            let headerHtml = `<div class="leaderboard-header whitespace-nowrap"><div class="w-16 text-center">#</div><div class="w-64 text-left">Player</div><div class="flex-1 text-left">Hardest Tower</div><div class="w-56 text-left">Difficulty</div><div class="w-24 text-center pr-2">Towers</div></div>`;
 
             let rowsHtml = '';
             leaderboardData.forEach((player, index) => {
@@ -889,13 +1025,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const diffPillClass = difficultyPillClasses[player.hardest_tower_difficulty] || difficultyPillClasses.nil;
                 const numericDifficulty = (player.number_difficulty || 0).toFixed(2);
 
-                rowsHtml += `<div class="leaderboard-row ${rankClass}" style="--rank-rgb: ${rankRgb};"><div class="w-16 text-center text-lg font-bold text-gray-400">${rank}</div><div class="w-64"><div class="flex items-center gap-3"><img src="${player.avatar_url || 'icon.jpg'}" class="leaderboard-avatar" alt="avatar"><div class="flex flex-col"><span class="font-bold text-white truncate">${player.display_name || player.user_name}</span><span class="text-xs text-gray-400">@${player.user_name || 'null'}</span></div></div></div><div class="flex-1 text-gray-300 text-sm text-left truncate pr-4">${player.hardest_tower_name}</div><div class="w-56 text-left"><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${diffPillClass}">${difficultyText} [${numericDifficulty}]</span></div><div class="w-24 text-center text-lg font-bold text-white">${player.total_towers}</div></div>`;
+                rowsHtml += `<div class="leaderboard-row ${rankClass}" style="--rank-rgb: ${rankRgb};"><div class="w-16 text-center text-lg font-bold text-gray-400">${rank}</div><div class="w-64"><div class="flex items-center gap-3"><img src="${player.avatar_url || 'icon.jpg'}" class="leaderboard-avatar" alt="avatar"><div class="flex flex-col"><span class="font-bold text-white truncate">${player.display_name || player.user_name}</span><span class="text-xs text-gray-400">@${player.user_name || 'null'}</span></div></div></div><div class="flex-1 text-gray-300 text-sm text-left truncate pr-4">${player.hardest_tower_name}</div><div class="w-56 text-left"><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${diffPillClass}">${difficultyText} [${numericDifficulty}]</span></div><div class="w-24 text-center text-lg font-bold text-white pr-2">${player.total_towers}</div></div>`;
             });
 
-            leaderboardContainer.innerHTML = `<div class="min-w-[900px] bg-black/20">${headerHtml + rowsHtml}</div>`;
+            leaderboardContainer.innerHTML = `<div class="min-w-[900px]">${headerHtml + rowsHtml}</div>`;
 
         } catch (error) {
-            leaderboardContainer.innerHTML = `<div class="flex items-center justify-center p-8 text-red-400 bg-black/20">Failed to load leaderboard.</div>`;
+            leaderboardContainer.innerHTML = `<div class="flex items-center justify-center p-8 text-red-400">Failed to load leaderboard.</div>`;
             showNotification(error.message, 'error');
         }
     };
@@ -1105,13 +1241,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const completionRgb = isCompleted ? '67, 255, 129' : '255, 50, 50';
                     const diffRgb = (hexToRgb(difficultyColors[tower.difficulty] || '#808080') || [128, 128, 128]).join(', ');
 
-                    towerRowsHtml += `<tr class="tower-row ${isCompleted?'status-outline-completed':'status-outline-incomplete'}" style="--difficulty-rgb: ${completionRgb}; --area-rgb: ${diffRgb};" data-tower-name="${tower.name}"><td class="py-0.5 px-2 ${isCompleted?'text-gray-200':'text-gray-500'}">${tower.name}</td><td class="py-0.5 px-2 text-right"><div class="flex justify-end items-center gap-2"><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 ${isCompleted?'text-gray-300 bg-gray-500/10':'text-gray-600 bg-gray-500/10'}">${isCompleted?new Date(beatenVersion.awarded_unix*1000).toLocaleDateString():'--'}</span><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${difficultyPillClasses[tower.difficulty]||difficultyPillClasses.nil}">${tower.modifier||''} ${tower.difficulty||''} [${(tower.number_difficulty||0).toFixed(2)}]</span></div></td></tr>`;
+                    towerRowsHtml += `<tr class="tower-row ${isCompleted?'status-outline-completed':'status-outline-incomplete'}" style="--difficulty-rgb: ${completionRgb}; --area-rgb: ${diffRgb};" data-tower-name="${tower.name}"><td class="py-1 px-3 ${isCompleted?'text-gray-200':'text-gray-500'}">${tower.name}</td><td class="py-1 px-3 text-right"><div class="flex justify-end items-center gap-2"><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 ${isCompleted?'text-gray-300 bg-gray-500/10':'text-gray-600 bg-gray-500/10'}">${isCompleted?new Date(beatenVersion.awarded_unix*1000).toLocaleDateString():'--'}</span><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${difficultyPillClasses[tower.difficulty]||difficultyPillClasses.nil}">${tower.modifier||''} ${tower.difficulty||''} [${(tower.number_difficulty||0).toFixed(2)}]</span></div></td></tr>`;
                 });
-
-                const wrapperStyle = area.isSub ? 'margin-left: 2.5rem; position: relative; width: calc(100% - 2.5rem);' : '';
-                const connectorHtml = area.isSub ? '<div class="subrealm-connector"></div>' : '';
-
-                columnHtml += `<div style="${wrapperStyle}">${connectorHtml}<div class="bg-black/20 rounded-md overflow-x-auto"><table class="w-full text-sm min-w-[500px]"><caption class="py-1.5 px-4 text-left font-bold text-base bg-black/20 border-b border-white/5"><div class="${captionClasses} select-none flex justify-between items-center"><span class="caption-text">${area.name}</span><div class="flex items-center gap-3">${countPill}<span class="material-symbols-outlined caption-icon dropdown-arrow">${captionIcon}</span></div></div></caption><tbody class="${tbodyClass}">${towerRowsHtml}</tbody></table></div></div>`;
+                columnHtml += `<div class="bg-black/20 rounded-md overflow-hidden"><table class="w-full text-sm"><caption class="py-2.5 px-4 text-left font-bold text-base bg-black/10"><div class="${captionClasses} select-none flex justify-between items-center"><span class="caption-text">${area.name}</span><div class="flex items-center gap-3">${countPill}<span class="material-symbols-outlined caption-icon dropdown-arrow">${captionIcon}</span></div></div></caption><tbody class="${tbodyClass}">${towerRowsHtml}</tbody></table></div>`;
             }
             return `<div class="flex flex-col gap-4">${columnHtml}</div>`;
         };

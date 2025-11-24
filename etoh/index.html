@@ -20,11 +20,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <link rel="icon" href="icon.jpg">
-    <link rel="stylesheet" href="./css/style.css?v=1.6.0">
+    <link rel="stylesheet" href="./css/style.css?v=1.6.1">
 </head>
 <body class="text-[#EAEAEA] antialiased">
     <div class="relative flex h-auto min-h-screen w-full flex-col overflow-hidden">
-        
         <header class="fixed top-0 left-0 right-0 z-30 mx-auto w-[70%] p-3 hidden lg:block">
             <div class="glass-panel flex h-14 items-center justify-between rounded-lg px-4">
                 <div class="flex items-center gap-3">
@@ -59,7 +58,6 @@
         </header>
 
         <main class="flex h-full min-h-screen w-full grow flex-col lg:flex-row pt-20 pb-3 px-2 lg:px-3 gap-4 lg:gap-3 w-full mx-auto relative">
-            
             <aside id="left-sidebar" class="fixed inset-y-0 left-0 z-50 w-[280px] bg-[#120E1C] lg:bg-transparent transform -translate-x-full lg:translate-x-0 transition-transform duration-300 lg:sticky lg:top-20 lg:self-start flex flex-col gap-3 h-full lg:h-[calc(100vh-80px-12px)] p-4 lg:p-0 border-r border-white/10 lg:border-none overflow-y-auto custom-scrollbar">
                 <div class="glass-panel rounded-lg p-3 flex-shrink-0">
                     <div class="flex flex-col min-w-40 h-10 w-full">
@@ -155,7 +153,7 @@
                     </div>
                     
                     <div id="leaderboard-view" class="flex-grow w-full h-full overflow-y-auto hidden">
-                        <div id="leaderboard-container" class="bg-transparent rounded-md overflow-hidden overflow-x-auto">
+                        <div id="leaderboard-container" class="bg-black/20 rounded-md overflow-hidden overflow-x-auto">
                             <div class="flex items-center justify-center p-8 text-sm text-gray-500">Loading leaderboard...</div>
                         </div>
                     </div>
@@ -230,7 +228,7 @@
                 </div>
             </aside>
             
-            <aside id="library-filters-sidebar" class="fixed inset-y-0 right-0 z-50 w-[320px] lg:w-[420px] bg-[#120E1C] lg:bg-transparent transform translate-x-full lg:translate-x-0 transition-transform duration-300 lg:sticky lg:top-0 lg:self-start flex-col gap-3 h-full lg:h-full max-h-full lg:max-h-full p-4 lg:p-0 border-l border-white/10 lg:border-none hidden overflow-y-auto">
+            <aside id="library-filters-sidebar" class="fixed inset-y-0 right-0 z-50 w-[320px] lg:w-[420px] bg-[#120E1C] lg:bg-transparent transform translate-x-full lg:translate-x-0 transition-transform duration-300 lg:sticky lg:top-0 lg:self-start flex-col gap-3 h-full lg:h-[calc(100vh-80px-12px)] max-h-full p-4 lg:p-0 border-l border-white/10 lg:border-none hidden overflow-y-auto">
                 <div class="glass-panel flex-grow rounded-lg p-5 flex flex-col gap-6 overflow-hidden">
                     <div class="flex justify-between items-center border-b border-white/10 pb-3 flex-shrink-0">
                         <h3 class="text-sm font-bold text-white">Library Filters</h3>
@@ -238,7 +236,6 @@
                     </div>
 
                     <div class="flex-grow overflow-y-auto flex flex-col gap-6 pr-1 custom-scrollbar h-[400px] lg:h-auto">
-                        
                         <div class="flex flex-col gap-1.5">
                             <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Name</label>
                             <div class="relative">
@@ -265,6 +262,15 @@
                             </div>
                         </div>
 
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Type</label>
+                            <div class="grid grid-cols-3 gap-1 bg-black/30 p-1 rounded-md border border-white/10">
+                                <button class="type-filter-btn px-2 py-1.5 lg:py-1.5 text-[10px] lg:text-xs font-bold rounded transition-all bg-[#BE00FF] text-white" data-value="Tower">Tower</button>
+                                <button class="type-filter-btn px-2 py-1.5 lg:py-1.5 text-[10px] lg:text-xs font-bold rounded transition-all bg-[#BE00FF] text-white" data-value="Citadel">Citadel</button>
+                                <button class="type-filter-btn px-2 py-1.5 lg:py-1.5 text-[10px] lg:text-xs font-bold rounded transition-all bg-[#BE00FF] text-white" data-value="Steeple">Steeple</button>
+                            </div>
+                        </div>
+
                         <div class="flex flex-col gap-1.5 relative">
                             <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Area</label>
                             <button id="area-dropdown-btn" class="w-full flex justify-between items-center bg-black/30 border border-white/10 rounded-md px-3 py-1.5 lg:py-2.5 text-[10px] lg:text-sm text-gray-300 focus:border-[#BE00FF] hover:bg-white/5 transition-colors text-left">
@@ -278,6 +284,7 @@
 
                         <div class="flex flex-col gap-2 relative mt-1">
                             <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Difficulty</label>
+                            
                             <div class="grid grid-cols-2 gap-1 bg-black/30 p-1 rounded-md border border-white/10 w-full">
                                 <button id="btn-mode-range" class="px-2 py-1.5 text-[10px] lg:text-xs font-bold rounded transition-all bg-[#BE00FF] text-white">Range</button>
                                 <button id="btn-mode-select" class="px-2 py-1.5 text-[10px] lg:text-xs font-bold rounded transition-all text-gray-400 hover:text-white">Select</button>
@@ -307,10 +314,50 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="flex flex-col gap-1.5 relative">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Length</label>
+                            <button id="length-dropdown-btn" class="w-full flex justify-between items-center bg-black/30 border border-white/10 rounded-md px-3 py-1.5 lg:py-2.5 text-[10px] lg:text-sm text-gray-300 focus:border-[#BE00FF] hover:bg-white/5 transition-colors text-left">
+                                <span class="truncate">All Lengths</span>
+                                <span class="material-symbols-outlined text-sm text-gray-500">expand_more</span>
+                            </button>
+                            <div id="length-dropdown-menu" class="hidden absolute top-full left-0 right-0 mt-1 bg-[#1C1C22] border border-white/10 rounded-md shadow-2xl z-50 flex flex-col max-h-[300px]">
+                                <div id="length-list-container" class="p-2 overflow-y-auto flex flex-col"></div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Floors</label>
+                            <div class="flex items-center gap-3">
+                                <input id="floor-min-input" type="number" placeholder="Min" min="1"
+                                    class="flex-1 bg-black/30 border border-white/10 rounded-md px-2 py-1.5 lg:py-2 text-[10px] lg:text-sm text-white focus:border-[#BE00FF] focus:outline-none font-mono text-center">
+                                <span class="text-gray-400 font-bold">-</span>
+                                <input id="floor-max-input" type="number" placeholder="Max" min="1"
+                                    class="flex-1 bg-black/30 border border-white/10 rounded-md px-2 py-1.5 lg:py-2 text-[10px] lg:text-sm text-white focus:border-[#BE00FF] focus:outline-none font-mono text-center">
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-1.5 relative">
+                            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider">Creator</label>
+                            <button id="creator-dropdown-btn" class="w-full flex justify-between items-center bg-black/30 border border-white/10 rounded-md px-3 py-1.5 lg:py-2.5 text-[10px] lg:text-sm text-gray-300 focus:border-[#BE00FF] hover:bg-white/5 transition-colors text-left">
+                                <span class="truncate">All Creators</span>
+                                <span class="material-symbols-outlined text-sm text-gray-500">expand_more</span>
+                            </button>
+                            <div id="creator-dropdown-menu" class="hidden absolute top-full left-0 right-0 mt-1 bg-[#1C1C22] border border-white/10 rounded-md shadow-2xl z-50 flex flex-col max-h-[300px]">
+                                <div class="p-2 border-b border-white/10 bg-[#1C1C22]">
+                                    <input id="creator-search-input" type="text" placeholder="Search creators..." class="w-full bg-black/50 border border-white/10 rounded px-2 py-1.5 text-xs text-white focus:border-[#BE00FF] focus:outline-none">
+                                    <div class="flex gap-2 mt-2">
+                                        <button id="btn-select-all-creators" class="text-[10px] text-[#BE00FF] font-bold hover:underline">ALL</button>
+                                        <button id="btn-deselect-all-creators" class="text-[10px] text-gray-400 font-bold hover:underline">NONE</button>
+                                    </div>
+                                </div>
+                                <div id="creator-list-container" class="p-2 overflow-y-auto flex flex-col"></div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </aside>
-
         </main>
     </div>
     
@@ -335,6 +382,6 @@
         </div>
     </div>
 
-    <script src="./js/main.js?v=1.6.0"></script>
+    <script src="./js/main.js?v=1.6.1"></script>
 </body>
 </html>

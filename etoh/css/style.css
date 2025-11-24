@@ -339,20 +339,8 @@ select {
 
 .subrealm-item {
     position: relative;
-    margin-left: 34px;
-}
-
-.subrealm-item::before {
-    content: '';
-    position: absolute;
-    left: -15px; 
-    top: -22px; 
-    width: 25px; 
-    height: 40px; 
-    border-left: 2px solid rgba(255, 255, 255, 0.2);
-    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
-    border-bottom-left-radius: 12px;
-    pointer-events: none;
+    margin-left: 16px !important;
+    width: calc(100% - 16px) !important;
 }
 
 .dropdown-check-item {
