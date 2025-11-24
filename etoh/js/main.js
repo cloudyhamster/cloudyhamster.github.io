@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let allTowersData = [];
     let beatenTowersData = [];
     let leaderboardData = null;
+    let currentUserData = null;
 
     let targetTower = null;
     let guesses = [];
@@ -25,14 +26,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let libSelectedAreas = new Set();
     let libStatusValue = 'All';
     let libSortOrder = 'desc';
-
     let libSelectedTypes = new Set(['Tower', 'Citadel', 'Steeple']);
-
     let libSelectedLengths = new Set();
     let libMinFloors = null;
     let libMaxFloors = null;
     let libSelectedCreators = new Set();
-    let libSelectedWarnings = new Set();
+
+    const areaDisplayNames = {
+        'Garden Of Eesh%C3%B6L': 'Garden Of Eeshöl'
+    };
 
     const NON_CANON_TOWERS = new Set([
         "Tower Not Found", "Not Even A Tower", "This Is Probably A Tower",
@@ -87,10 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
         'Default': '#6b7280'
     };
 
-    const areaDisplayNames = {
-        'Garden Of Eesh%C3%B6L': 'Garden Of Eeshöl'
-    };
-
     const difficultyPillClasses = {
         "Easy": "border-green-500/50 text-green-300 bg-green-500/10",
         "Medium": "border-yellow-500/50 text-yellow-300 bg-yellow-500/10",
@@ -143,6 +141,78 @@ document.addEventListener('DOMContentLoaded', () => {
         "bronze": "205, 127, 50",
         "top10": "190, 0, 255"
     };
+    const getTowerType = (name) => name.includes("Citadel") ? "Citadel" : name.includes("Steeple") ? "Steeple" : "Tower";
+    const getLengthValue = (str) => {
+        const m = {
+            '<20 minutes': 1,
+            '20+ minutes': 2,
+            '30+ minutes': 3,
+            '45+ minutes': 4,
+            '60+ minutes': 5,
+            '90+ minutes': 6
+        };
+        return m[str ? str.replace(' long', '') : ''] || 0;
+    };
+    const getAreaInfo = (areaName) => {
+        const subrealms = {
+            "Forgotten Ridge": {
+                r: 0,
+                i: 1,
+                isSub: true
+            },
+            "Garden Of Eesh%C3%B6L": {
+                r: 0,
+                i: 2,
+                isSub: true
+            },
+            "Silent Abyss": {
+                r: 0,
+                i: 4,
+                isSub: true
+            },
+            "Lost River": {
+                r: 0,
+                i: 5,
+                isSub: true
+            },
+            "Ashen Towerworks": {
+                r: 0,
+                i: 6,
+                isSub: true
+            },
+            "The Starlit Archives": {
+                r: 0,
+                i: 8,
+                isSub: true
+            },
+            "Arcane Area": {
+                r: 1,
+                i: 2,
+                isSub: true
+            },
+            "Paradise Atoll": {
+                r: 1,
+                i: 3,
+                isSub: true
+            },
+        };
+        if (subrealms[areaName]) return subrealms[areaName];
+        if (areaName.startsWith("Ring")) return {
+            r: 0,
+            i: parseInt(areaName.split(' ')[1]),
+            isSub: false
+        };
+        if (areaName.startsWith("Zone")) return {
+            r: 1,
+            i: parseInt(areaName.split(' ')[1]),
+            isSub: false
+        };
+        return {
+            r: -1,
+            i: -1,
+            isSub: false
+        };
+    };
 
     const searchInput = document.getElementById('searchInput');
     const searchButton = document.getElementById('searchButton');
@@ -153,6 +223,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const hardestTowerStat = document.getElementById('hardestTowerStat');
     const hardestDifficultyStat = document.getElementById('hardestDifficultyStat');
     const notificationContainer = document.getElementById('notification-container');
+    const profileTriggerContainer = document.getElementById('profile-trigger-container');
+    const viewProfileBtn = document.getElementById('view-profile-btn');
 
     const navLinksContainer = document.getElementById('nav-links');
     const gamesNavLinksContainer = document.getElementById('games-nav-links');
@@ -194,6 +266,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalArea = document.getElementById('modal-area');
     const modalDate = document.getElementById('modal-date');
 
+    const profileBackdrop = document.getElementById('profile-modal-backdrop');
+    const profileCloseBtn = document.getElementById('profile-close-button');
+    const profileAvatarFull = document.getElementById('profile-avatar-full');
+    const profileAvatarLoader = document.getElementById('profile-avatar-loader');
+    const profileDisplayName = document.getElementById('profile-display-name');
+    const profileUsername = document.getElementById('profile-username');
+    const profileRankBadge = document.getElementById('profile-rank-badge');
+    const profileTotalCount = document.getElementById('profile-total-count');
+    const profileCompletionPct = document.getElementById('profile-completion-pct');
+    const profileHardestName = document.getElementById('profile-hardest-name');
+    const profileHardestDiff = document.getElementById('profile-hardest-diff');
+    const profileTotalDiff = document.getElementById('profile-total-diff');
+    const profileAvgDiff = document.getElementById('profile-avg-diff');
+    const profileCountTowers = document.getElementById('profile-count-towers');
+    const profileCountCitadels = document.getElementById('profile-count-citadels');
+    const profileCountSteeples = document.getElementById('profile-count-steeples');
+
     const libSearch = document.getElementById('lib-search');
     const libSortBtn = document.getElementById('lib-sort-btn');
     const libSortText = document.getElementById('lib-sort-text');
@@ -216,9 +305,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const areaDropdownBtn = document.getElementById('area-dropdown-btn');
     const areaDropdownMenu = document.getElementById('area-dropdown-menu');
     const areaListContainer = document.getElementById('area-list-container');
-
-    const statusDropdownBtn = document.getElementById('status-dropdown-btn');
-    const statusDropdownMenu = document.getElementById('status-dropdown-menu');
 
     const lengthDropdownBtn = document.getElementById('length-dropdown-btn');
     const lengthDropdownMenu = document.getElementById('length-dropdown-menu');
@@ -263,6 +349,118 @@ document.addEventListener('DOMContentLoaded', () => {
             r = r1.slice();
         for (let i = 0; i < 3; i++) r[i] = r1[i] + f * (r2[i] - r1[i]);
         return rgbToHex(r[0], r[1], r[2]);
+    };
+
+    const ensureGameData = async () => {
+        if (allTowersData.length > 0) return true;
+        gameGuessInput.placeholder = "Loading tower data...";
+        gameGuessInput.disabled = true;
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/get_master_towers`);
+            const result = await response.json();
+            if (result.success) {
+                allTowersData = result.towers;
+                gameGuessInput.placeholder = "Start typing a tower name...";
+                gameGuessInput.disabled = false;
+                return true;
+            }
+        } catch (e) {
+            console.error(e);
+            showNotification("Failed to load game data.", "error");
+        }
+        return false;
+    };
+
+    const initGame = async () => {
+        const hasData = await ensureGameData();
+        if (!hasData) return;
+
+        const canonTowers = allTowersData.filter(t => !NON_CANON_TOWERS.has(t.name));
+        targetTower = canonTowers[Math.floor(Math.random() * canonTowers.length)];
+
+        guesses = [];
+        isGameActive = true;
+        gameGuessInput.value = '';
+        gameGuessInput.disabled = false;
+        gameMessage.classList.add('hidden');
+        renderGameGrid();
+    };
+
+    const renderGameGrid = () => {
+        gameGrid.innerHTML = '';
+        guesses.forEach(guess => {
+            const row = document.createElement('div');
+            row.className = 'game-row';
+
+            const nameHtml = `<div class="${guess.name === targetTower.name ? 'status-correct font-bold' : 'text-white'}">${guess.name}</div>`;
+
+            let diffClass = 'status-wrong',
+                diffIcon = '';
+            if (guess.difficulty === targetTower.difficulty) diffClass = 'status-correct';
+            if (Math.abs(guess.number_difficulty - targetTower.number_difficulty) < 0.01) {
+                diffIcon = 'check';
+                diffClass = 'status-correct';
+            } else if (guess.number_difficulty < targetTower.number_difficulty) diffIcon = 'arrow_upward';
+            else diffIcon = 'arrow_downward';
+            const diffPill = `<span class="inline-flex items-center gap-1 ${diffClass}">${guess.difficulty} <span class="material-symbols-outlined feedback-icon">${diffIcon}</span></span>`;
+
+            const safeGuessLen = guess.length || '<20 minutes';
+            const safeTargetLen = targetTower.length || '<20 minutes';
+            const guessLenVal = getLengthValue(safeGuessLen);
+            const targetLenVal = getLengthValue(safeTargetLen);
+            let lenClass = 'status-wrong',
+                lenIcon = '';
+            if (guessLenVal === targetLenVal) {
+                lenClass = 'status-correct';
+                lenIcon = 'check';
+            } else lenIcon = guessLenVal < targetLenVal ? 'arrow_upward' : 'arrow_downward';
+            const lenHtml = `<span class="inline-flex items-center gap-1 ${lenClass}">${safeGuessLen.replace(' long', '')} <span class="material-symbols-outlined feedback-icon">${lenIcon}</span></span>`;
+
+            const typeClass = getTowerType(guess.name) === getTowerType(targetTower.name) ? 'status-correct' : 'status-wrong';
+            const typeHtml = `<span class="${typeClass}">${getTowerType(guess.name)}</span>`;
+
+            const guessArea = getAreaInfo(guess.area);
+            const targetArea = getAreaInfo(targetTower.area);
+            let areaClass = 'status-wrong',
+                areaIcon = '';
+
+            if (guessArea.r !== targetArea.r) {
+                areaClass = 'status-wrong';
+            } else {
+                if (guessArea.i === targetArea.i) {
+                    if (guessArea.isSub === targetArea.isSub) {
+                        areaClass = 'status-correct';
+                        areaIcon = 'check';
+                    } else {
+                        areaClass = 'status-partial';
+                        areaIcon = 'location_searching';
+                    }
+                } else {
+                    areaClass = 'status-wrong';
+                    areaIcon = guessArea.i < targetArea.i ? 'arrow_upward' : 'arrow_downward';
+                }
+            }
+            const areaHtml = `<span class="inline-flex items-center gap-1 ${areaClass}">${areaDisplayNames[guess.area]||guess.area} <span class="material-symbols-outlined feedback-icon">${areaIcon}</span></span>`;
+
+            const guessCreators = new Set((Array.isArray(guess.creators) ? guess.creators : []).flatMap(c => c.split(',').map(x => x.trim())));
+            const targetCreators = new Set((Array.isArray(targetTower.creators) ? targetTower.creators : []).flatMap(c => c.split(',').map(x => x.trim())));
+            const areSetsEqual = (a, b) => a.size === b.size && [...a].every(v => b.has(v));
+            const isSubset = [...guessCreators].every(c => targetCreators.has(c));
+            let creatorClass = 'status-wrong';
+            if (areSetsEqual(guessCreators, targetCreators)) creatorClass = 'status-correct';
+            else if (isSubset && guessCreators.size > 0) creatorClass = 'status-partial';
+            const creatorHtml = `<div class="truncate ${creatorClass}" title="${[...guessCreators].join(', ')}">${[...guessCreators].join(', ')||'Unknown'}</div>`;
+
+            row.innerHTML = nameHtml + diffPill + lenHtml + typeHtml + areaHtml + creatorHtml;
+            gameGrid.appendChild(row);
+        });
+
+        for (let i = guesses.length; i < maxGuesses; i++) {
+            const row = document.createElement('div');
+            row.className = 'game-row opacity-30';
+            row.innerHTML = `<div class="h-2 bg-white/10 rounded w-24"></div><div class="h-2 bg-white/10 rounded w-16"></div><div class="h-2 bg-white/10 rounded w-12"></div><div class="h-2 bg-white/10 rounded w-12"></div><div class="h-2 bg-white/10 rounded w-20"></div><div class="h-2 bg-white/10 rounded w-32"></div>`;
+            gameGrid.appendChild(row);
+        }
     };
 
     const switchView = (viewName) => {
@@ -619,6 +817,27 @@ document.addEventListener('DOMContentLoaded', () => {
         else btn.textContent = `${libSelectedCreators.size} Creators Selected`;
     };
 
+    const handleGuess = (towerName) => {
+        if (!isGameActive) return;
+
+        const tower = allTowersData.find(t => t.name === towerName);
+        if (!tower) return;
+
+        if (guesses.some(g => g.name === tower.name)) {
+            showNotification("You already guessed that tower!", "error");
+            return;
+        }
+
+        guesses.push(tower);
+        renderGameGrid();
+
+        if (tower.name === targetTower.name) {
+            endGame(true);
+        } else if (guesses.length >= maxGuesses) {
+            endGame(false);
+        }
+    };
+
     const renderLibrary = () => {
         libraryContainer.innerHTML = '';
         if (!allTowersData || allTowersData.length === 0) {
@@ -687,386 +906,41 @@ document.addEventListener('DOMContentLoaded', () => {
         libraryContainer.innerHTML = `<table class="w-full text-sm"><tbody>${rowsHtml}</tbody></table>`;
     };
 
-    libraryContainer.addEventListener('click', (e) => {
-        const r = e.target.closest('.tower-row');
-        if (r && r.dataset.towerName) openModalWithTower(r.dataset.towerName);
-    });
-    libSearch.addEventListener('input', renderLibrary);
-    diffMinInput.addEventListener('input', (e) => {
-        libMinDiff = parseFloat(e.target.value) || 0;
-        renderLibrary();
-    });
-    diffMaxInput.addEventListener('input', (e) => {
-        libMaxDiff = parseFloat(e.target.value) || 12;
-        renderLibrary();
-    });
-    floorMinInput.addEventListener('input', (e) => {
-        libMinFloors = e.target.value ? parseInt(e.target.value) : null;
-        renderLibrary();
-    });
-    floorMaxInput.addEventListener('input', (e) => {
-        libMaxFloors = e.target.value ? parseInt(e.target.value) : null;
-        renderLibrary();
-    });
-
-    btnModeRange.addEventListener('click', () => {
-        libFilterMode = 'range';
-        btnModeRange.classList.replace('text-gray-400', 'text-white');
-        btnModeRange.classList.add('bg-[#BE00FF]');
-        btnModeRange.classList.remove('hover:text-white');
-        btnModeSelect.classList.replace('text-white', 'text-gray-400');
-        btnModeSelect.classList.remove('bg-[#BE00FF]');
-        btnModeSelect.classList.add('hover:text-white');
-        diffUiRange.classList.remove('hidden');
-        diffUiSelect.classList.add('hidden');
-        renderLibrary();
-    });
-    btnModeSelect.addEventListener('click', () => {
-        libFilterMode = 'select';
-        btnModeSelect.classList.replace('text-gray-400', 'text-white');
-        btnModeSelect.classList.add('bg-[#BE00FF]');
-        btnModeSelect.classList.remove('hover:text-white');
-        btnModeRange.classList.replace('text-white', 'text-gray-400');
-        btnModeRange.classList.remove('bg-[#BE00FF]');
-        btnModeRange.classList.add('hover:text-white');
-        diffUiRange.classList.add('hidden');
-        diffUiSelect.classList.remove('hidden');
-        renderLibrary();
-    });
-
-    const getTowerType = (name) => name.includes("Citadel") ? "Citadel" : name.includes("Steeple") ? "Steeple" : "Tower";
-    const getAreaInfo = (areaName) => {
-        const subrealms = {
-            "Forgotten Ridge": {
-                r: 0,
-                i: 1,
-                isSub: true
-            },
-            "Garden Of Eesh%C3%B6L": {
-                r: 0,
-                i: 2,
-                isSub: true
-            },
-            "Silent Abyss": {
-                r: 0,
-                i: 4,
-                isSub: true
-            },
-            "Lost River": {
-                r: 0,
-                i: 5,
-                isSub: true
-            },
-            "Ashen Towerworks": {
-                r: 0,
-                i: 6,
-                isSub: true
-            },
-            "The Starlit Archives": {
-                r: 0,
-                i: 8,
-                isSub: true
-            },
-            "Arcane Area": {
-                r: 1,
-                i: 2,
-                isSub: true
-            },
-            "Paradise Atoll": {
-                r: 1,
-                i: 3,
-                isSub: true
-            },
-        };
-        if (subrealms[areaName]) return subrealms[areaName];
-        if (areaName.startsWith("Ring")) return {
-            r: 0,
-            i: parseInt(areaName.split(' ')[1]),
-            isSub: false
-        };
-        if (areaName.startsWith("Zone")) return {
-            r: 1,
-            i: parseInt(areaName.split(' ')[1]),
-            isSub: false
-        };
-        return {
-            r: -1,
-            i: -1,
-            isSub: false
-        };
-    };
-    const getLengthValue = (str) => {
-        const m = {
-            '<20 minutes': 1,
-            '20+ minutes': 2,
-            '30+ minutes': 3,
-            '45+ minutes': 4,
-            '60+ minutes': 5,
-            '90+ minutes': 6
-        };
-        return m[str.replace(' long', '')] || 0;
-    };
-
-    const ensureGameData = async () => {
-        if (allTowersData.length > 0) return true;
-        gameGuessInput.placeholder = "Loading tower data...";
-        gameGuessInput.disabled = true;
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/get_master_towers`);
-            const result = await response.json();
-            if (result.success) {
-                allTowersData = result.towers;
-                gameGuessInput.placeholder = "Start typing a tower name...";
-                gameGuessInput.disabled = false;
-                return true;
-            }
-        } catch (e) {
-            console.error(e);
-            showNotification("Failed to load game data.", "error");
-        }
-        return false;
-    };
-
-    const initGame = async () => {
-        const hasData = await ensureGameData();
-        if (!hasData) return;
-        const canonTowers = allTowersData.filter(t => !NON_CANON_TOWERS.has(t.name));
-        targetTower = canonTowers[Math.floor(Math.random() * canonTowers.length)];
-        guesses = [];
-        isGameActive = true;
-        gameGuessInput.value = '';
-        gameGuessInput.disabled = false;
-        gameMessage.classList.add('hidden');
-        renderGameGrid();
-    };
-
-    const renderGameGrid = () => {
-        gameGrid.innerHTML = '';
-        guesses.forEach(guess => {
-            const row = document.createElement('div');
-            row.className = 'game-row';
-
-            const nameHtml = `<div class="${guess.name === targetTower.name ? 'status-correct font-bold' : 'text-white'}">${guess.name}</div>`;
-
-            let diffClass = 'status-wrong',
-                diffIcon = '';
-            if (guess.difficulty === targetTower.difficulty) diffClass = 'status-correct';
-            if (Math.abs(guess.number_difficulty - targetTower.number_difficulty) < 0.01) {
-                diffIcon = 'check';
-                diffClass = 'status-correct';
-            } else if (guess.number_difficulty < targetTower.number_difficulty) diffIcon = 'arrow_upward';
-            else diffIcon = 'arrow_downward';
-            const diffPill = `<span class="inline-flex items-center gap-1 ${diffClass}">${guess.difficulty} <span class="material-symbols-outlined feedback-icon">${diffIcon}</span></span>`;
-
-            const safeGuessLen = guess.length || '<20 minutes';
-            const safeTargetLen = targetTower.length || '<20 minutes';
-            const guessLenVal = getLengthValue(safeGuessLen);
-            const targetLenVal = getLengthValue(safeTargetLen);
-            let lenClass = 'status-wrong',
-                lenIcon = '';
-            if (guessLenVal === targetLenVal) {
-                lenClass = 'status-correct';
-                lenIcon = 'check';
-            } else lenIcon = guessLenVal < targetLenVal ? 'arrow_upward' : 'arrow_downward';
-            const lenHtml = `<span class="inline-flex items-center gap-1 ${lenClass}">${safeGuessLen.replace(' long', '')} <span class="material-symbols-outlined feedback-icon">${lenIcon}</span></span>`;
-
-            const typeClass = getTowerType(guess.name) === getTowerType(targetTower.name) ? 'status-correct' : 'status-wrong';
-            const typeHtml = `<span class="${typeClass}">${getTowerType(guess.name)}</span>`;
-
-            const guessArea = getAreaInfo(guess.area);
-            const targetArea = getAreaInfo(targetTower.area);
-            let areaClass = 'status-wrong',
-                areaIcon = '';
-            if (guessArea.r !== targetArea.r) areaClass = 'status-wrong';
-            else {
-                if (guessArea.i === targetArea.i) {
-                    if (guessArea.isSub === targetArea.isSub) {
-                        areaClass = 'status-correct';
-                        areaIcon = 'check';
-                    } else {
-                        areaClass = 'status-partial';
-                        areaIcon = 'location_searching';
-                    }
-                } else {
-                    areaClass = 'status-wrong';
-                    areaIcon = guessArea.i < targetArea.i ? 'arrow_upward' : 'arrow_downward';
-                }
-            }
-            const areaHtml = `<span class="inline-flex items-center gap-1 ${areaClass}">${areaDisplayNames[guess.area]||guess.area} <span class="material-symbols-outlined feedback-icon">${areaIcon}</span></span>`;
-
-            const guessCreators = new Set((Array.isArray(guess.creators) ? guess.creators : []).flatMap(c => c.split(',').map(x => x.trim())));
-            const targetCreators = new Set((Array.isArray(targetTower.creators) ? targetTower.creators : []).flatMap(c => c.split(',').map(x => x.trim())));
-            const areSetsEqual = (a, b) => a.size === b.size && [...a].every(v => b.has(v));
-            const isSubset = [...guessCreators].every(c => targetCreators.has(c));
-            let creatorClass = 'status-wrong';
-            if (areSetsEqual(guessCreators, targetCreators)) creatorClass = 'status-correct';
-            else if (isSubset && guessCreators.size > 0) creatorClass = 'status-partial';
-            const creatorHtml = `<div class="truncate ${creatorClass}" title="${[...guessCreators].join(', ')}">${[...guessCreators].join(', ')||'Unknown'}</div>`;
-
-            row.innerHTML = nameHtml + diffPill + lenHtml + typeHtml + areaHtml + creatorHtml;
-            gameGrid.appendChild(row);
-        });
-        for (let i = guesses.length; i < maxGuesses; i++) {
-            const row = document.createElement('div');
-            row.className = 'game-row opacity-30';
-            row.innerHTML = `<div class="h-2 bg-white/10 rounded w-24"></div><div class="h-2 bg-white/10 rounded w-16"></div><div class="h-2 bg-white/10 rounded w-12"></div><div class="h-2 bg-white/10 rounded w-12"></div><div class="h-2 bg-white/10 rounded w-20"></div><div class="h-2 bg-white/10 rounded w-32"></div>`;
-            gameGrid.appendChild(row);
-        }
-    };
-
-    const handleGuess = (towerName) => {
-        if (!isGameActive) return;
-        const tower = allTowersData.find(t => t.name === towerName);
-        if (!tower) return;
-        if (guesses.some(g => g.name === tower.name)) {
-            showNotification("You already guessed that tower!", "error");
-            return;
-        }
-        guesses.push(tower);
-        renderGameGrid();
-        if (tower.name === targetTower.name) endGame(true);
-        else if (guesses.length >= maxGuesses) endGame(false);
-    };
-
-    const endGame = (won) => {
-        isGameActive = false;
-        gameGuessInput.disabled = true;
-        gameGuessInput.value = '';
-        sessionStats.played++;
-        if (won) {
-            sessionStats.wins++;
-            sessionStats.totalGuesses += guesses.length;
-            if (sessionStats.bestGame === null || guesses.length < sessionStats.bestGame) sessionStats.bestGame = guesses.length;
-        }
-        updateStatsUI();
-        gameMessage.classList.remove('hidden');
-        const h4 = gameMessage.querySelector('h4');
-        const p = gameMessage.querySelector('p');
-        if (won) {
-            h4.textContent = "Victory!";
-            h4.className = "text-xl font-bold mb-2 text-green-400";
-            p.textContent = `You found ${targetTower.name} in ${guesses.length} guesses.`;
-        } else {
-            h4.textContent = "Game Over";
-            h4.className = "text-xl font-bold mb-2 text-red-400";
-            p.textContent = `The tower was: ${targetTower.name}`;
-        }
-    };
-
-    const updateStatsUI = () => {
-        statGamesPlayed.textContent = sessionStats.played;
-        const winRate = sessionStats.played === 0 ? 0 : Math.round((sessionStats.wins / sessionStats.played) * 100);
-        statWinRate.textContent = `${winRate}%`;
-        statBestGame.textContent = sessionStats.bestGame === null ? '-' : sessionStats.bestGame;
-        statAvgGuesses.textContent = sessionStats.wins === 0 ? '-' : (sessionStats.totalGuesses / sessionStats.wins).toFixed(1);
-    };
-
-    gameGuessInput.addEventListener('input', (e) => {
-        const val = e.target.value.toLowerCase();
-        gameAutocompleteList.innerHTML = '';
-        if (val.length < 2) {
-            gameAutocompleteList.classList.add('hidden');
-            return;
-        }
-        const matches = allTowersData.filter(t => t.name.toLowerCase().includes(val) && !NON_CANON_TOWERS.has(t.name)).slice(0, 10);
-        if (matches.length > 0) {
-            gameAutocompleteList.classList.remove('hidden');
-            matches.forEach(t => {
-                const div = document.createElement('div');
-                div.className = 'autocomplete-item text-sm text-gray-300';
-                div.textContent = t.name;
-                div.addEventListener('click', () => {
-                    handleGuess(t.name);
-                    gameGuessInput.value = '';
-                    gameAutocompleteList.classList.add('hidden');
-                });
-                gameAutocompleteList.appendChild(div);
-            });
-        } else {
-            gameAutocompleteList.classList.add('hidden');
-        }
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!gameGuessInput.contains(e.target) && !gameAutocompleteList.contains(e.target)) gameAutocompleteList.classList.add('hidden');
-    });
-    newGameBtn.addEventListener('click', initGame);
-
-    const fetchAndRenderLeaderboard = async () => {
-        leaderboardContainer.innerHTML = `<div class="flex items-center justify-center p-8 text-gray-400">Loading leaderboard...</div>`;
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/get_leaderboard`);
-            const result = await response.json();
-            if (!result.success) throw new Error(result.error);
-            leaderboardData = result.leaderboard;
-
-            let headerHtml = `<div class="leaderboard-header whitespace-nowrap"><div class="w-16 text-center">#</div><div class="w-64 text-left">Player</div><div class="flex-1 text-left">Hardest Tower</div><div class="w-56 text-left">Difficulty</div><div class="w-24 text-center pr-2">Towers</div></div>`;
-
-            let rowsHtml = '';
-            leaderboardData.forEach((player, index) => {
-                const rank = index + 1;
-                let rankClass = '',
-                    rankRgb = '';
-                if (rank === 1) {
-                    rankClass = 'rank-gold';
-                    rankRgb = rankColors.gold;
-                } else if (rank === 2) {
-                    rankClass = 'rank-silver';
-                    rankRgb = rankColors.silver;
-                } else if (rank === 3) {
-                    rankClass = 'rank-bronze';
-                    rankRgb = rankColors.bronze;
-                } else if (rank <= 10) {
-                    rankClass = 'rank-top10';
-                    rankRgb = rankColors.top10;
-                }
-
-                const difficultyText = `${player.hardest_tower_modifier || ''} ${player.hardest_tower_difficulty || ''}`.trim();
-                const diffPillClass = difficultyPillClasses[player.hardest_tower_difficulty] || difficultyPillClasses.nil;
-                const numericDifficulty = (player.number_difficulty || 0).toFixed(2);
-
-                rowsHtml += `<div class="leaderboard-row ${rankClass}" style="--rank-rgb: ${rankRgb};"><div class="w-16 text-center text-lg font-bold text-gray-400">${rank}</div><div class="w-64"><div class="flex items-center gap-3"><img src="${player.avatar_url || 'icon.jpg'}" class="leaderboard-avatar" alt="avatar"><div class="flex flex-col"><span class="font-bold text-white truncate">${player.display_name || player.user_name}</span><span class="text-xs text-gray-400">@${player.user_name || 'null'}</span></div></div></div><div class="flex-1 text-gray-300 text-sm text-left truncate pr-4">${player.hardest_tower_name}</div><div class="w-56 text-left"><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${diffPillClass}">${difficultyText} [${numericDifficulty}]</span></div><div class="w-24 text-center text-lg font-bold text-white pr-2">${player.total_towers}</div></div>`;
-            });
-
-            leaderboardContainer.innerHTML = `<div class="min-w-[900px]">${headerHtml + rowsHtml}</div>`;
-
-        } catch (error) {
-            leaderboardContainer.innerHTML = `<div class="flex items-center justify-center p-8 text-red-400">Failed to load leaderboard.</div>`;
-            showNotification(error.message, 'error');
-        }
-    };
-
-    const handleSearch = async () => {
-        const username = searchInput.value.trim();
-        const forceRefresh = forceRefreshCheckbox.checked;
+    const performSearch = async (username) => {
         if (!username) {
             showNotification('Please enter a Roblox Username.', 'error');
-            return;
+            return false;
         }
-        const searchIcon = document.getElementById('searchIcon');
-        const searchLoadingIndicator = document.getElementById('searchLoadingIndicator');
         searchIcon.classList.add('hidden');
         searchLoadingIndicator.classList.remove('hidden');
         statsContainer.style.display = 'none';
         try {
             const cacheKey = `etoh_profile_${username.toLowerCase()}`;
             let apiUrl = `${API_BASE_URL}/api/get_player_data?username=${username}`;
-            if (forceRefresh) apiUrl += '&force_refresh=true';
+            if (forceRefreshCheckbox.checked) apiUrl += '&force_refresh=true';
             const response = await fetch(apiUrl);
             if (response.status === 429) throw new Error('Rate limit exceeded. Please wait a moment.');
             const result = await response.json();
             if (result.success) {
+                currentUserData = result;
                 sessionStorage.setItem(cacheKey, JSON.stringify(result));
                 renderProfile(result);
                 showNotification(`Successfully loaded stats for ${username}.`, 'success');
+                profileTriggerContainer.classList.remove('hidden');
                 if (currentView === 'games') initGame();
+                return true;
             } else throw new Error(result.error);
         } catch (error) {
             showNotification(error.message, 'error');
+            return false;
         } finally {
             searchIcon.classList.remove('hidden');
             searchLoadingIndicator.classList.add('hidden');
         }
+    };
+
+    const handleSearch = async () => {
+        await performSearch(searchInput.value.trim());
     };
 
     const calculateAndRenderStats = (beatenTowers, allTowers) => {
@@ -1394,6 +1268,166 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const closeModal = () => modalBackdrop.classList.add('hidden');
 
+    const fetchAndRenderLeaderboard = async () => {
+        leaderboardContainer.innerHTML = `<div class="flex items-center justify-center p-8 text-gray-400">Loading leaderboard...</div>`;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/get_leaderboard`);
+            const result = await response.json();
+            if (!result.success) throw new Error(result.error);
+            leaderboardData = result.leaderboard;
+
+            let headerHtml = `<div class="leaderboard-header whitespace-nowrap"><div class="w-16 text-center">#</div><div class="w-64 text-left">Player</div><div class="flex-1 text-left">Hardest Tower</div><div class="w-56 text-left">Difficulty</div><div class="w-24 text-center pr-2">Towers</div></div>`;
+
+            let rowsHtml = '';
+            leaderboardData.forEach((player, index) => {
+                const rank = index + 1;
+                let rankClass = '',
+                    rankRgb = '';
+                if (rank === 1) {
+                    rankClass = 'rank-gold';
+                    rankRgb = rankColors.gold;
+                } else if (rank === 2) {
+                    rankClass = 'rank-silver';
+                    rankRgb = rankColors.silver;
+                } else if (rank === 3) {
+                    rankClass = 'rank-bronze';
+                    rankRgb = rankColors.bronze;
+                } else if (rank <= 10) {
+                    rankClass = 'rank-top10';
+                    rankRgb = rankColors.top10;
+                }
+
+                const difficultyText = `${player.hardest_tower_modifier || ''} ${player.hardest_tower_difficulty || ''}`.trim();
+                const diffPillClass = difficultyPillClasses[player.hardest_tower_difficulty] || difficultyPillClasses.nil;
+                const numericDifficulty = (player.number_difficulty || 0).toFixed(2);
+
+                rowsHtml += `
+                <div class="leaderboard-row ${rankClass}" style="--rank-rgb: ${rankRgb};">
+                    <div class="w-16 text-center text-lg font-bold text-gray-400">${rank}</div>
+                    
+                    <div class="w-64 cursor-pointer leaderboard-player-cell group" data-username="${player.user_name}">
+                        <div class="flex items-center gap-3 transition-transform group-hover:translate-x-1">
+                            <img src="${player.avatar_url || 'icon.jpg'}" class="leaderboard-avatar group-hover:border-[#BE00FF]" alt="avatar">
+                            <div class="flex flex-col">
+                                <span class="font-bold text-white group-hover:text-[#BE00FF] transition-colors truncate">${player.display_name || player.user_name}</span>
+                                <span class="text-xs text-gray-400">@${player.user_name || 'null'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1 text-gray-300 text-sm text-left truncate pr-4">${player.hardest_tower_name}</div>
+                    <div class="w-56 text-left"><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${diffPillClass}">${difficultyText} [${numericDifficulty}]</span></div>
+                    <div class="w-24 text-center text-lg font-bold text-white pr-2">${player.total_towers}</div>
+                </div>`;
+            });
+
+            leaderboardContainer.innerHTML = `<div class="min-w-[900px]">${headerHtml + rowsHtml}</div>`;
+
+        } catch (error) {
+            leaderboardContainer.innerHTML = `<div class="flex items-center justify-center p-8 text-red-400">Failed to load leaderboard.</div>`;
+            showNotification(error.message, 'error');
+        }
+    };
+
+    const openProfileModal = async () => {
+        if (!currentUserData) return;
+
+        const {
+            user_id,
+            user_name,
+            display_name,
+            beaten_towers,
+            all_towers,
+            avatar_url,
+            avatar_full_url
+        } = currentUserData;
+
+        profileDisplayName.textContent = display_name;
+        profileUsername.textContent = `@${user_name}`;
+
+        profileAvatarFull.classList.add('hidden');
+        profileAvatarLoader.classList.remove('hidden');
+
+        profileAvatarFull.src = avatar_full_url || avatar_url;
+
+        profileAvatarFull.onload = () => {
+            profileAvatarLoader.classList.add('hidden');
+            profileAvatarFull.classList.remove('hidden');
+        };
+
+        const canonBeaten = beaten_towers.filter(t => !NON_CANON_TOWERS.has(t.name));
+        const canonTotal = all_towers.filter(t => !NON_CANON_TOWERS.has(t.name)).length;
+        const totalCount = canonBeaten.length;
+        const percentage = canonTotal > 0 ? ((totalCount / canonTotal) * 100).toFixed(1) : "0.0";
+
+        canonBeaten.sort((a, b) => b.number_difficulty - a.number_difficulty);
+        const hardest = canonBeaten.length > 0 ? canonBeaten[0] : null;
+
+        let sumDiff = 0,
+            towers = 0,
+            citadels = 0,
+            steeples = 0;
+
+        canonBeaten.forEach(t => {
+            sumDiff += (t.number_difficulty || 0);
+            const type = getTowerType(t.name);
+            if (type === 'Tower') towers++;
+            else if (type === 'Citadel') citadels++;
+            else if (type === 'Steeple') steeples++;
+        });
+
+        const avgDiff = totalCount > 0 ? (sumDiff / totalCount).toFixed(2) : "0.00";
+
+        profileTotalCount.textContent = `${totalCount} / ${canonTotal}`;
+        profileCompletionPct.textContent = `${percentage}%`;
+
+        if (hardest) {
+            profileHardestName.textContent = hardest.name;
+            profileHardestDiff.textContent = `${hardest.difficulty} [${hardest.number_difficulty.toFixed(2)}]`;
+            const hex = difficultyColors[hardest.difficulty] || '#808080';
+            profileRankBadge.textContent = hardest.difficulty.toUpperCase();
+            profileRankBadge.style.borderColor = hex;
+            profileRankBadge.style.color = hex;
+            profileRankBadge.style.backgroundColor = `${hex}20`;
+            profileHardestName.style.color = hex;
+        } else {
+            profileHardestName.textContent = "N/A";
+            profileHardestName.style.color = "#9CA3AF";
+            profileHardestDiff.textContent = "-";
+            profileRankBadge.textContent = "NOOB";
+            profileRankBadge.style.borderColor = "#808080";
+            profileRankBadge.style.color = "#808080";
+            profileRankBadge.style.backgroundColor = "transparent";
+        }
+
+        profileTotalDiff.textContent = sumDiff.toFixed(2);
+        profileAvgDiff.textContent = avgDiff;
+        profileCountTowers.textContent = towers;
+        profileCountCitadels.textContent = citadels;
+        profileCountSteeples.textContent = steeples;
+
+        profileBackdrop.classList.remove('hidden');
+    };
+
+    viewProfileBtn.addEventListener('click', openProfileModal);
+    profileCloseBtn.addEventListener('click', () => profileBackdrop.classList.add('hidden'));
+    profileBackdrop.addEventListener('click', (e) => {
+        if (e.target === profileBackdrop) profileBackdrop.classList.add('hidden');
+    });
+
+    leaderboardContainer.addEventListener('click', async (e) => {
+        const playerCell = e.target.closest('.leaderboard-player-cell');
+        if (playerCell) {
+            const username = playerCell.dataset.username;
+            if (username) {
+                searchInput.value = username;
+                const success = await performSearch(username);
+                if (success) openProfileModal();
+            }
+        }
+    });
+
     searchButton.addEventListener('click', handleSearch);
     searchInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') handleSearch();
@@ -1425,6 +1459,52 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && !modalBackdrop.classList.contains('hidden')) closeModal();
+    });
+
+    if (gameGuessInput) {
+        gameGuessInput.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            gameAutocompleteList.innerHTML = '';
+
+            if (val.length < 2) {
+                gameAutocompleteList.classList.add('hidden');
+                return;
+            }
+
+            const matches = allTowersData
+                .filter(t => t.name.toLowerCase().includes(val) && !NON_CANON_TOWERS.has(t.name))
+                .slice(0, 10);
+
+            if (matches.length > 0) {
+                gameAutocompleteList.classList.remove('hidden');
+                matches.forEach(t => {
+                    const div = document.createElement('div');
+                    div.className = 'autocomplete-item text-sm text-gray-300';
+                    div.textContent = t.name;
+                    div.addEventListener('click', () => {
+                        handleGuess(t.name);
+                        gameGuessInput.value = '';
+                        gameAutocompleteList.classList.add('hidden');
+                    });
+                    gameAutocompleteList.appendChild(div);
+                });
+            } else {
+                gameAutocompleteList.classList.add('hidden');
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!gameGuessInput.contains(e.target) && !gameAutocompleteList.contains(e.target)) {
+                gameAutocompleteList.classList.add('hidden');
+            }
+        });
+    }
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            if (!modalBackdrop.classList.contains('hidden')) closeModal();
+            if (!profileBackdrop.classList.contains('hidden')) profileBackdrop.classList.add('hidden');
+        }
     });
 
     switchView('chart');
