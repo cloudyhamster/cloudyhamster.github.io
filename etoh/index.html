@@ -20,7 +20,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <link rel="icon" href="icon.jpg">
-    <link rel="stylesheet" href="./css/style.css?v=1.6.2">
+    <link rel="stylesheet" href="./css/style.css?v=1.6.3">
 </head>
 <body class="text-[#EAEAEA] antialiased">
     <div class="relative flex h-auto min-h-screen w-full flex-col overflow-hidden">
@@ -170,16 +170,17 @@
                                 <div class="flex-1 w-full md:max-w-md relative">
                                     <label class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5 block">Guess a Tower</label>
                                     <input id="game-guess-input" type="text" placeholder="Start typing a tower name..." 
-                                        class="w-full rounded-md px-4 py-1.5 lg:py-2.5 text-[10px] lg:text-sm focus:outline-none">
+                                        class="w-full rounded-md px-4 py-1.5 lg:py-2.5 text-[10px] lg:text-sm focus:outline-none transition-all border border-transparent focus:border-[#BE00FF] bg-black/20 text-white">
                                     <div id="game-autocomplete-list" class="absolute w-full bg-[#1C1C22] border border-white/10 rounded-b-md mt-1 max-h-60 overflow-y-auto hidden shadow-2xl z-50"></div>
                                 </div>
                                 
                                 <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
-                                    <div id="game-message" class="hidden text-right">
-                                        <h4 class="text-sm font-bold"></h4>
-                                        <p class="text-xs text-gray-400"></p>
+                                    <div id="game-message" class="hidden text-right flex flex-col justify-center h-full">
+                                        <h4 class="text-sm font-bold leading-tight"></h4>
+                                        <p class="text-xs text-gray-400 leading-tight"></p>
                                     </div>
-                                    <button id="new-game-btn" class="flex items-center gap-2 px-4 py-1.5 lg:py-2 bg-[#BE00FF]/10 hover:bg-[#BE00FF]/20 border border-[#BE00FF]/50 text-[#BE00FF] rounded-md transition-all text-xs lg:text-sm font-bold whitespace-nowrap">
+                                    
+                                    <button id="new-game-btn" class="flex items-center gap-2 px-4 py-1.5 lg:py-2 bg-[#BE00FF]/10 hover:bg-[#BE00FF]/20 border border-[#BE00FF]/50 text-[#BE00FF] rounded-md transition-all text-xs lg:text-sm font-bold whitespace-nowrap h-full">
                                         <span class="material-symbols-outlined text-lg">refresh</span>
                                         New Game
                                     </button>
@@ -224,7 +225,7 @@
                         </div>
                         <div class="flex flex-col gap-0.5 rounded-md p-2 bg-black/20">
                             <p class="text-xs font-medium leading-normal text-gray-400">Best Game</p>
-                            <p id="stat-best-game" class="text-xl font-bold text-[#BE00FF]">-</p>
+                            <p id="stat-best-game" class="text-xl font-bold text-white">-</p>
                         </div>
                         <div class="flex flex-col gap-0.5 rounded-md p-2 bg-black/20">
                             <p class="text-xs font-medium leading-normal text-gray-400">Avg. Guesses</p>
@@ -461,6 +462,6 @@
         </div>
     </div>
 
-    <script src="./js/main.js?v=1.6.2"></script>
+    <script type="module" src="./js/main.js?v=1.6.3"></script>
 </body>
 </html>
