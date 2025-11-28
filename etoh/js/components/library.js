@@ -1,6 +1,6 @@
 import { store } from '../state.js';
-import { AREA_COLORS, DIFFICULTY_COLORS, DIFFICULTY_PILL_CLASSES, AREA_PILL_CLASSES, AREA_DISPLAY_NAMES, NON_CANON_TOWERS } from '../config.js';
-import { hexToRgb, getTowerType } from '../utils.js';
+import { AREA_DISPLAY_NAMES, DIFFICULTY_COLORS, NON_CANON_TOWERS, AREA_PILL_CLASSES, DIFFICULTY_PILL_CLASSES, AREA_COLORS } from '../config.js';
+import { getTowerType, hexToRgb } from '../utils.js';
 import { openModalWithTower } from '../ui/modals.js';
 
 let libFilterMode = 'range';
@@ -15,6 +15,10 @@ let libSelectedLengths = new Set();
 let libMinFloors = null;
 let libMaxFloors = null;
 let libSelectedCreators = new Set();
+
+const ACTIVE_STYLE = ['bg-[#BE00FF]/10', 'text-white', 'border-[#BE00FF]/30'];
+const INACTIVE_STYLE = ['bg-white/5', 'text-gray-300', 'border-white/10', 'hover:bg-white/10'];
+const DROPDOWN_ITEM_BASE = ['text-left', 'px-3', 'py-2', 'text-xs', 'font-bold', 'rounded', 'border', 'cursor-pointer', 'transition-colors', 'select-none'];
 
 export function initLibrary() {
     if (store.allTowers.length > 0) {
@@ -31,12 +35,14 @@ export function initLibrary() {
     });
 
     const container = document.getElementById('library-container');
-    container.addEventListener('click', (e) => {
-        const row = e.target.closest('.tower-row');
-        if (row && row.dataset.towerName) {
-            openModalWithTower(row.dataset.towerName);
-        }
-    });
+    if (container) {
+        container.addEventListener('click', (e) => {
+            const row = e.target.closest('.tower-row');
+            if (row && row.dataset.towerName) {
+                openModalWithTower(row.dataset.towerName);
+            }
+        });
+    }
 
     const inputs = [
         document.getElementById('lib-search'),
@@ -47,33 +53,48 @@ export function initLibrary() {
     ];
     inputs.forEach(input => input && input.addEventListener('input', () => renderLibrary()));
     
-    document.getElementById('diff-min-input').addEventListener('change', (e) => { libMinDiff = parseFloat(e.target.value) || 0; renderLibrary(); });
-    document.getElementById('diff-max-input').addEventListener('change', (e) => { libMaxDiff = parseFloat(e.target.value) || 12; renderLibrary(); });
-    document.getElementById('floor-min-input').addEventListener('change', (e) => { libMinFloors = e.target.value ? parseInt(e.target.value) : null; renderLibrary(); });
-    document.getElementById('floor-max-input').addEventListener('change', (e) => { libMaxFloors = e.target.value ? parseInt(e.target.value) : null; renderLibrary(); });
+    const diffMin = document.getElementById('diff-min-input');
+    const diffMax = document.getElementById('diff-max-input');
+    const floorMin = document.getElementById('floor-min-input');
+    const floorMax = document.getElementById('floor-max-input');
+
+    if (diffMin) diffMin.addEventListener('change', (e) => { libMinDiff = parseFloat(e.target.value) || 0; renderLibrary(); });
+    if (diffMax) diffMax.addEventListener('change', (e) => { libMaxDiff = parseFloat(e.target.value) || 12; renderLibrary(); });
+    if (floorMin) floorMin.addEventListener('change', (e) => { libMinFloors = e.target.value ? parseInt(e.target.value) : null; renderLibrary(); });
+    if (floorMax) floorMax.addEventListener('change', (e) => { libMaxFloors = e.target.value ? parseInt(e.target.value) : null; renderLibrary(); });
 
     const btnModeRange = document.getElementById('btn-mode-range');
     const btnModeSelect = document.getElementById('btn-mode-select');
     const diffUiRange = document.getElementById('diff-ui-range');
     const diffUiSelect = document.getElementById('diff-ui-select');
 
-    btnModeRange.addEventListener('click', () => {
-        libFilterMode = 'range';
-        btnModeRange.className = "px-2 py-1.5 text-[10px] lg:text-xs font-bold rounded transition-all bg-[#BE00FF] text-white";
-        btnModeSelect.className = "px-2 py-1.5 text-[10px] lg:text-xs font-bold rounded transition-all text-gray-400 hover:text-white";
-        diffUiRange.classList.remove('hidden');
-        diffUiSelect.classList.add('hidden');
-        renderLibrary();
-    });
+    if (btnModeRange && btnModeSelect) {
+        const setActive = (el, isActive) => {
+            if (isActive) {
+                el.className = "px-2 py-1.5 text-[10px] lg:text-xs font-bold rounded transition-all bg-[#BE00FF] text-white";
+            } else {
+                el.className = "px-2 py-1.5 text-[10px] lg:text-xs font-bold rounded transition-all text-gray-400 hover:text-white";
+            }
+        };
 
-    btnModeSelect.addEventListener('click', () => {
-        libFilterMode = 'select';
-        btnModeSelect.className = "px-2 py-1.5 text-[10px] lg:text-xs font-bold rounded transition-all bg-[#BE00FF] text-white";
-        btnModeRange.className = "px-2 py-1.5 text-[10px] lg:text-xs font-bold rounded transition-all text-gray-400 hover:text-white";
-        diffUiSelect.classList.remove('hidden');
-        diffUiRange.classList.add('hidden');
-        renderLibrary();
-    });
+        btnModeRange.addEventListener('click', () => {
+            libFilterMode = 'range';
+            setActive(btnModeRange, true);
+            setActive(btnModeSelect, false);
+            diffUiRange.classList.remove('hidden');
+            diffUiSelect.classList.add('hidden');
+            renderLibrary();
+        });
+
+        btnModeSelect.addEventListener('click', () => {
+            libFilterMode = 'select';
+            setActive(btnModeSelect, true);
+            setActive(btnModeRange, false);
+            diffUiSelect.classList.remove('hidden');
+            diffUiRange.classList.add('hidden');
+            renderLibrary();
+        });
+    }
 }
 
 export function renderLibrary() {
@@ -133,11 +154,15 @@ export function renderLibrary() {
     });
 
     let rowsHtml = '';
+    
     filteredTowers.forEach((tower, index) => {
         const beatenVersion = beatenMap.get(tower.name);
         const isCompleted = !!beatenVersion;
         const completionRgb = isCompleted ? '67, 255, 129' : '255, 50, 50';
-        const diffRgb = (hexToRgb(DIFFICULTY_COLORS[tower.difficulty] || '#808080') || [128, 128, 128]).join(', ');
+        
+        const diffHex = DIFFICULTY_COLORS[tower.difficulty] || '#808080';
+        const diffRgb = (hexToRgb(diffHex) || [128, 128, 128]).join(', ');
+        
         const dateStr = isCompleted ? new Date(beatenVersion.awarded_unix * 1000).toLocaleDateString() : '--';
         const areaClass = AREA_PILL_CLASSES[tower.area] || AREA_PILL_CLASSES.Default;
         const diffClass = DIFFICULTY_PILL_CLASSES[tower.difficulty] || DIFFICULTY_PILL_CLASSES.nil;
@@ -153,7 +178,58 @@ function initLibraryComponents() {
     if (allTowersData.length === 0) return;
 
     const areaListContainer = document.getElementById('area-list-container');
-    if (areaListContainer.children.length > 0) return;
+    if (areaListContainer.children.length > 0) return; 
+
+    const createDropdownItem = (text, value, isSelected, onClick, colorHex = null) => {
+        const div = document.createElement('div');
+        div.textContent = text;
+        div.className = DROPDOWN_ITEM_BASE.join(' ');
+        
+        const updateStyle = () => {
+            const selected = isSelected(value);
+            
+            div.classList.remove(...ACTIVE_STYLE, ...INACTIVE_STYLE);
+            div.style.background = '';
+            div.style.borderLeft = '';
+            div.style.borderTop = '';
+            div.style.borderRight = '';
+            div.style.borderBottom = '';
+            div.classList.remove('text-white', 'text-gray-400', 'font-medium');
+
+            if (colorHex) {
+                const rgb = hexToRgb(colorHex) || [128, 128, 128];
+                const opacity = selected ? 0.15 : 0.04;
+                
+                div.style.background = `linear-gradient(90deg, rgba(${rgb[0]},${rgb[1]},${rgb[2]},${opacity}) 0%, rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.01) 100%)`;
+                div.style.borderLeft = `3px solid ${colorHex}`;
+                div.style.borderTop = '1px solid transparent';
+                div.style.borderRight = '1px solid transparent';
+                div.style.borderBottom = '1px solid transparent';
+
+                if (selected) {
+                    div.classList.add('text-white');
+                } else {
+                    div.classList.add('text-gray-400');
+                }
+            } else {
+                if (selected) {
+                    div.classList.add(...ACTIVE_STYLE);
+                } else {
+                    div.classList.add(...INACTIVE_STYLE);
+                }
+            }
+        };
+        
+        updateStyle(); 
+
+        div.addEventListener('click', (e) => {
+            e.stopPropagation();
+            onClick(value);
+            updateStyle();
+        });
+        
+        return div;
+    };
 
     const areaMenu = document.getElementById('area-dropdown-menu');
     const diffMenu = document.getElementById('diff-dropdown-menu');
@@ -171,17 +247,26 @@ function initLibraryComponents() {
     statusBtns.forEach(btn => {
         const newBtn = btn.cloneNode(true);
         btn.parentNode.replaceChild(newBtn, btn);
+        
+        if (newBtn.dataset.value === libStatusValue) {
+            newBtn.classList.remove(...INACTIVE_STYLE, 'text-gray-400', 'hover:text-white');
+            newBtn.classList.add(...ACTIVE_STYLE);
+        } else {
+            newBtn.classList.remove(...ACTIVE_STYLE, 'bg-[#BE00FF]', 'text-white');
+            newBtn.classList.add(...INACTIVE_STYLE);
+        }
+
         newBtn.addEventListener('click', () => {
             libStatusValue = newBtn.dataset.value;
             statusBtns.forEach(b => {
-                const freshBtn = document.querySelector(`.status-filter-btn[data-value="${b.dataset.value}"]`);
-                if(freshBtn) {
-                    freshBtn.classList.remove('bg-[#BE00FF]', 'text-white');
-                    freshBtn.classList.add('text-gray-400', 'hover:text-white');
+                const fresh = document.querySelector(`.status-filter-btn[data-value="${b.dataset.value}"]`);
+                if(fresh) {
+                    fresh.classList.remove(...ACTIVE_STYLE);
+                    fresh.classList.add(...INACTIVE_STYLE);
                 }
             });
-            newBtn.classList.remove('text-gray-400', 'hover:text-white');
-            newBtn.classList.add('bg-[#BE00FF]', 'text-white');
+            newBtn.classList.remove(...INACTIVE_STYLE);
+            newBtn.classList.add(...ACTIVE_STYLE);
             renderLibrary();
         });
     });
@@ -190,17 +275,26 @@ function initLibraryComponents() {
     typeBtns.forEach(btn => {
         const newBtn = btn.cloneNode(true);
         btn.parentNode.replaceChild(newBtn, btn);
+        
+        const val = newBtn.dataset.value;
+        if (libSelectedTypes.has(val)) {
+            newBtn.classList.remove(...INACTIVE_STYLE);
+            newBtn.classList.add(...ACTIVE_STYLE);
+        } else {
+            newBtn.classList.remove(...ACTIVE_STYLE);
+            newBtn.classList.add(...INACTIVE_STYLE);
+        }
+
         newBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            const val = newBtn.dataset.value;
             if (libSelectedTypes.has(val)) {
                 libSelectedTypes.delete(val);
-                newBtn.classList.remove('bg-[#BE00FF]', 'text-white');
-                newBtn.classList.add('text-gray-400', 'hover:text-white');
+                newBtn.classList.remove(...ACTIVE_STYLE);
+                newBtn.classList.add(...INACTIVE_STYLE);
             } else {
                 libSelectedTypes.add(val);
-                newBtn.classList.remove('text-gray-400', 'hover:text-white');
-                newBtn.classList.add('bg-[#BE00FF]', 'text-white');
+                newBtn.classList.remove(...INACTIVE_STYLE);
+                newBtn.classList.add(...ACTIVE_STYLE);
             }
             renderLibrary();
         });
@@ -208,12 +302,12 @@ function initLibraryComponents() {
 
     const areas = Array.from(new Set(allTowersData.map(t => t.area).filter(Boolean)));
     libSelectedAreas = new Set(areas);
+    
     const hierarchyMap = {
         "Ring 1": ["Forgotten Ridge"], "Ring 2": ["Garden Of Eesh%C3%B6L"], "Ring 4": ["Silent Abyss"],
         "Ring 5": ["Lost River"], "Ring 6": ["Ashen Towerworks"], "Ring 8": ["The Starlit Archives"],
         "Zone 2": ["Arcane Area"], "Zone 3": ["Paradise Atoll"]
     };
-
     let sortedAreaList = [];
     for (let i = 0; i <= 9; i++) {
         const ring = `Ring ${i}`;
@@ -230,24 +324,23 @@ function initLibraryComponents() {
 
     areaListContainer.innerHTML = '';
     sortedAreaList.forEach(item => {
-        const hex = AREA_COLORS[item.name] || '#808080';
-        const rgb = hexToRgb(hex) || [128, 128, 128];
-        const bgStyle = `background: linear-gradient(90deg, rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.04) 0%, rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.01) 100%); border-left: 3px solid ${hex};`;
-
-        const label = document.createElement('label');
-        const containerClass = item.isSub ? 'subrealm-item dropdown-check-item' : 'dropdown-check-item';
-        label.className = `${containerClass} text-xs text-gray-300`;
-        label.style = bgStyle;
-        label.style.color = hex;
-        const isChecked = libSelectedAreas.has(item.name) ? 'checked' : '';
-        label.innerHTML = `<input type="checkbox" value="${item.name}" ${isChecked}><span class="text-gray-200 font-medium">${AREA_DISPLAY_NAMES[item.name]||item.name}</span>`;
-        label.querySelector('input').addEventListener('change', (e) => {
-            if (e.target.checked) libSelectedAreas.add(item.name);
-            else libSelectedAreas.delete(item.name);
-            updateAreaButtonText(areas.length);
-            renderLibrary();
-        });
-        areaListContainer.appendChild(label);
+        const display = AREA_DISPLAY_NAMES[item.name] || item.name;
+        const text = display;
+        
+        const el = createDropdownItem(
+            text, 
+            item.name, 
+            (val) => libSelectedAreas.has(val),
+            (val) => {
+                if (libSelectedAreas.has(val)) libSelectedAreas.delete(val);
+                else libSelectedAreas.add(val);
+                updateAreaButtonText(areas.length);
+                renderLibrary();
+            },
+            AREA_COLORS[item.name]
+        );
+        if (item.isSub) el.classList.add('ml-4');
+        areaListContainer.appendChild(el);
     });
 
     const difficulties = Object.keys(DIFFICULTY_COLORS);
@@ -255,21 +348,19 @@ function initLibraryComponents() {
     const diffListContainer = document.getElementById('diff-list-container');
     diffListContainer.innerHTML = '';
     difficulties.forEach(diff => {
-        const hex = DIFFICULTY_COLORS[diff];
-        const rgb = hexToRgb(hex);
-        const bgStyle = `background: linear-gradient(90deg, rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.04) 0%, rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.01) 100%); border-left: 3px solid ${hex};`;
-        const label = document.createElement('label');
-        label.className = 'dropdown-check-item text-xs text-gray-200';
-        label.style = bgStyle;
-        label.style.color = hex;
-        label.innerHTML = `<input type="checkbox" value="${diff}" checked><span class="text-gray-200 font-medium">${diff}</span>`;
-        label.querySelector('input').addEventListener('change', (e) => {
-            if (e.target.checked) libSelectedDiffs.add(diff);
-            else libSelectedDiffs.delete(diff);
-            updateDiffButtonText(difficulties.length);
-            renderLibrary();
-        });
-        diffListContainer.appendChild(label);
+        const el = createDropdownItem(
+            diff,
+            diff,
+            (val) => libSelectedDiffs.has(val),
+            (val) => {
+                if (libSelectedDiffs.has(val)) libSelectedDiffs.delete(val);
+                else libSelectedDiffs.add(val);
+                updateDiffButtonText(difficulties.length);
+                renderLibrary();
+            },
+            DIFFICULTY_COLORS[diff]
+        );
+        diffListContainer.appendChild(el);
     });
 
     const lengths = ['<20 minutes', '20+ minutes', '30+ minutes', '45+ minutes', '60+ minutes', '90+ minutes'];
@@ -277,17 +368,18 @@ function initLibraryComponents() {
     const lengthListContainer = document.getElementById('length-list-container');
     lengthListContainer.innerHTML = '';
     lengths.forEach(len => {
-        const label = document.createElement('label');
-        label.className = 'dropdown-check-item text-xs text-gray-200';
-        label.style.color = '#FFA500';
-        label.innerHTML = `<input type="checkbox" value="${len}" checked><span class="text-gray-200 font-medium">${len}</span>`;
-        label.querySelector('input').addEventListener('change', (e) => {
-            if (e.target.checked) libSelectedLengths.add(len);
-            else libSelectedLengths.delete(len);
-            updateLengthButtonText(lengths.length);
-            renderLibrary();
-        });
-        lengthListContainer.appendChild(label);
+        const el = createDropdownItem(
+            len,
+            len,
+            (val) => libSelectedLengths.has(val),
+            (val) => {
+                if (libSelectedLengths.has(val)) libSelectedLengths.delete(val);
+                else libSelectedLengths.add(val);
+                updateLengthButtonText(lengths.length);
+                renderLibrary();
+            }
+        );
+        lengthListContainer.appendChild(el);
     });
 
     const creators = Array.from(new Set(allTowersData.flatMap(t => Array.isArray(t.creators) ? t.creators.flatMap(c => c.split(',')) : []).map(c => c.trim()).filter(Boolean))).sort();
@@ -299,18 +391,18 @@ function initLibraryComponents() {
         creatorListContainer.innerHTML = '';
         const filtered = creators.filter(c => c.toLowerCase().includes(filter.toLowerCase()));
         filtered.forEach(c => {
-            const label = document.createElement('label');
-            label.className = 'dropdown-check-item text-xs text-gray-200';
-            label.style.color = '#EAEAEA';
-            const isChecked = libSelectedCreators.has(c) ? 'checked' : '';
-            label.innerHTML = `<input type="checkbox" value="${c}" ${isChecked}><span class="text-gray-200 font-medium truncate">${c}</span>`;
-            label.querySelector('input').addEventListener('change', (e) => {
-                if (e.target.checked) libSelectedCreators.add(c);
-                else libSelectedCreators.delete(c);
-                updateCreatorButtonText(creators.length);
-                renderLibrary();
-            });
-            creatorListContainer.appendChild(label);
+            const el = createDropdownItem(
+                c,
+                c,
+                (val) => libSelectedCreators.has(val),
+                (val) => {
+                    if (libSelectedCreators.has(val)) libSelectedCreators.delete(val);
+                    else libSelectedCreators.add(val);
+                    updateCreatorButtonText(creators.length);
+                    renderLibrary();
+                }
+            );
+            creatorListContainer.appendChild(el);
         });
     };
     renderCreatorList();
@@ -344,9 +436,11 @@ function initLibraryComponents() {
     const sortBtn = document.getElementById('lib-sort-btn');
     const newSortBtn = sortBtn.cloneNode(true);
     sortBtn.parentNode.replaceChild(newSortBtn, sortBtn);
+    
+    const libSortText = document.getElementById('lib-sort-text');
+    const libSortIcon = document.getElementById('lib-sort-icon');
+
     newSortBtn.addEventListener('click', () => {
-        const libSortText = document.getElementById('lib-sort-text');
-        const libSortIcon = document.getElementById('lib-sort-icon');
         if (libSortOrder === 'desc') {
             libSortOrder = 'asc';
             libSortText.textContent = 'Easiest First (Ascending)';
@@ -359,17 +453,17 @@ function initLibraryComponents() {
         renderLibrary();
     });
 
-    const setupDropdown = (id, menu) => {
+    const setupDropdownTrigger = (id, menu) => {
         const el = document.getElementById(id);
         const newEl = el.cloneNode(true);
         el.parentNode.replaceChild(newEl, el);
         newEl.addEventListener('click', (e) => { e.stopPropagation(); toggleDropdown(menu); });
     };
 
-    setupDropdown('area-dropdown-btn', areaMenu);
-    setupDropdown('diff-dropdown-btn', diffMenu);
-    setupDropdown('length-dropdown-btn', lengthMenu);
-    setupDropdown('creator-dropdown-btn', creatorMenu);
+    setupDropdownTrigger('area-dropdown-btn', areaMenu);
+    setupDropdownTrigger('diff-dropdown-btn', diffMenu);
+    setupDropdownTrigger('length-dropdown-btn', lengthMenu);
+    setupDropdownTrigger('creator-dropdown-btn', creatorMenu);
 
     document.addEventListener('click', (e) => { if (!e.target.closest('.relative')) menus.forEach(m => m.classList.add('hidden')); });
     
