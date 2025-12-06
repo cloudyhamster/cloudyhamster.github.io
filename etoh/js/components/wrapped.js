@@ -20,16 +20,17 @@ const SLIDES = [
     'summary'
 ];
 
+// Distinct themes for each section
 const THEMES = {
-    intro: '#BE00FF',
-    count: '#3b82f6',
-    height: '#8b5cf6',
-    skill: '#f43f5e',
-    creators: '#d946ef',
-    realms: '#10b981',
-    hourly: '#06b6d4',
-    archetype: '#f59e0b',
-    summary: null
+    intro: '#BE00FF',      
+    count: '#3b82f6',      
+    height: '#8b5cf6',     
+    skill: '#f43f5e',      
+    creators: '#d946ef',   
+    realms: '#10b981',     
+    hourly: '#06b6d4',     
+    archetype: '#f59e0b',  
+    summary: null          
 };
 
 export function initWrapped() {
@@ -54,6 +55,7 @@ export function initWrapped() {
         .wrapped-delay-2 { animation-delay: 0.2s; }
         .wrapped-delay-3 { animation-delay: 0.3s; }
         
+        /* Fixed Button Style (Transparent Center) */
         .btn-wrapped-trigger {
             position: relative;
             width: 100%;
@@ -62,10 +64,9 @@ export function initWrapped() {
             gap: 10px;
             padding: 8px 12px;
             border-radius: 6px;
-            border: 1.5px solid transparent; /* The border width */
+            border: 1.5px solid transparent;
             
-            /* Layer 1: Inner background (Dark) - Clips to padding */
-            /* Layer 2: Outer background (Gradient) - Clips to border */
+            /* Layer 1: Inner (matches sidebar), Layer 2: Outer (Gradient) */
             background-image: 
                 linear-gradient(#15151c, #15151c), 
                 linear-gradient(90deg, #BE00FF, #3b82f6, #BE00FF); 
@@ -82,7 +83,6 @@ export function initWrapped() {
         
         .btn-wrapped-trigger:hover {
             transform: scale(1.02);
-            /* Slightly lighter inner bg on hover */
             background-image: 
                 linear-gradient(#1e1e24, #1e1e24), 
                 linear-gradient(90deg, #BE00FF, #3b82f6, #BE00FF);
@@ -341,8 +341,8 @@ function renderSlide(index) {
         `<div class="w-2.5 h-2.5 rounded-full transition-all duration-300 ${i === index ? 'bg-white w-6' : 'bg-white/30'}"></div>`
     ).join('');
 
+    // Determine Theme Color
     let themeHex = THEMES[type];
-    
     if (!themeHex) {
         themeHex = DIFFICULTY_COLORS[s.hardestCurrent.difficulty] || '#BE00FF';
     }
@@ -350,8 +350,8 @@ function renderSlide(index) {
     const themeRgb = hexToRgb(themeHex) || [190, 0, 255]; 
     const themeString = `${themeRgb[0]}, ${themeRgb[1]}, ${themeRgb[2]}`;
 
+    // Background Logic
     const bgStyle = `background: radial-gradient(circle at center, rgba(${themeString}, 0.2) 0%, #000000 80%);`;
-
     container.className = `flex-1 flex items-center justify-center relative w-full h-full transition-all duration-700 bg-black`;
     container.setAttribute('style', bgStyle);
 
@@ -372,6 +372,9 @@ function renderSlide(index) {
                 </div>
             `;
             break;
+        
+        // ... (Other cases 'count', 'height', 'skill', 'creators', 'realms', 'hourly', 'archetype' remain similar with ${themeHex} applied) ...
+        // I'm including them all to ensure full file integrity as requested.
 
         case 'count':
             html = `
@@ -522,12 +525,14 @@ function renderSlide(index) {
             break;
 
         case 'summary':
+            // SUMMARY Uses difficulty color, not a preset theme
             html = `
                 <div class="flex flex-col items-center justify-center w-full h-full p-4 md:p-8 overflow-y-auto">
                     <div class="w-full max-w-6xl bg-[#080808] border border-white/5 rounded-[2rem] p-8 shadow-2xl relative wrapped-anim-scale overflow-hidden" 
                          id="share-card" 
                          style="background-image: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(0,0,0,0) 100%); border-color: ${themeHex}30; box-shadow: 0 0 80px ${themeHex}10;">
                         
+                        <!-- Background Glow -->
                         <div class="absolute top-[-200px] right-[-200px] w-[500px] h-[500px] rounded-full blur-[180px] opacity-20 pointer-events-none" style="background: ${themeHex}"></div>
 
                         <div class="flex justify-between items-center mb-6 relative z-10">
@@ -542,6 +547,7 @@ function renderSlide(index) {
 
                         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6 relative z-10">
                             
+                            <!-- Archetype -->
                             <div class="lg:col-span-2 h-48 rounded-2xl p-8 flex flex-col justify-between relative overflow-hidden group transition-colors"
                                  style="background: linear-gradient(to bottom right, ${themeHex}15, rgba(255,255,255,0.03)); border: 1px solid ${themeHex}30;">
                                 <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -554,6 +560,7 @@ function renderSlide(index) {
                                 <p class="text-sm text-gray-400 font-serif italic relative z-10">"${getArchetypeDescription(s.archetype)}"</p>
                             </div>
 
+                            <!-- Hardest -->
                             <div class="lg:col-span-2 h-48 rounded-2xl p-8 relative overflow-hidden flex flex-col justify-center transition-colors"
                                  style="background: linear-gradient(to bottom left, ${themeHex}15, rgba(255,255,255,0.03)); border: 1px solid ${themeHex}30;">
                                 <div class="absolute left-0 top-0 bottom-0 w-2" style="background:${themeHex}"></div>
@@ -565,6 +572,7 @@ function renderSlide(index) {
                                 </div>
                             </div>
 
+                            <!-- Top 5 Towers -->
                             <div class="lg:col-span-2 min-h-[320px] bg-white/5 rounded-2xl p-6 border border-white/5 flex flex-col hover:border-white/10 transition-colors">
                                 <p class="text-xs text-gray-500 uppercase tracking-widest mb-4 pb-2 border-b border-white/5 font-bold">Top 5 Completions</p>
                                 <div class="flex flex-col gap-2 flex-1 overflow-y-auto bento-scroll">
@@ -580,6 +588,7 @@ function renderSlide(index) {
                                 </div>
                             </div>
 
+                            <!-- Top 5 Builders -->
                             <div class="lg:col-span-2 min-h-[320px] bg-white/5 rounded-2xl p-6 border border-white/5 flex flex-col hover:border-white/10 transition-colors">
                                 <p class="text-xs text-gray-500 uppercase tracking-widest mb-4 pb-2 border-b border-white/5 font-bold">Top 5 Builders</p>
                                 <div class="flex flex-col gap-2 flex-1 overflow-y-auto bento-scroll">
