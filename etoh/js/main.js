@@ -9,6 +9,7 @@ import { initLeaderboard } from './components/leaderboard.js';
 import { initProfile } from './components/profile.js';
 import { initNavigation } from './components/navigation.js';
 import { initModals, openProfileModal } from './ui/modals.js';
+import { initWrapped } from './components/wrapped.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     initNavigation();
@@ -19,6 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initLeaderboard();
     initProfile();
     initModals();
+    initWrapped();
 
     try {
         const towers = await api.getMasterTowers();

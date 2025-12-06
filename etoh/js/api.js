@@ -31,6 +31,18 @@ class ApiClient {
         const res = await this.get('/api/get_leaderboard');
         return res.leaderboard;
     }
+
+    async getBadgeStats(badgeId) {
+        const url = `https://badges.roproxy.com/v1/badges/${badgeId}`;
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`Roblox API Error: ${res.status}`);
+            return await res.json();
+        } catch (e) {
+            console.error("Failed to fetch badge stats", e);
+            return null;
+        }
+    }
 }
 
 export const api = new ApiClient();
