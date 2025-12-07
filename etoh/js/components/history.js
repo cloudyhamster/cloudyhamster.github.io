@@ -159,11 +159,11 @@ function renderAreaTable(allTowers, beatenTowers, unlockedAreas) {
                     
                     const styleClass = met 
                         ? 'border-blue-500/50 text-blue-300 bg-blue-500/10'
-                        : 'border-white/10 text-gray-600 bg-white/5';
+                        : 'border-white/20 text-gray-500 bg-transparent';
                     
                     pills.push(`
-                        <span class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono border ${styleClass}" title="Total Towers Required">
-                            <span class="text-[9px] font-bold opacity-70 tracking-tight uppercase">TOTAL</span>
+                        <span class="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono border leading-none ${styleClass}" title="Total Towers Required">
+                            <span class="text-[8px] font-bold opacity-70 tracking-tight uppercase">TOTAL</span>
                             ${current}/${reqs.total_towers}
                         </span>
                     `);
@@ -177,13 +177,17 @@ function renderAreaTable(allTowers, beatenTowers, unlockedAreas) {
                         }, 0);
 
                         const met = current >= needed;
+                        const diffHex = DIFFICULTY_COLORS[diffName] || '#808080';
                         
-                        let pillClass = met 
-                            ? (DIFFICULTY_PILL_CLASSES[diffName] || DIFFICULTY_PILL_CLASSES.nil)
-                            : 'border-white/10 text-gray-600 bg-white/5';
+                        let textColor = diffHex;
+                        if (diffName === 'Intense') textColor = '#9CA3AF'; 
+
+                        const style = met 
+                            ? `background: ${diffHex}15; border-color: ${diffHex}50; color: ${textColor};`
+                            : `background: transparent; border-color: ${diffHex}50; color: ${textColor}; opacity: 0.8;`;
 
                         pills.push(`
-                            <span class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono border ${pillClass}" title="${diffName} or harder">
+                            <span class="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono border leading-none" style="${style}" title="${diffName} or harder">
                                 ${current}/${needed}
                             </span>
                         `);

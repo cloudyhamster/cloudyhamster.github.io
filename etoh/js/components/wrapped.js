@@ -340,6 +340,18 @@ function renderSlide(index) {
         `<div class="w-2.5 h-2.5 rounded-full transition-all duration-300 ${i === index ? 'bg-white w-6' : 'bg-white/30'}"></div>`
     ).join('');
 
+    const THEMES = {
+        intro: '#BE00FF',      
+        count: '#3b82f6',      
+        height: '#8b5cf6',     
+        skill: '#f43f5e',      
+        creators: '#d946ef',   
+        realms: '#10b981',     
+        hourly: '#06b6d4',     
+        archetype: '#f59e0b',  
+        summary: null          
+    };
+
     let themeHex = THEMES[type];
     if (!themeHex) {
         themeHex = DIFFICULTY_COLORS[s.hardestCurrent.difficulty] || '#BE00FF';
@@ -408,6 +420,22 @@ function renderSlide(index) {
             break;
 
         case 'skill':
+            const diffVal = parseFloat(s.diffIncrease);
+            let diffIcon = 'arrow_upward';
+            let diffColorClass = 'text-green-400';
+            let diffDisplay = s.diffIncrease;
+
+            if (diffVal > 0) {
+                diffDisplay = '+' + s.diffIncrease;
+            } else if (diffVal < 0) {
+                diffIcon = 'arrow_downward';
+                diffColorClass = 'text-red-400';
+            } else {
+                diffIcon = 'remove';
+                diffColorClass = 'text-gray-400';
+                diffDisplay = '0.00';
+            }
+
             html = `
                 <div class="text-center p-8 w-full max-w-5xl relative">
                     <p class="text-2xl mb-12 font-light uppercase tracking-widest wrapped-anim-up" style="color: ${themeHex}">The Summit</p>
@@ -428,7 +456,9 @@ function renderSlide(index) {
                             <div class="flex items-center gap-4 relative z-10 mt-auto">
                                 <span class="px-4 py-1.5 rounded bg-white text-black font-bold text-sm tracking-wider uppercase">${s.hardestCurrent.difficulty}</span>
                                 <span class="text-2xl font-mono text-white font-bold tracking-tighter">${s.hardestCurrent.number_difficulty.toFixed(2)}</span>
-                                <span class="ml-auto font-bold flex items-center gap-1 bg-white/10 text-white px-3 py-1 rounded-full border" style="border-color: ${themeHex}"><span class="material-symbols-outlined text-sm">arrow_upward</span>${s.diffIncrease}</span>
+                                <span class="ml-auto font-bold flex items-center gap-1 bg-white/10 ${diffColorClass} px-3 py-1 rounded-full border" style="border-color: ${themeHex}">
+                                    <span class="material-symbols-outlined text-sm">${diffIcon}</span>${diffDisplay}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -525,7 +555,6 @@ function renderSlide(index) {
                          id="share-card" 
                          style="background-image: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(0,0,0,0) 100%); border-color: ${themeHex}30; box-shadow: 0 0 80px ${themeHex}10;">
                         
-                        <!-- Background Glow -->
                         <div class="absolute top-[-200px] right-[-200px] w-[500px] h-[500px] rounded-full blur-[180px] opacity-20 pointer-events-none" style="background: ${themeHex}"></div>
 
                         <div class="flex justify-between items-center mb-6 relative z-10">
@@ -540,7 +569,6 @@ function renderSlide(index) {
 
                         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6 relative z-10">
                             
-                            <!-- Archetype -->
                             <div class="lg:col-span-2 h-48 rounded-2xl p-8 flex flex-col justify-between relative overflow-hidden group transition-colors"
                                  style="background: linear-gradient(to bottom right, ${themeHex}15, rgba(255,255,255,0.03)); border: 1px solid ${themeHex}30;">
                                 <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -553,7 +581,6 @@ function renderSlide(index) {
                                 <p class="text-sm text-gray-400 font-serif italic relative z-10">"${getArchetypeDescription(s.archetype)}"</p>
                             </div>
 
-                            <!-- Hardest -->
                             <div class="lg:col-span-2 h-48 rounded-2xl p-8 relative overflow-hidden flex flex-col justify-center transition-colors"
                                  style="background: linear-gradient(to bottom left, ${themeHex}15, rgba(255,255,255,0.03)); border: 1px solid ${themeHex}30;">
                                 <div class="absolute left-0 top-0 bottom-0 w-2" style="background:${themeHex}"></div>
@@ -565,7 +592,6 @@ function renderSlide(index) {
                                 </div>
                             </div>
 
-                            <!-- Top 5 Towers -->
                             <div class="lg:col-span-2 min-h-[320px] bg-white/5 rounded-2xl p-6 border border-white/5 flex flex-col hover:border-white/10 transition-colors">
                                 <p class="text-xs text-gray-500 uppercase tracking-widest mb-4 pb-2 border-b border-white/5 font-bold">Top 5 Completions</p>
                                 <div class="flex flex-col gap-2 flex-1 overflow-y-auto bento-scroll">
@@ -581,7 +607,6 @@ function renderSlide(index) {
                                 </div>
                             </div>
 
-                            <!-- Top 5 Builders -->
                             <div class="lg:col-span-2 min-h-[320px] bg-white/5 rounded-2xl p-6 border border-white/5 flex flex-col hover:border-white/10 transition-colors">
                                 <p class="text-xs text-gray-500 uppercase tracking-widest mb-4 pb-2 border-b border-white/5 font-bold">Top 5 Builders</p>
                                 <div class="flex flex-col gap-2 flex-1 overflow-y-auto bento-scroll">
