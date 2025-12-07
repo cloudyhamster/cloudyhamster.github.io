@@ -81,3 +81,25 @@ export const RANK_COLORS = {
 export const AREA_DISPLAY_NAMES = {
     'Garden Of Eesh%C3%B6L': 'Garden Of Eeshöl'
 };
+
+export const AREA_REQUIREMENTS = {
+    "Ring 1": {"total_towers": 3, "from_areas": ["Ring 0"]},
+    "Ring 2": {"total_towers": 6, "difficulties": {"Medium": 1}},
+    "Ring 3": {"total_towers": 10, "difficulties": {"Hard": 1}},
+    "Ring 4": {"total_towers": 15, "difficulties": {"Hard": 3, "Difficult": 1}},
+    "Ring 5": {"total_towers": 22, "difficulties": {"Difficult": 3, "Challenging": 1}},
+    "Ring 6": {"total_towers": 30, "difficulties": {"Difficult": 5, "Challenging": 2}},
+    "Ring 7": {"total_towers": 39, "difficulties": {"Challenging": 4, "Intense": 1}},
+    "Ring 8": {"total_towers": 49, "difficulties": {"Challenging": 6, "Intense": 2}},
+    "Ring 9": {"total_towers": 60, "difficulties": {"Intense": 4, "Remorseless": 1}},
+    "Zone 1": {"total_towers": 3, "from_areas": ["Ring 0"]},
+    "Zone 2": {"total_towers": 7, "difficulties": {"Medium": 1}},
+    "Zone 3": {"total_towers": 12, "difficulties": {"Hard": 1}},
+    "Zone 4": {"total_towers": 18, "difficulties": {"Hard": 3, "Difficult": 1}},
+    "Zone 5": {"total_towers": 25, "difficulties": {"Difficult": 3, "Challenging": 1}},
+    "Zone 6": {"total_towers": 33, "difficulties": {"Difficult": 5, "Challenging": 3}},
+    "Zone 7": {"total_towers": 45, "difficulties": {"Challenging": 5, "Intense": 1}},
+    "Zone 8": {"total_towers": 59, "difficulties": {"Challenging": 7, "Intense": 3}},
+    "Zone 9": {"total_towers": 75, "difficulties": {"Intense": 5, "Remorseless": 1}},
+    "Zone 10": {"total_towers": 85, "difficulties": {"Intense": 7, "Remorseless": 2}},
+};

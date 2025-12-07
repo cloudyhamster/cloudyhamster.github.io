@@ -1,7 +1,13 @@
 import { store } from '../state.js';
-import { DIFFICULTY_COLORS, DIFFICULTY_PILL_CLASSES, AREA_COLORS, AREA_PILL_CLASSES, AREA_DISPLAY_NAMES } from '../config.js';
+import { DIFFICULTY_COLORS, DIFFICULTY_PILL_CLASSES, AREA_COLORS, AREA_PILL_CLASSES, AREA_DISPLAY_NAMES, AREA_REQUIREMENTS } from '../config.js';
 import { interpolateColor, hexToRgb } from '../utils.js';
 import { openModalWithTower } from '../ui/modals.js';
+
+const DIFFICULTY_VALUES = {
+    "Easy": 1, "Medium": 2, "Hard": 3, "Difficult": 4, "Challenging": 5,
+    "Intense": 6, "Remorseless": 7, "Insane": 8, "Extreme": 9,
+    "Terrifying": 10, "Catastrophic": 11
+};
 
 export function initHistory() {
     store.subscribe('userChanged', (userData) => {
@@ -10,21 +16,42 @@ export function initHistory() {
     });
 
     const tableView = document.getElementById('table-view');
-    tableView.addEventListener('click', (e) => {
-        const c = e.target.closest('.clickable-caption');
-        if (c) {
-            const tb = c.closest('table').querySelector('tbody');
-            tb.classList.toggle('hidden');
-            c.querySelector('.dropdown-arrow').style.transform = tb.classList.contains('hidden') ? 'rotate(-90deg)' : 'rotate(0deg)';
-        } else {
-            const r = e.target.closest('.tower-row');
-            if (r && r.dataset.towerName) openModalWithTower(r.dataset.towerName);
-        }
+    if (tableView) {
+        tableView.addEventListener('click', (e) => {
+            const c = e.target.closest('.clickable-caption');
+            if (c) {
+                const tb = c.closest('table').querySelector('tbody');
+                tb.classList.toggle('hidden');
+                c.querySelector('.dropdown-arrow').style.transform = tb.classList.contains('hidden') ? 'rotate(-90deg)' : 'rotate(0deg)';
+            } else {
+                const r = e.target.closest('.tower-row');
+                if (r && r.dataset.towerName) openModalWithTower(r.dataset.towerName);
+            }
+        });
+    }
+}
+
+function calculateProfileStats(beatenTowers) {
+    const profile = {
+        total: beatenTowers.length,
+        difficultyCounts: {},
+        areaCounts: {}
+    };
+
+    Object.keys(DIFFICULTY_VALUES).forEach(d => profile.difficultyCounts[d] = 0);
+
+    beatenTowers.forEach(t => {
+        if (t.difficulty) profile.difficultyCounts[t.difficulty] = (profile.difficultyCounts[t.difficulty] || 0) + 1;
+        if (t.area) profile.areaCounts[t.area] = (profile.areaCounts[t.area] || 0) + 1;
     });
+
+    return profile;
 }
 
 function renderFullHistoryList(beatenTowers) {
     const container = document.getElementById('full-history-container');
+    if (!container) return;
+    
     container.innerHTML = '';
     if (!beatenTowers || beatenTowers.length === 0) return;
 
@@ -51,8 +78,12 @@ function renderFullHistoryList(beatenTowers) {
 
 function renderAreaTable(allTowers, beatenTowers, unlockedAreas) {
     const container = document.getElementById('area-history-container');
+    if (!container) return;
+
     container.innerHTML = '';
     if (!allTowers || allTowers.length === 0) return;
+
+    const stats = calculateProfileStats(beatenTowers);
 
     const ringAreas = [
         { key: 'Ring 0', name: 'Ring 0: Purgatorio' },
@@ -112,6 +143,63 @@ function renderAreaTable(allTowers, beatenTowers, unlockedAreas) {
             } else if (percent > 0) textColorClass = 'text-gray-200';
             
             const progressStyle = `background: linear-gradient(to right, ${fillColor} 0%, ${fillColor} ${percent}%, transparent ${percent}%, transparent 100%);`;
+            
+            let reqHtml = '';
+            const reqs = AREA_REQUIREMENTS[area.key];
+            
+            if (reqs) {
+                const pills = [];
+
+                if (reqs.total_towers) {
+                    let current = stats.total;
+                    if (reqs.from_areas) {
+                        current = reqs.from_areas.reduce((acc, a) => acc + (stats.areaCounts[a] || 0), 0);
+                    }
+                    const met = current >= reqs.total_towers;
+                    
+                    const styleClass = met 
+                        ? 'border-blue-500/50 text-blue-300 bg-blue-500/10'
+                        : 'border-white/10 text-gray-600 bg-white/5';
+                    
+                    pills.push(`
+                        <span class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono border ${styleClass}" title="Total Towers Required">
+                            <span class="text-[9px] font-bold opacity-70 tracking-tight uppercase">TOTAL</span>
+                            ${current}/${reqs.total_towers}
+                        </span>
+                    `);
+                }
+
+                if (reqs.difficulties) {
+                    Object.entries(reqs.difficulties).forEach(([diffName, needed]) => {
+                        const reqVal = DIFFICULTY_VALUES[diffName];
+                        const current = Object.entries(stats.difficultyCounts).reduce((acc, [dName, count]) => {
+                            return (DIFFICULTY_VALUES[dName] >= reqVal) ? acc + count : acc;
+                        }, 0);
+
+                        const met = current >= needed;
+                        
+                        let pillClass = met 
+                            ? (DIFFICULTY_PILL_CLASSES[diffName] || DIFFICULTY_PILL_CLASSES.nil)
+                            : 'border-white/10 text-gray-600 bg-white/5';
+
+                        pills.push(`
+                            <span class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono border ${pillClass}" title="${diffName} or harder">
+                                ${current}/${needed}
+                            </span>
+                        `);
+                    });
+                }
+                
+                if (pills.length > 0) {
+                     reqHtml = `
+                        <div class="flex items-center gap-2">
+                             ${pills.join('')}
+                        </div>
+                        <div class="w-px h-4 bg-white/10 mx-1"></div>
+                     `;
+                }
+            }
+
             const countPill = `<span class="inline-block py-0.5 px-5 rounded-full text-xs font-mono border ${borderClass} ${textColorClass}" style="${progressStyle}">${completedCount}/${totalCount}</span>`;
 
             let towerRowsHtml = '';
@@ -124,7 +212,25 @@ function renderAreaTable(allTowers, beatenTowers, unlockedAreas) {
                 towerRowsHtml += `<tr class="tower-row ${isCompleted?'status-outline-completed':'status-outline-incomplete'}" style="--difficulty-rgb: ${completionRgb}; --area-rgb: ${diffRgb};" data-tower-name="${tower.name}"><td class="py-1 px-3 ${isCompleted?'text-gray-200':'text-gray-500'}">${tower.name}</td><td class="py-1 px-3 text-right"><div class="flex justify-end items-center gap-2"><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 ${isCompleted?'text-gray-300 bg-gray-500/10':'text-gray-600 bg-gray-500/10'}">${isCompleted?new Date(beatenVersion.awarded_unix*1000).toLocaleDateString():'--'}</span><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${DIFFICULTY_PILL_CLASSES[tower.difficulty]||DIFFICULTY_PILL_CLASSES.nil}">${tower.modifier||''} ${tower.difficulty||''} [${(tower.number_difficulty||0).toFixed(2)}]</span></div></td></tr>`;
             });
 
-            columnHtml += `<div class="bg-black/20 rounded-md overflow-hidden"><table class="w-full text-sm"><caption class="py-2.5 px-4 text-left font-bold text-base bg-black/10"><div class="${captionClasses} select-none flex justify-between items-center"><span class="caption-text">${area.name}</span><div class="flex items-center gap-3">${countPill}<span class="material-symbols-outlined caption-icon dropdown-arrow">${captionIcon}</span></div></div></caption><tbody class="${tbodyClass}">${towerRowsHtml}</tbody></table></div>`;
+            columnHtml += `
+                <div class="bg-black/20 rounded-md overflow-hidden">
+                    <table class="w-full text-sm">
+                        <caption class="py-2.5 px-4 text-left font-bold text-base bg-black/10">
+                            <div class="${captionClasses} select-none flex flex-wrap justify-between items-center gap-2">
+                                
+                                <span class="caption-text whitespace-nowrap">${area.name}</span>
+
+                                <div class="flex items-center gap-3">
+                                    ${reqHtml}
+                                    ${countPill}
+                                    <span class="material-symbols-outlined caption-icon dropdown-arrow">${captionIcon}</span>
+                                </div>
+
+                            </div>
+                        </caption>
+                        <tbody class="${tbodyClass}">${towerRowsHtml}</tbody>
+                    </table>
+                </div>`;
         }
         return `<div class="flex flex-col gap-4">${columnHtml}</div>`;
     };

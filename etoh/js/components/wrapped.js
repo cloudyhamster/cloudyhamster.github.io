@@ -20,7 +20,6 @@ const SLIDES = [
     'summary'
 ];
 
-// Distinct themes for each section
 const THEMES = {
     intro: '#BE00FF',      
     count: '#3b82f6',      
@@ -341,7 +340,6 @@ function renderSlide(index) {
         `<div class="w-2.5 h-2.5 rounded-full transition-all duration-300 ${i === index ? 'bg-white w-6' : 'bg-white/30'}"></div>`
     ).join('');
 
-    // Determine Theme Color
     let themeHex = THEMES[type];
     if (!themeHex) {
         themeHex = DIFFICULTY_COLORS[s.hardestCurrent.difficulty] || '#BE00FF';
@@ -350,7 +348,6 @@ function renderSlide(index) {
     const themeRgb = hexToRgb(themeHex) || [190, 0, 255]; 
     const themeString = `${themeRgb[0]}, ${themeRgb[1]}, ${themeRgb[2]}`;
 
-    // Background Logic
     const bgStyle = `background: radial-gradient(circle at center, rgba(${themeString}, 0.2) 0%, #000000 80%);`;
     container.className = `flex-1 flex items-center justify-center relative w-full h-full transition-all duration-700 bg-black`;
     container.setAttribute('style', bgStyle);
@@ -372,9 +369,6 @@ function renderSlide(index) {
                 </div>
             `;
             break;
-        
-        // ... (Other cases 'count', 'height', 'skill', 'creators', 'realms', 'hourly', 'archetype' remain similar with ${themeHex} applied) ...
-        // I'm including them all to ensure full file integrity as requested.
 
         case 'count':
             html = `
@@ -525,7 +519,6 @@ function renderSlide(index) {
             break;
 
         case 'summary':
-            // SUMMARY Uses difficulty color, not a preset theme
             html = `
                 <div class="flex flex-col items-center justify-center w-full h-full p-4 md:p-8 overflow-y-auto">
                     <div class="w-full max-w-6xl bg-[#080808] border border-white/5 rounded-[2rem] p-8 shadow-2xl relative wrapped-anim-scale overflow-hidden" 
