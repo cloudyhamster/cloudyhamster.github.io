@@ -1,5 +1,5 @@
 import { fetchAndRenderLeaderboard } from './leaderboard.js';
-import { initGame } from './game.js';
+import { startHiLoGame } from './game_hilo.js';
 import { renderLibrary } from './library.js';
 import { store } from '../state.js';
 
@@ -121,7 +121,7 @@ export function switchView(viewName) {
     }
 
     if (viewName === 'leaderboard' && !store.leaderboard) fetchAndRenderLeaderboard();
-    if (viewName === 'games') initGame();
+    if (viewName === 'games') startHiLoGame();
     if (viewName === 'library') renderLibrary();
 
     const mobileFilterToggle = document.getElementById('mobile-filter-toggle');

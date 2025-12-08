@@ -20,7 +20,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <link rel="icon" href="icon.jpg">
-    <link rel="stylesheet" href="./css/style.css?v=1.7.2">
+    <link rel="stylesheet" href="./css/style.css?v=1.7.3">
 </head>
 <body class="text-[#EAEAEA] antialiased bg-[#120E1C]">
     <div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
@@ -107,9 +107,9 @@
                     <div class="flex flex-col gap-3 mt-4">
                         <h1 class="text-sm font-medium leading-normal px-2">Games</h1>
                         <div id="games-nav-links" class="flex flex-col gap-1">
-                            <a data-view="games" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-gray-300 transition-colors hover:bg-white/5 hover:text-white" href="#">
-                                <span class="material-symbols-outlined text-xl">chess_queen</span>
-                                <p class="text-xs font-medium leading-normal">Guess the Tower</p>
+                            <a data-view="games" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-gray-300 transition-colors hover:bg-white/5 hover:text-white cursor-pointer" href="#">
+                                <span class="material-symbols-outlined text-xl">swap_vert</span>
+                                <p class="text-xs font-medium leading-normal">Higher or Lower</p>
                             </a>
                         </div>
                     </div>
@@ -173,38 +173,81 @@
                     </div>
                     
                     <div id="games-view" class="flex-grow w-full h-full overflow-y-auto hidden">
-                        <div class="flex flex-col gap-6 w-full mx-auto p-2">
-                            <div class="flex flex-col md:flex-row justify-between items-end gap-4">
-                                <div class="flex-1 w-full md:max-w-md relative">
-                                    <label class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5 block">Guess a Tower</label>
-                                    <input id="game-guess-input" type="text" placeholder="Start typing a tower name..." 
-                                        class="w-full rounded-md px-4 py-1.5 lg:py-2.5 text-[10px] lg:text-sm focus:outline-none transition-all border border-transparent focus:border-[#BE00FF] bg-black/20 text-white">
-                                    <div id="game-autocomplete-list" class="absolute w-full bg-[#1C1C22] border border-white/10 rounded-b-md mt-1 max-h-60 overflow-y-auto hidden shadow-2xl z-50"></div>
+                        <div class="flex flex-col items-center justify-center min-h-full w-full max-w-5xl mx-auto p-4 relative">
+                            <div id="hilo-game-over" class="absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center hidden rounded-2xl border border-white/10">
+                                <h2 class="text-6xl font-black text-red-500 mb-2 tracking-tighter">GAME OVER</h2>
+                                <p class="text-gray-400 text-lg mb-6">You chose poorly.</p>
+                                <div class="flex flex-col items-center gap-1 mb-8">
+                                    <p class="text-sm text-gray-500 uppercase tracking-widest font-bold">Final Streak</p>
+                                    <span id="hilo-final-score" class="text-4xl font-bold text-white">0</span>
                                 </div>
-                                
-                                <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
-                                    <div id="game-message" class="hidden text-right flex flex-col justify-center h-full">
-                                        <h4 class="text-sm font-bold leading-tight"></h4>
-                                        <p class="text-xs text-gray-400 leading-tight"></p>
-                                    </div>
-                                    
-                                    <button id="new-game-btn" class="flex items-center gap-2 px-4 py-1.5 lg:py-2 bg-[#BE00FF]/10 hover:bg-[#BE00FF]/20 border border-[#BE00FF]/50 text-[#BE00FF] rounded-md transition-all text-xs lg:text-sm font-bold whitespace-nowrap h-full">
-                                        <span class="material-symbols-outlined text-lg">refresh</span>
-                                        New Game
-                                    </button>
-                                </div>
+                                <button id="hilo-restart-btn" class="px-8 py-3 bg-white hover:bg-gray-200 text-black font-bold rounded-full transition-transform hover:scale-105">
+                                    Play Again
+                                </button>
                             </div>
 
-                            <div class="glass-panel rounded-lg overflow-hidden flex flex-col overflow-x-auto">
-                                <div class="game-header min-w-[600px]">
-                                    <div>Tower Name</div>
-                                    <div>Difficulty</div>
-                                    <div>Length</div>
-                                    <div>Type</div>
-                                    <div>Area</div>
-                                    <div>Creators</div>
+                            <div class="flex flex-col md:flex-row items-center justify-center w-full gap-6 relative">
+                                <div class="w-full md:w-1/2 aspect-[3/4] max-h-[550px] bg-[#0A0A0F] border border-white/10 rounded-3xl relative overflow-hidden flex flex-col items-center p-8 transition-all duration-500 z-10 shadow-2xl">
+                                    <div id="hilo-bg-left" class="absolute top-0 left-0 w-full h-2 transition-colors duration-500"></div>
+                                    <div id="hilo-glow-left" class="absolute -top-20 left-1/2 -translate-x-1/2 w-40 h-40 blur-[80px] opacity-20 transition-colors duration-500 rounded-full"></div>
+
+                                    <div class="flex-1 flex flex-col items-center justify-center w-full gap-4 relative z-10">
+                                        <h3 id="hilo-name-left" class="text-2xl md:text-4xl font-black text-white text-center leading-tight">Loading...</h3>
+                                        
+                                        <div class="flex flex-wrap justify-center gap-2 mb-4">
+                                            <div id="hilo-area-left" class="px-3 py-1 rounded-full text-xs font-bold border">Area</div>
+                                            <div id="hilo-diff-left" class="px-3 py-1 rounded-full text-xs font-bold border">Difficulty</div>
+                                        </div>
+
+                                        <div class="w-12 h-1 bg-white/10 rounded-full mb-4"></div>
+
+                                        <p class="text-gray-500 uppercase tracking-widest text-xs font-bold">Has</p>
+                                        <p id="hilo-count-left" class="text-5xl md:text-7xl font-black text-white my-2 tracking-tight text-center">0</p>
+                                        <p class="text-gray-500 uppercase tracking-widest text-xs font-bold">Victors</p>
+                                    </div>
                                 </div>
-                                <div id="game-grid" class="flex flex-col min-w-[600px]"></div>
+
+                                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-12 h-12 bg-[#120E1C] border border-white/20 rounded-full flex items-center justify-center shadow-xl">
+                                    <span class="text-xs font-black text-gray-500">VS</span>
+                                </div>
+
+                                <div class="w-full md:w-1/2 aspect-[3/4] max-h-[550px] bg-[#0A0A0F] border border-white/10 rounded-3xl relative overflow-hidden flex flex-col items-center p-8 transition-all duration-500 z-10 shadow-2xl">
+                                    <div id="hilo-bg-right" class="absolute top-0 left-0 w-full h-2 transition-colors duration-500"></div>
+                                    <div id="hilo-glow-right" class="absolute -top-20 left-1/2 -translate-x-1/2 w-40 h-40 blur-[80px] opacity-20 transition-colors duration-500 rounded-full"></div>
+
+                                    <div class="flex-1 flex flex-col items-center justify-center w-full gap-4 relative z-10">
+                                        <h3 id="hilo-name-right" class="text-2xl md:text-4xl font-black text-white text-center leading-tight">Loading...</h3>
+                                        
+                                        <div class="flex flex-wrap justify-center gap-2 mb-4">
+                                            <div id="hilo-area-right" class="px-3 py-1 rounded-full text-xs font-bold border">Area</div>
+                                            <div id="hilo-diff-right" class="px-3 py-1 rounded-full text-xs font-bold border">Difficulty</div>
+                                        </div>
+
+                                        <div class="w-12 h-1 bg-white/10 rounded-full mb-4"></div>
+                                        
+                                        <p class="text-gray-500 uppercase tracking-widest text-xs font-bold">Has</p>
+                                        
+                                        <div id="hilo-controls" class="flex flex-col gap-3 w-full max-w-[200px] mt-2">
+                                            <button id="btn-higher" class="group relative w-full py-3 bg-[#1A1A22] border border-white/10 hover:border-green-500 hover:bg-green-500/10 text-gray-300 hover:text-green-400 font-bold uppercase tracking-widest rounded-lg transition-all duration-200">
+                                                <span class="flex items-center justify-center gap-2 text-sm">
+                                                    <span class="material-symbols-outlined text-lg">keyboard_arrow_up</span> Higher
+                                                </span>
+                                            </button>
+                                            
+                                            <button id="btn-lower" class="group relative w-full py-3 bg-[#1A1A22] border border-white/10 hover:border-red-500 hover:bg-red-500/10 text-gray-300 hover:text-red-400 font-bold uppercase tracking-widest rounded-lg transition-all duration-200">
+                                                <span class="flex items-center justify-center gap-2 text-sm">
+                                                    <span class="material-symbols-outlined text-lg">keyboard_arrow_down</span> Lower
+                                                </span>
+                                            </button>
+                                        </div>
+
+                                        <div id="hilo-result" class="hidden flex-col items-center justify-center w-full animate-[popIn_0.3s_ease-out]">
+                                            <p id="hilo-count-right" class="text-5xl md:text-7xl font-black text-white my-2 tracking-tight text-center">0</p>
+                                            <p class="text-gray-500 uppercase tracking-widest text-xs font-bold">Victors</p>
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
                     </div>
@@ -222,22 +265,18 @@
             <aside id="game-stats-sidebar" class="fixed top-14 bottom-0 right-0 z-50 w-[240px] bg-[#120E1C] lg:bg-transparent transform translate-x-full lg:translate-x-0 transition-transform duration-300 lg:sticky lg:top-20 lg:self-start flex-col gap-3 h-full lg:h-[calc(100vh-80px-12px)] p-4 lg:p-0 border-l border-white/10 lg:border-none hidden">
                 <div class="glass-panel flex-grow rounded-lg p-3">
                     <h2 class="text-sm font-medium leading-normal mb-3 border-b border-white/10 pb-2">Session Stats</h2>
-                    <div class="grid grid-cols-2 lg:grid-cols-1 gap-2">
+                    <div class="grid grid-cols-1 gap-2">
                         <div class="flex flex-col gap-0.5 rounded-md p-2 bg-black/20">
                             <p class="text-xs font-medium leading-normal text-gray-400">Games Played</p>
-                            <p id="stat-games-played" class="text-xl font-bold">0</p>
+                            <p id="hilo-stat-played" class="text-xl font-bold text-white">0</p>
                         </div>
                         <div class="flex flex-col gap-0.5 rounded-md p-2 bg-black/20">
-                            <p class="text-xs font-medium leading-normal text-gray-400">Win Rate</p>
-                            <p id="stat-win-rate" class="text-xl font-bold">0%</p>
+                            <p class="text-xs font-medium leading-normal text-gray-400">Highest Streak</p>
+                            <p id="hilo-stat-best" class="text-xl font-bold text-[#FFD700]">0</p>
                         </div>
                         <div class="flex flex-col gap-0.5 rounded-md p-2 bg-black/20">
-                            <p class="text-xs font-medium leading-normal text-gray-400">Best Game</p>
-                            <p id="stat-best-game" class="text-xl font-bold text-white">-</p>
-                        </div>
-                        <div class="flex flex-col gap-0.5 rounded-md p-2 bg-black/20">
-                            <p class="text-xs font-medium leading-normal text-gray-400">Avg. Guesses</p>
-                            <p id="stat-avg-guesses" class="text-xl font-bold">-</p>
+                            <p class="text-xs font-medium leading-normal text-gray-400">Current Streak</p>
+                            <p id="hilo-stat-current" class="text-xl font-bold text-white">0</p>
                         </div>
                     </div>
                 </div>
@@ -459,6 +498,6 @@
     <div id="tower-modal-backdrop" class="modal-backdrop hidden"><div id="tower-modal-panel" class="glass-panel modal-panel"><div class="flex justify-between items-center border-b border-white/10 pb-2 mb-4"><h2 id="modal-tower-name" class="text-xl font-bold"></h2><button id="modal-close-button" class="text-gray-400 hover:text-white transition-colors"><span class="material-symbols-outlined">close</span></button></div><div class="space-y-3 text-sm"><div class="flex justify-between items-center"><span class="text-gray-400">Difficulty:</span><span id="modal-difficulty"></span></div><div class="flex justify-between items-center"><span class="text-gray-400">Length:</span><span id="modal-length"></span></div><div class="flex justify-between items-center"><span class="text-gray-400">Floors:</span><span id="modal-floors"></span></div><div class="flex justify-between items-center"><span class="text-gray-400">Creator(s):</span><div id="modal-creator" class="flex flex-wrap justify-end items-center gap-2"></div></div><div class="flex justify-between items-center"><span class="text-gray-400">Warnings:</span><div id="modal-warnings" class="flex flex-wrap justify-end items-center gap-2"></div></div><div class="flex justify-between items-center"><span class="text-gray-400">Area:</span><span id="modal-area"></span></div><div class="flex justify-between items-center"><span class="text-gray-400">Date Completed:</span><span id="modal-date"></span></div></div></div></div>
     <div id="profile-modal-backdrop" class="modal-backdrop hidden"><div id="profile-modal-panel" class="glass-panel modal-panel max-w-2xl w-full p-6 relative overflow-hidden"><button id="profile-close-button" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors z-20"><span class="material-symbols-outlined">close</span></button><div class="flex flex-col md:flex-row gap-6 pt-2"><div class="flex-shrink-0 flex flex-col items-center"><div class="w-40 h-40 rounded-lg bg-black/40 border border-white/10 overflow-hidden shadow-2xl relative"><img id="profile-avatar-full" src="" alt="Avatar" class="w-full h-full object-cover object-top hidden"><div id="profile-avatar-loader" class="absolute inset-0 flex items-center justify-center text-gray-600"><span class="material-symbols-outlined animate-spin">sync</span></div></div><div class="mt-3 text-center"><h2 id="profile-display-name" class="text-xl font-bold text-white leading-tight"></h2><p id="profile-username" class="text-sm text-gray-400 font-mono"></p></div><div id="profile-rank-badge" class="mt-3 px-3 py-1 rounded-full border text-xs font-bold bg-black/40">Rank</div></div><div class="flex-grow flex flex-col gap-4"><h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider border-b border-white/10 pb-1">Career Statistics</h3><div class="grid grid-cols-2 gap-3"><div class="bg-black/20 rounded p-3 border border-white/5"><p class="text-xs text-gray-500 uppercase">Total Completions</p><p id="profile-total-count" class="text-lg font-bold text-white">0</p></div><div class="bg-black/20 rounded p-3 border border-white/5"><p class="text-xs text-gray-500 uppercase">Completion %</p><p id="profile-completion-pct" class="text-lg font-bold text-white">0%</p></div><div class="bg-black/20 rounded p-3 border border-white/5 col-span-2"><p class="text-xs text-gray-500 uppercase">Hardest Completion</p><p id="profile-hardest-name" class="text-sm font-bold truncate">None</p><p id="profile-hardest-diff" class="text-xs text-gray-400">N/A</p></div><div class="bg-black/20 rounded p-3 border border-white/5"><p class="text-xs text-gray-500 uppercase">Total Difficulty</p><p id="profile-total-diff" class="text-lg font-bold text-white">0.00</p></div><div class="bg-black/20 rounded p-3 border border-white/5"><p class="text-xs text-gray-500 uppercase">Avg Difficulty</p><p id="profile-avg-diff" class="text-lg font-bold text-white">0.00</p></div></div><div class="grid grid-cols-3 gap-2 text-center mt-1"><div class="bg-black/20 rounded p-2 border border-white/5"><span class="material-symbols-outlined text-gray-500 text-lg block">location_city</span><span id="profile-count-towers" class="text-xs font-bold">0</span><span class="text-[10px] text-gray-500 block">Towers</span></div><div class="bg-black/20 rounded p-2 border border-white/5"><span class="material-symbols-outlined text-gray-500 text-lg block">fort</span><span id="profile-count-citadels" class="text-xs font-bold">0</span><span class="text-[10px] text-gray-500 block">Citadels</span></div><div class="bg-black/20 rounded p-2 border border-white/5"><span class="material-symbols-outlined text-gray-500 text-lg block">church</span><span id="profile-count-steeples" class="text-xs font-bold">0</span><span class="text-[10px] text-gray-500 block">Steeples</span></div></div></div></div></div></div>
 
-    <script type="module" src="./js/main.js?v=1.7.2"></script>
+    <script type="module" src="./js/main.js?v=1.7.3"></script>
 </body>
 </html>

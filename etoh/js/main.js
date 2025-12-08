@@ -4,7 +4,7 @@ import { showNotification } from './utils.js';
 import { initChart } from './components/chart.js';
 import { initHistory } from './components/history.js';
 import { initLibrary } from './components/library.js';
-import { initGameLogic, initGame } from './components/game.js';
+import { initHiLo } from './components/game_hilo.js';
 import { initLeaderboard } from './components/leaderboard.js';
 import { initProfile } from './components/profile.js';
 import { initNavigation } from './components/navigation.js';
@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initChart();
     initHistory();
     initLibrary();
-    initGameLogic();
+    initHiLo();
     initLeaderboard();
     initProfile();
     initModals();
