@@ -497,3 +497,6 @@ select {
 ::-webkit-scrollbar-corner {
     background: transparent;
 }
+
+.toggle-checkbox:checked { right: 0; border-color: #BE00FF; }
+.toggle-checkbox:checked + .toggle-label { background-color: #BE00FF; }
