@@ -138,7 +138,7 @@ export function initWrapped() {
 
 async function generateStats() {
     const user = store.currentUser;
-    const beaten = user.beaten_towers;
+    const beaten = Array.from(new Map(user.beaten_towers.map(t => [t.name, t])).values());
     
     const yearTowers = beaten.filter(t => {
         const d = new Date(t.awarded_unix * 1000);

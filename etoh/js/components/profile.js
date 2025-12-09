@@ -1,5 +1,6 @@
 import { store } from '../state.js';
 import { NON_CANON_TOWERS } from '../config.js';
+import { getTowerType } from '../utils.js';
 
 export function initProfile() {
     store.subscribe('userChanged', (userData) => {
@@ -9,7 +10,8 @@ export function initProfile() {
 }
 
 function calculateAndRenderStats(beatenTowers, allTowers) {
-    const canonCompletions = beatenTowers.filter(tower => !NON_CANON_TOWERS.has(tower.name));
+    const uniqueBeaten = Array.from(new Map(beatenTowers.map(t => [t.name, t])).values());
+    const canonCompletions = uniqueBeaten.filter(tower => !NON_CANON_TOWERS.has(tower.name));
     const totalCanonTowers = allTowers.filter(tower => !NON_CANON_TOWERS.has(tower.name));
     const totalBeaten = canonCompletions.length;
     const totalInGame = totalCanonTowers.length;
