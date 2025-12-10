@@ -11,6 +11,7 @@ import { initNavigation } from './components/navigation.js';
 import { initModals, openProfileModal } from './ui/modals.js';
 import { initWrapped } from './components/wrapped.js';
 import { initRoulette } from './components/roulette.js';
+import { initLadder } from './components/game_ladder.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     initNavigation();
@@ -23,6 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initModals();
     initWrapped();
     initRoulette();
+    initLadder();
 
     try {
         const towers = await api.getMasterTowers();
