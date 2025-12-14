@@ -1,5 +1,5 @@
-// export const API_BASE_URL = 'https://etoh-thing-w1v8.onrender.com';
-export const API_BASE_URL = 'http://127.0.0.1:5000';
+export const API_BASE_URL = 'https://etoh-thing-w1v8.onrender.com';
+// export const API_BASE_URL = 'http://127.0.0.1:5000';
 
 export const NON_CANON_TOWERS = new Set([
     "Tower Not Found", "Not Even A Tower", "This Is Probably A Tower",
