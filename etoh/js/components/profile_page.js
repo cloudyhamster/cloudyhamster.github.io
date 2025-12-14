@@ -1,7 +1,7 @@
 import { store } from '../state.js';
 import { api } from '../api.js';
 import { showNotification } from '../utils.js';
-import { DIFFICULTY_COLORS, NON_CANON_TOWERS, API_BASE_URL } from '../config.js';
+import { DIFFICULTY_COLORS, DIFFICULTY_PILL_CLASSES, NON_CANON_TOWERS, API_BASE_URL } from '../config.js';
 
 const style = document.createElement('style');
 style.innerHTML = `
@@ -778,11 +778,7 @@ function renderHeaderModule(data, user, stats, w, h) {
                     <div class="flex items-center gap-3 mt-2">
                         <p class="text-gray-300 font-mono text-xs bg-black/30 px-2 py-0.5 rounded backdrop-blur-sm">@${user.user_name}</p>
                         ${stats.hardest && w > 2 ? `
-                            <div class="flex items-center gap-2 text-xs font-bold text-gray-400">
-                                <span class="w-1 h-1 bg-gray-500 rounded-full"></span>
-                                <span style="color: ${DIFFICULTY_COLORS[stats.hardest.difficulty]}">${stats.hardest.name}</span>
-                                <span class="text-white opacity-50 font-mono">[${stats.hardest.number_difficulty.toFixed(2)}]</span>
-                            </div>
+                            <span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-bold border ${DIFFICULTY_PILL_CLASSES[stats.hardest.difficulty] || DIFFICULTY_PILL_CLASSES.nil}">${stats.hardest.name} [${stats.hardest.number_difficulty.toFixed(2)}]</span>
                         ` : ''}
                     </div>
                 </div>

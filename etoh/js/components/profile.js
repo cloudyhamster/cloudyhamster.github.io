@@ -1,5 +1,5 @@
 import { store } from '../state.js';
-import { NON_CANON_TOWERS } from '../config.js';
+import { NON_CANON_TOWERS, DIFFICULTY_COLORS } from '../config.js';
 
 export function initProfile() {
     store.subscribe('userChanged', (userData) => {
@@ -21,12 +21,13 @@ function calculateAndRenderStats(beatenTowers, allTowers) {
     const totalBeaten = canonCompletions.length;
     const totalInGame = totalCanonTowers.length;
     
-    let hardestTowerName = "N/A", hardestDifficultyStr = "N/A";
+    let hardestTowerName = "N/A", hardestDifficultyStr = "N/A", hardestDifficultyColor = "#999";
     if (beatenTowers.length > 0) {
         const sortedByDifficulty = [...beatenTowers].sort((a, b) => b.number_difficulty - a.number_difficulty);
         const hardestTower = sortedByDifficulty[0];
         hardestTowerName = hardestTower.name || 'Unknown';
         hardestDifficultyStr = `${hardestTower.modifier || ''} ${hardestTower.difficulty || ''} [${(hardestTower.number_difficulty || 0).toFixed(2)}]`.trim();
+        hardestDifficultyColor = DIFFICULTY_COLORS[hardestTower.difficulty] || '#999';
     }
     
     const totalEl = document.getElementById('totalTowersStat');
@@ -36,6 +37,9 @@ function calculateAndRenderStats(beatenTowers, allTowers) {
 
     if (totalEl) totalEl.textContent = `${totalBeaten}/${totalInGame}`;
     if (hardestNameEl) hardestNameEl.textContent = hardestTowerName;
-    if (hardestDiffEl) hardestDiffEl.textContent = hardestDifficultyStr;
+    if (hardestDiffEl) {
+        hardestDiffEl.textContent = hardestDifficultyStr;
+        hardestDiffEl.style.color = hardestDifficultyColor;
+    }
     if (container) container.style.display = 'grid';
 }
