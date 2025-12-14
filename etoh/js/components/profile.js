@@ -39,7 +39,7 @@ function calculateAndRenderStats(beatenTowers, allTowers) {
     if (hardestNameEl) hardestNameEl.textContent = hardestTowerName;
     if (hardestDiffEl) {
         hardestDiffEl.textContent = hardestDifficultyStr;
-        hardestDiffEl.style.color = hardestDifficultyColor;
+        hardestDiffEl.style.color = '#ffffff';
     }
     if (container) container.style.display = 'grid';
 }

@@ -21,7 +21,12 @@ document.head.appendChild(style);
 const BANNER_STYLES = {
     'solid': 'Solid Color',
     'none': 'No Color (Dark)',
-    'neon': 'Neon Grid'
+    'neon': 'Neon Grid',
+    'gradient': 'Gradient',
+    'pattern': 'Pattern',
+    'wave': 'Wave',
+    'dots': 'Dots',
+    'lines': 'Lines'
 };
 
 const MODULE_REGISTRY = {
@@ -67,7 +72,10 @@ const MODULE_REGISTRY = {
         name: 'Total Towers',
         minW: 1, maxW: 2, minH: 1, maxH: 1,
         defaultW: 1, defaultH: 1,
-        render: (data, user, stats, w, h) => renderStatCard('Total Towers', stats.total, 'location_city', false, w, h),
+        render: (data, user, stats, w, h) => {
+            const total = user.total_towers !== undefined ? user.total_towers : stats.total;
+            return renderStatCard('Total Towers', total, 'location_city', false, w, h);
+        },
         fields: []
     },
     'stat_diff': {
@@ -342,10 +350,10 @@ window.openConfig = (id) => {
     
     document.removeEventListener('click', closeAllDropdowns);
 
-    def.fields.forEach(field => {
+        def.fields.forEach(field => {
         const wrapper = document.createElement('div');
         wrapper.className = "relative mb-4";
-        let inputHtml = '';
+        let inputHtml = ''
         const safeVal = item.data[field.key] || (field.type === 'color' ? '#000000' : '');
 
         if (field.type === 'textarea') {
@@ -431,7 +439,6 @@ window.openConfig = (id) => {
     modal.classList.remove('hidden');
     
     if (moduleEl) {
-        // Get the settings button inside the module
         const settingsBtn = moduleEl.querySelector('button[onclick*="openConfig"]');
         positionModal(modalContent, settingsBtn || moduleEl);
     }
@@ -448,7 +455,7 @@ window.openConfig = (id) => {
     };
 
     newClose.onclick = closeModal;
-    newSave.onclick = () => {
+    newSave.onclick = async () => {
         const inputs = container.querySelectorAll('input, textarea');
         const selects = container.querySelectorAll('.custom-select');
 
@@ -458,6 +465,31 @@ window.openConfig = (id) => {
         selects.forEach(sel => {
             item.data[sel.dataset.key] = sel.dataset.value;
         });
+
+        const profileData = {};
+        currentLayout.forEach(layoutItem => {
+            if (layoutItem.data && Object.keys(layoutItem.data).length > 0) {
+                profileData[layoutItem.id] = layoutItem.data;
+            }
+        });
+        
+        try {
+            await fetch(`${API_BASE_URL}/api/update_profile`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'Authorization': `Bearer ${api.token}` 
+                },
+                body: JSON.stringify({ profile_data: JSON.stringify(profileData) })
+            });
+            
+            const updatedUser = { ...store.currentUser };
+            updatedUser.profile_data = JSON.stringify(profileData);
+            store.setCurrentUser(updatedUser);
+        } catch (e) {
+            console.error('Failed to save profile data:', e);
+            showNotification("Failed to save changes.", "error");
+        }
 
         closeModal();
         renderProfilePage(true); 
@@ -580,12 +612,36 @@ export function renderProfilePage(preserveLocalState = false) {
     const isOwner = authUser && String(authUser.sub) === String(user.user_id);
     
     if (!preserveLocalState) {
-        if (user.profile_layout && user.profile_layout !== "[]") {
-            try {
-                currentLayout = typeof user.profile_layout === 'string' ? JSON.parse(user.profile_layout) : user.profile_layout;
-                currentLayout.forEach(item => { if(!item.w) item.w = 1; if(!item.h) item.h = 1; });
-            } catch { currentLayout = DEFAULT_LAYOUT; }
-        } else {
+        let layoutData = [];
+        let moduleData = {};
+        
+        try {
+            if (user.profile_layout && user.profile_layout !== "[]") {
+                layoutData = typeof user.profile_layout === 'string' ? JSON.parse(user.profile_layout) : user.profile_layout;
+            }
+            if (user.profile_data && user.profile_data !== "{}") {
+                moduleData = typeof user.profile_data === 'string' ? JSON.parse(user.profile_data) : user.profile_data;
+            }
+            
+            if (layoutData.length > 0) {
+                currentLayout = layoutData.map(item => {
+                    const mergedItem = {
+                        id: item.id,
+                        type: item.type,
+                        w: item.w || 1,
+                        h: item.h || 1,
+                        data: moduleData[item.id] || {}
+                    };
+                    return mergedItem;
+                });
+            } else {
+                currentLayout = DEFAULT_LAYOUT.map(item => ({
+                    ...item,
+                    data: moduleData[item.id] || item.data || {}
+                }));
+            }
+        } catch (e) {
+            console.error("Error loading profile layout/data:", e);
             currentLayout = DEFAULT_LAYOUT;
         }
     }
@@ -618,8 +674,10 @@ export function renderProfilePage(preserveLocalState = false) {
         if(!preserveLocalState) api.getLeaderboard().then(d => { store.setLeaderboard(d); renderProfilePage(); });
     }
 
+    const totalTowers = user.total_towers !== undefined ? user.total_towers : canonBeaten.length;
+
     const statsObj = { 
-        total: canonBeaten.length, 
+        total: totalTowers, 
         totalCanon: allCanonCount,
         avgDiff, 
         rankDisplay, 
@@ -662,9 +720,13 @@ export function renderProfilePage(preserveLocalState = false) {
             <div id="add-module-modal" class="hidden absolute z-[50] w-full h-full top-0 left-0 pointer-events-none">
                 <div class="fixed inset-0 bg-black/60 pointer-events-auto backdrop-blur-sm" onclick="document.getElementById('close-add-modal').click()"></div>
                 <div id="add-modal-content" class="absolute bg-[#1C1C22] border border-white/10 rounded-2xl p-6 w-full max-w-lg shadow-2xl pointer-events-auto profile-anim origin-top">
-                    <h3 class="text-xl font-bold text-white mb-4">Add Module</h3>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-bold text-white">Add Module</h3>
+                        <button id="close-add-modal" onclick="document.getElementById('add-module-modal').classList.add('hidden')" class="w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors border border-white/10">
+                            <span class="material-symbols-outlined text-lg">close</span>
+                        </button>
+                    </div>
                     <div class="grid grid-cols-2 gap-3" id="module-selector-grid"></div>
-                    <button id="close-add-modal" class="hidden">Close</button>
                 </div>
             </div>
 
@@ -688,7 +750,7 @@ export function renderProfilePage(preserveLocalState = false) {
 function renderToolbar(editing) {
     return `
         <div class="flex justify-end mb-6 sticky top-4 z-40">
-            <button id="toggle-edit-mode" class="px-5 py-2 rounded-full font-bold text-xs uppercase tracking-wider shadow-xl backdrop-blur-md border transition-all ${editing ? 'bg-red-500/20 text-red-400 border-red-500/50' : 'bg-black/60 text-gray-400 border-white/10 hover:text-white hover:border-white/30'}">
+            <button id="toggle-edit-mode" class="px-5 py-2 rounded-full font-bold text-xs uppercase tracking-wider shadow-xl backdrop-blur-md border transition-all ${editing ? 'bg-green-500/20 text-green-400 border-green-500/50' : 'bg-black/60 text-gray-400 border-white/10 hover:text-white hover:border-white/30'}">
                 ${editing ? 'Done Editing' : 'Edit Layout'}
             </button>
         </div>
@@ -744,6 +806,7 @@ function renderModuleItem(item, user, stats, editing) {
 function renderHeaderModule(data, user, stats, w, h) {
     const style = data.style || 'solid';
     const c1 = data.color1 || '#000000';
+    const c2 = data.color2 || '#000000';
     let bgHtml = '';
 
     if (style === 'neon') {
@@ -755,6 +818,40 @@ function renderHeaderModule(data, user, stats, w, h) {
     }
     else if (style === 'solid') {
         bgHtml = `<div class="absolute inset-0 -z-10" style="background: ${c1};"></div><div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent -z-10"></div>`;
+    }
+    else if (style === 'gradient') {
+        bgHtml = `
+            <div class="absolute inset-0 -z-10" style="background: linear-gradient(135deg, ${c1} 0%, ${c2} 100%);"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent -z-10"></div>
+        `;
+    }
+    else if (style === 'pattern') {
+        bgHtml = `
+            <div class="absolute inset-0 bg-[#050505] -z-10"></div>
+            <div class="absolute inset-0 -z-10 opacity-20" style="background-image: repeating-linear-gradient(45deg, ${c1} 0px, ${c1} 10px, transparent 10px, transparent 20px, ${c2} 20px, ${c2} 30px, transparent 30px, transparent 40px);"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent -z-10"></div>
+        `;
+    }
+    else if (style === 'wave') {
+        bgHtml = `
+            <div class="absolute inset-0 -z-10" style="background: ${c1};"></div>
+            <div class="absolute inset-0 -z-10 opacity-30" style="background-image: radial-gradient(ellipse at top, ${c2} 0%, transparent 50%), radial-gradient(ellipse at bottom, ${c2} 0%, transparent 50%); background-size: 100% 50%; background-position: top, bottom; background-repeat: no-repeat;"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent -z-10"></div>
+        `;
+    }
+    else if (style === 'dots') {
+        bgHtml = `
+            <div class="absolute inset-0 bg-[#050505] -z-10"></div>
+            <div class="absolute inset-0 -z-10 opacity-25" style="background-image: radial-gradient(circle, ${c1} 1px, transparent 1px); background-size: 30px 30px;"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent -z-10"></div>
+        `;
+    }
+    else if (style === 'lines') {
+        bgHtml = `
+            <div class="absolute inset-0 bg-[#050505] -z-10"></div>
+            <div class="absolute inset-0 -z-10 opacity-20" style="background-image: repeating-linear-gradient(0deg, ${c1} 0px, ${c1} 2px, transparent 2px, transparent 20px, ${c2} 20px, ${c2} 22px, transparent 22px, transparent 40px);"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent -z-10"></div>
+        `;
     }
     else {
         bgHtml = `<div class="absolute inset-0 bg-[#0a0a0f] -z-10"></div>`;
@@ -821,7 +918,26 @@ function setupEditListeners(user) {
     newBtn.onclick = async () => {
         if (isEditing) {
             newBtn.textContent = "Saving...";
-            const payload = { layout: JSON.stringify(currentLayout) };
+            
+            const layoutOnly = currentLayout.map(item => ({
+                id: item.id,
+                type: item.type,
+                w: item.w || 1,
+                h: item.h || 1
+            }));
+            
+            const profileData = {};
+            currentLayout.forEach(item => {
+                if (item.data && Object.keys(item.data).length > 0) {
+                    profileData[item.id] = item.data;
+                }
+            });
+            
+            const payload = {
+                layout: JSON.stringify(layoutOnly),
+                profile_data: JSON.stringify(profileData)
+            };
+            
             try {
                 await fetch(`${API_BASE_URL}/api/update_profile`, {
                     method: 'POST',
@@ -830,7 +946,8 @@ function setupEditListeners(user) {
                 });
                 
                 const updatedUser = { ...store.currentUser };
-                updatedUser.profile_layout = JSON.stringify(currentLayout);
+                updatedUser.profile_layout = JSON.stringify(layoutOnly);
+                updatedUser.profile_data = JSON.stringify(profileData);
                 store.setCurrentUser(updatedUser);
 
                 isEditing = false;
