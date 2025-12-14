@@ -27,12 +27,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <link rel="icon" href="icon.jpg">
-    <link rel="stylesheet" href="./css/style.css?v=1.7.7">
+    <link rel="stylesheet" href="./css/style.css?v=1.8.0">
 </head>
 <body class="text-[#EAEAEA] antialiased bg-[#120E1C]">
     <div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
         <header class="fixed top-0 left-0 right-0 z-50 mx-auto w-[70%] p-3 hidden lg:block">
-            <div class="glass-panel flex h-14 items-center justify-between rounded-lg px-4">
+            <div class="glass-panel flex h-14 items-center justify-between rounded-lg pl-4 pr-2.5">
                 <div class="flex items-center gap-3">
                     <div class="text-[#BE00FF] size-5">
                         <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M39.5563 34.1455V13.8546C39.5563 15.708 36.8773 17.3437 32.7927 18.3189C30.2914 18.916 27.263 19.2655 24 19.2655C20.737 19.2655 17.7086 18.916 15.2073 18.3189C11.1227 17.3437 8.44365 15.708 8.44365 13.8546V34.1455C8.44365 35.9988 11.1227 37.6346 15.2073 38.6098C17.7086 39.2069 20.737 39.5564 24 39.5564C27.263 39.5564 30.2914 39.2069 32.7927 38.6098C36.8773 37.6346 39.5563 35.9988 39.5563 34.1455Z" fill="currentColor"></path><path clip-rule="evenodd" d="M10.4485 13.8519C10.4749 13.9271 10.6203 14.246 11.379 14.7361C12.298 15.3298 13.7492 15.9145 15.6717 16.3735C18.0007 16.9296 20.8712 17.2655 24 17.2655C27.1288 17.2655 29.9993 16.9296 32.3283 16.3735C34.2508 15.9145 35.702 15.3298 36.621 14.7361C37.3796 14.246 37.5251 13.9271 37.5515 13.8519C37.5287 13.7876 37.4333 13.5973 37.0635 13.2931C36.5266 12.8516 35.6288 12.3647 34.343 11.9175C31.79 11.0295 28.1333 10.4437 24 10.4437C19.8667 10.4437 16.2099 11.0295 13.657 11.9175C12.3712 12.3647 11.4734 12.8516 10.9365 13.2931C10.5667 13.5973 10.4713 13.7876 10.4485 13.8519ZM37.5563 18.7877C36.3176 19.3925 34.8502 19.8839 33.2571 20.2642C30.5836 20.9025 27.3973 21.2655 24 21.2655C20.6027 21.2655 17.4164 20.9025 14.7429 20.2642C13.1498 19.8839 11.6824 19.3925 10.4436 18.7877V34.1275C10.4515 34.1545 10.5427 34.4867 11.379 35.027C12.298 35.6207 13.7492 36.2054 15.6717 36.6644C18.0007 37.2205 20.8712 37.5564 24 37.5564C27.1288 37.5564 29.9993 37.2205 32.3283 36.6644C34.2508 36.2054 35.702 35.6207 36.621 35.027C37.4573 34.4867 37.5485 34.1546 37.5563 34.1275V18.7877ZM41.5563 13.8546V34.1455C41.5563 36.1078 40.158 37.5042 38.7915 38.3869C37.3498 39.3182 35.4192 40.0389 33.2571 40.5551C30.5836 41.1934 27.3973 41.5564 24 41.5564C20.6027 41.5564 17.4164 41.1934 14.7429 40.5551C12.5808 40.0389 10.6502 39.3182 9.20848 38.3869C7.84205 37.5042 6.44365 36.1078 6.44365 34.1455L6.44365 13.8546C6.44365 12.2684 7.37223 11.0454 8.39581 10.2036C9.43325 9.3505 10.8137 8.67141 12.343 8.13948C15.4203 7.06909 19.5418 6.44366 24 6.44366C28.4582 6.44366 32.5797 7.06909 35.657 8.13948C37.1863 8.67141 38.5667 9.3505 39.6042 10.2036C40.6278 11.0454 41.5563 12.2684 41.5563 13.8546Z" fill="currentColor" fill-rule="evenodd"></path></svg>
@@ -40,57 +40,7 @@
                     <h2 class="text-base font-bold leading-tight tracking-[-0.015em]">EToH Progression</h2>
                 </div>
 
-                <div class="flex items-center gap-5">
-                    <div id="auth-container" class="flex items-center gap-3"></div>
-
-                    <div class="h-5 w-px bg-white/10"></div>
-                    
-                    <div class="flex items-center gap-3">
-                        <a href="privacy.html" title="Privacy Policy" class="text-gray-300 transition-colors hover:text-white">
-                            <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 2L4 5V11.09C4 16.14 7.41 20.85 12 22C16.59 20.85 20 16.14 20 11.09V5L12 2Z" />
-                            </svg>
-                        </a>
-                        <a href="terms.html" title="Terms of Service" class="text-gray-300 transition-colors hover:text-white">
-                            <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2ZM16 18H8V16H16V18ZM16 14H8V12H16V14ZM13 9V3.5L18.5 9H13Z" />
-                            </svg>
-                        </a>
-                    </div>
-                    
-                    <div class="h-5 w-px bg-white/10"></div>
-
-                    <a href="https://discord.gg/GDMjAytHPS" target="_blank" rel="noopener noreferrer" title="Join our Discord Server" class="text-gray-300 transition-colors hover:text-[#5865F2]">
-                        <svg class="h-6 w-6" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M524.5 133.8C524.3 133.5 524.1 133.2 523.7 133.1C485.6 115.6 445.3 103.1 404 96C403.6 95.9 403.2 96 402.9 96.1C402.6 96.2 402.3 96.5 402.1 96.9C396.6 106.8 391.6 117.1 387.2 127.5C342.6 120.7 297.3 120.7 252.8 127.5C248.3 117 243.3 106.8 237.7 96.9C237.5 96.6 237.2 96.3 236.9 96.1C236.6 95.9 236.2 95.9 235.8 95.9C194.5 103 154.2 115.5 116.1 133C115.8 133.1 115.5 133.4 115.3 133.7C39.1 247.5 18.2 358.6 28.4 468.2C28.4 468.5 28.5 468.7 28.6 469C28.7 469.3 28.9 469.4 29.1 469.6C73.5 502.5 123.1 527.6 175.9 543.8C176.3 543.9 176.7 543.9 177 543.8C177.3 543.7 177.7 543.4 177.9 543.1C189.2 527.7 199.3 511.3 207.9 494.3C208 494.1 208.1 493.8 208.1 493.5C208.1 493.2 208.1 493 208 492.7C207.9 492.4 207.8 492.2 207.6 492.1C207.4 492 207.2 491.8 206.9 491.7C191.1 485.6 175.7 478.3 161 469.8C160.7 469.6 160.5 469.4 160.3 469.2C160.1 469 160 468.6 160 468.3C160 468 160 467.7 160.2 467.4C160.4 467.1 160.5 466.9 160.8 466.7C163.9 464.4 167 462 169.9 459.6C170.2 459.4 170.5 459.2 170.8 459.2C171.1 459.2 171.5 459.2 171.8 459.3C268 503.2 372.2 503.2 467.3 459.3C467.6 459.2 468 459.1 468.3 459.1C468.6 459.1 469 459.3 469.2 459.5C472.1 461.9 475.2 464.4 478.3 466.7C478.5 466.9 478.7 467.1 478.9 467.4C479.1 467.7 479.1 468 479.1 468.3C479.1 468.6 479 468.9 478.8 469.2C478.6 469.5 478.4 469.7 478.2 469.8C463.5 478.4 448.2 485.7 432.3 491.6C432.1 491.7 431.8 491.8 431.6 492C431.4 492.2 431.3 492.4 431.2 492.7C431.1 493 431.1 493.2 431.1 493.5C431.1 493.8 431.2 494 431.3 494.3C440.1 511.3 450.1 527.6 461.3 543.1C461.5 543.4 461.9 543.7 462.2 543.8C462.5 543.9 463 543.9 463.3 543.8C516.2 527.6 565.9 502.5 610.4 469.6C610.6 469.4 610.8 469.2 610.9 469C611 468.8 611.1 468.5 611.1 468.2C623.4 341.4 590.6 231.3 524.2 133.7zM222.5 401.5C193.5 401.5 169.7 374.9 169.7 342.3C169.7 309.7 193.1 283.1 222.5 283.1C252.2 283.1 275.8 309.9 275.3 342.3C275.3 375 251.9 401.5 222.5 401.5zM417.9 401.5C388.9 401.5 365.1 374.9 365.1 342.3C365.1 309.7 388.5 283.1 417.9 283.1C447.6 283.1 471.2 309.9 470.7 342.3C470.7 375 447.5 401.5 417.9 401.5z"/></svg>
-                    </a>
-                </div>
-            </div>
-        </header>
-
-        <header class="fixed top-0 left-0 right-0 z-50 w-full h-14 p-3 lg:hidden bg-[#120E1C]/90 backdrop-blur-md border-b border-white/10">
-            <div class="flex items-center justify-between h-full">
-                <button id="mobile-menu-toggle" class="text-gray-300 hover:text-white p-2 rounded-md border border-white/10 bg-white/5 z-50">
-                    <span class="material-symbols-outlined align-middle">menu</span>
-                </button>
-                
-                <div class="flex items-center gap-2">
-                    <a href="privacy.html" class="text-gray-300 hover:text-white p-2 rounded-md border border-white/10 bg-white/5 flex items-center justify-center">
-                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 2L4 5V11.09C4 16.14 7.41 20.85 12 22C16.59 20.85 20 16.14 20 11.09V5L12 2Z" />
-                        </svg>
-                    </a>
-                    <a href="terms.html" class="text-gray-300 hover:text-white p-2 rounded-md border border-white/10 bg-white/5 flex items-center justify-center">
-                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2ZM16 18H8V16H16V18ZM16 14H8V12H16V14ZM13 9V3.5L18.5 9H13Z" />
-                        </svg>
-                    </a>
-                    <a href="https://discord.gg/GDMjAytHPS" target="_blank" rel="noopener noreferrer" class="text-gray-300 hover:text-[#5865F2] p-2 rounded-md border border-white/10 bg-white/5 flex items-center justify-center">
-                        <svg class="h-5 w-5" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M524.5 133.8C524.3 133.5 524.1 133.2 523.7 133.1C485.6 115.6 445.3 103.1 404 96C403.6 95.9 403.2 96 402.9 96.1C402.6 96.2 402.3 96.5 402.1 96.9C396.6 106.8 391.6 117.1 387.2 127.5C342.6 120.7 297.3 120.7 252.8 127.5C248.3 117 243.3 106.8 237.7 96.9C237.5 96.6 237.2 96.3 236.9 96.1C236.6 95.9 236.2 95.9 235.8 95.9C194.5 103 154.2 115.5 116.1 133C115.8 133.1 115.5 133.4 115.3 133.7C39.1 247.5 18.2 358.6 28.4 468.2C28.4 468.5 28.5 468.7 28.6 469C28.7 469.3 28.9 469.4 29.1 469.6C73.5 502.5 123.1 527.6 175.9 543.8C176.3 543.9 176.7 543.9 177 543.8C177.3 543.7 177.7 543.4 177.9 543.1C189.2 527.7 199.3 511.3 207.9 494.3C208 494.1 208.1 493.8 208.1 493.5C208.1 493.2 208.1 493 208 492.7C207.9 492.4 207.8 492.2 207.6 492.1C207.4 492 207.2 491.8 206.9 491.7C191.1 485.6 175.7 478.3 161 469.8C160.7 469.6 160.5 469.4 160.3 469.2C160.1 469 160 468.6 160 468.3C160 468 160 467.7 160.2 467.4C160.4 467.1 160.5 466.9 160.8 466.7C163.9 464.4 167 462 169.9 459.6C170.2 459.4 170.5 459.2 170.8 459.2C171.1 459.2 171.5 459.2 171.8 459.3C268 503.2 372.2 503.2 467.3 459.3C467.6 459.2 468 459.1 468.3 459.1C468.6 459.1 469 459.3 469.2 459.5C472.1 461.9 475.2 464.4 478.3 466.7C478.5 466.9 478.7 467.1 478.9 467.4C479.1 467.7 479.1 468 479.1 468.3C479.1 468.6 479 468.9 478.8 469.2C478.6 469.5 478.4 469.7 478.2 469.8C463.5 478.4 448.2 485.7 432.3 491.6C432.1 491.7 431.8 491.8 431.6 492C431.4 492.2 431.3 492.4 431.2 492.7C431.1 493 431.1 493.2 431.1 493.5C431.1 493.8 431.2 494 431.3 494.3C440.1 511.3 450.1 527.6 461.3 543.1C461.5 543.4 461.9 543.7 462.2 543.8C462.5 543.9 463 543.9 463.3 543.8C516.2 527.6 565.9 502.5 610.4 469.6C610.6 469.4 610.8 469.2 610.9 469C611 468.8 611.1 468.5 611.1 468.2C623.4 341.4 590.6 231.3 524.2 133.7zM222.5 401.5C193.5 401.5 169.7 374.9 169.7 342.3C169.7 309.7 193.1 283.1 222.5 283.1C252.2 283.1 275.8 309.9 275.3 342.3C275.3 375 251.9 401.5 222.5 401.5zM417.9 401.5C388.9 401.5 365.1 374.9 365.1 342.3C365.1 309.7 388.5 283.1 417.9 283.1C447.6 283.1 471.2 309.9 470.7 342.3C470.7 375 447.5 401.5 417.9 401.5z"/></svg>
-                    </a>
-                    <button id="mobile-filter-toggle" class="text-gray-300 hover:text-white p-2 rounded-md border border-white/10 bg-white/5 hidden z-50">
-                        <span class="material-symbols-outlined align-middle">filter_alt</span>
-                    </button>
-                </div>
+                <div id="auth-container"></div>
             </div>
         </header>
 
@@ -100,78 +50,110 @@
                     <div class="flex flex-col min-w-40 h-10 w-full">
                         <div class="flex w-full flex-1 items-stretch rounded-md h-full">
                             <input id="searchInput" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-l-md text-[#EAEAEA] focus:outline-0 focus:ring-1 focus:ring-[#BE00FF] border-none bg-black/20 focus:border-none h-full placeholder:text-[#9692c9] px-3 text-sm font-normal leading-normal" placeholder="Enter Roblox Username..." value=""/>
-                            <div id="searchButton" class="relative text-[#9692c9] flex border-none bg-black/20 items-center justify-center pl-3 pr-3 rounded-r-md cursor-pointer w-14">
+                            <div id="searchButton" class="relative text-[#9692c9] flex border-none bg-black/20 items-center justify-center pl-3 pr-3 rounded-r-md cursor-pointer w-14 hover:text-white transition-colors">
                                 <span id="searchIcon" class="material-symbols-outlined text-xl">search</span>
                                 <span id="searchLoadingIndicator" class="absolute hidden h-5 w-5 animate-spin rounded-full border-2 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></span>
                             </div>
                         </div>
                     </div>
-                    <div class="mt-3 flex items-center">
-                        <input id="forceRefreshCheckbox" type="checkbox" class="form-checkbox h-4 w-4 bg-black/20 border-white/20 rounded text-[#BE00FF] focus:ring-[#BE00FF]/50">
-                        <label for="forceRefreshCheckbox" class="ml-2 text-xs text-gray-300">Force Refresh (slower)</label>
-                    </div>
-                    <div id="profile-trigger-container" class="mt-3 hidden border-t border-white/10 pt-3">
-                        <button id="view-profile-btn" class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-[#BE00FF]/20 hover:bg-[#BE00FF]/40 border border-[#BE00FF]/50 rounded-md transition-all text-sm font-bold text-[#BE00FF]">
-                            <span class="material-symbols-outlined">person</span>
-                            View Player Profile
-                        </button>
+                    <div class="mt-3 flex flex-col gap-2">
+                        <div class="flex items-center">
+                            <input id="profileOnlyCheckbox" type="checkbox" class="form-checkbox h-3.5 w-3.5 bg-black/20 border-white/20 rounded text-[#BE00FF] focus:ring-[#BE00FF]/50 transition-all">
+                            <label for="profileOnlyCheckbox" class="ml-2 text-xs text-gray-400 select-none cursor-pointer">Profile Only (Fast Load, No Tower Data)</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input id="forceRefreshCheckbox" type="checkbox" class="form-checkbox h-3.5 w-3.5 bg-black/20 border-white/20 rounded text-[#BE00FF] focus:ring-[#BE00FF]/50 transition-all">
+                            <label for="forceRefreshCheckbox" class="ml-2 text-xs text-gray-400 select-none cursor-pointer">Force Refresh (Slow)</label>
+                        </div>
                     </div>
                 </div>
 
                 <div class="glass-panel flex-grow rounded-lg p-3 flex-shrink-0">
-                    <div class="flex flex-col gap-3">
-                        <h1 class="text-sm font-medium leading-normal px-2">Visualization</h1>
-                        <div id="nav-links" class="flex flex-col gap-1">
-                            <a data-view="chart" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md" href="#">
-                                <span class="material-symbols-outlined fill text-xl">stacked_line_chart</span>
-                                <p class="text-xs font-medium leading-normal">Completion Chart</p>
-                            </a>
-                            <a data-view="list" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md" href="#">
-                                <span class="material-symbols-outlined text-xl">list</span>
-                                <p class="text-xs font-medium leading-normal">Completion History</p>
-                            </a>
-                            <a data-view="table" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md" href="#">
-                                <span class="material-symbols-outlined text-xl">grid_view</span>
-                                <p class="text-xs font-medium leading-normal">Area Completion</p>
-                            </a>
-                            <a data-view="library" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md" href="#">
-                                <span class="material-symbols-outlined text-xl">filter_alt</span>
-                                <p class="text-xs font-medium leading-normal">Tower Library</p>
-                            </a>
-                        </div>
+                    <div class="grid grid-cols-2 gap-1 p-1 bg-black/20 rounded-lg mb-4 border border-white/5">
+                        <button id="nav-btn-discovery" class="px-2 py-1.5 text-xs font-bold text-white bg-[#BE00FF]/20 border border-[#BE00FF]/50 rounded-md shadow-sm transition-all text-center">
+                            Discovery
+                        </button>
+                        <button id="nav-btn-career" class="px-2 py-1.5 text-xs font-bold text-gray-500 hover:text-white hover:bg-white/5 border border-transparent rounded-md transition-all text-center">
+                            My Career
+                        </button>
                     </div>
-                    
-                    <div class="flex flex-col gap-3 mt-4">
-                        <h1 class="text-sm font-medium leading-normal px-2">Games</h1>
-                        <div id="games-nav-links" class="flex flex-col gap-1">
-                            <a data-view="games" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-gray-300 transition-colors hover:bg-white/5 hover:text-white cursor-pointer" href="#">
-                                <span class="material-symbols-outlined text-xl">swap_vert</span>
-                                <p class="text-xs font-medium leading-normal">Higher or Lower</p>
-                            </a>
-                            <a data-view="ladder" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-gray-300 transition-colors hover:bg-white/5 hover:text-white cursor-pointer" href="#">
-                                <span class="material-symbols-outlined text-xl">segment</span>
-                                <p class="text-xs font-medium leading-normal">Difficulty Ladder</p>
-                            </a>
+
+                    <div id="nav-group-discovery" class="flex flex-col gap-4">
+                        <div class="flex flex-col gap-3">
+                            <h1 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-2">Visualization</h1>
+                            <div id="nav-links" class="flex flex-col gap-1">
+                                <a data-view="chart" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-gray-300 transition-colors hover:bg-white/5 hover:text-white" href="#">
+                                    <span class="material-symbols-outlined text-xl">stacked_line_chart</span>
+                                    <p class="text-xs font-medium leading-normal">Completion Chart</p>
+                                </a>
+                                <a data-view="list" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-gray-300 transition-colors hover:bg-white/5 hover:text-white" href="#">
+                                    <span class="material-symbols-outlined text-xl">list</span>
+                                    <p class="text-xs font-medium leading-normal">Completion History</p>
+                                </a>
+                                <a data-view="table" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-gray-300 transition-colors hover:bg-white/5 hover:text-white" href="#">
+                                    <span class="material-symbols-outlined text-xl">grid_view</span>
+                                    <p class="text-xs font-medium leading-normal">Area Completion</p>
+                                </a>
+                                <a data-view="library" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-gray-300 transition-colors hover:bg-white/5 hover:text-white" href="#">
+                                    <span class="material-symbols-outlined text-xl">filter_alt</span>
+                                    <p class="text-xs font-medium leading-normal">Tower Library</p>
+                                </a>
+                            </div>
                         </div>
-                    </div>
-                    <div class="flex flex-col gap-3 mt-4">
-                        <h1 class="text-sm font-medium leading-normal px-2">Miscellaneous</h1>
-                        <div id="misc-nav-links" class="flex flex-col gap-1">
-                            <a data-view="leaderboard" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-gray-300 transition-colors hover:bg-white/5 hover:text-white" href="#">
-                                <span class="material-symbols-outlined text-xl">trophy</span>
-                                <p class="text-xs font-medium leading-normal">Leaderboard</p>
-                            </a>
-                            <a data-view="roulette" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-gray-300 transition-colors hover:bg-white/5 hover:text-white" href="#">
-                                <span class="material-symbols-outlined text-xl">change_circle</span>
-                                <p class="text-xs font-medium leading-normal">Tower Roulette</p>
-                            </a>
+                        
+                        <div class="flex flex-col gap-3">
+                            <h1 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-2">Games & Fun</h1>
+                            <div id="games-nav-links" class="flex flex-col gap-1">
+                                <a data-view="games" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-gray-300 transition-colors hover:bg-white/5 hover:text-white" href="#">
+                                    <span class="material-symbols-outlined text-xl">swap_vert</span>
+                                    <p class="text-xs font-medium leading-normal">Higher or Lower</p>
+                                </a>
+                                <a data-view="ladder" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-gray-300 transition-colors hover:bg-white/5 hover:text-white" href="#">
+                                    <span class="material-symbols-outlined text-xl">segment</span>
+                                    <p class="text-xs font-medium leading-normal">Difficulty Ladder</p>
+                                </a>
+                                <a data-view="roulette" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-gray-300 transition-colors hover:bg-white/5 hover:text-white" href="#">
+                                    <span class="material-symbols-outlined text-xl">change_circle</span>
+                                    <p class="text-xs font-medium leading-normal">Tower Roulette</p>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-3">
+                            <h1 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-2">Community</h1>
+                            <div id="misc-nav-links" class="flex flex-col gap-1">
+                                <a data-view="leaderboard" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-gray-300 transition-colors hover:bg-white/5 hover:text-white" href="#">
+                                    <span class="material-symbols-outlined text-xl">trophy</span>
+                                    <p class="text-xs font-medium leading-normal">Leaderboard</p>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-3">
+                            <h1 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-2">Limited Time</h1>
+                            <div id="limited-nav-links" class="flex flex-col gap-1">
+                                <div id="open-wrapped-btn"></div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="flex flex-col gap-3 mt-4">
-                        <h1 class="text-sm font-medium leading-normal px-2">Limited</h1>
-                        <div id="limited-nav-links" class="flex flex-col gap-1">
-                             <div id="open-wrapped-btn"></div>
+                    <div id="nav-group-career" class="hidden flex-col gap-4">
+                        <div class="flex flex-col gap-3">
+                            <h1 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest px-2">Management</h1>
+                            <div id="career-nav-links" class="flex flex-col gap-1">
+                                <a data-view="profile" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-gray-300 transition-colors hover:bg-white/5 hover:text-white" href="#">
+                                    <span class="material-symbols-outlined text-xl">person</span>
+                                    <p class="text-xs font-medium leading-normal">My Dashboard</p>
+                                </a>
+                                <a data-view="collections" class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-gray-300 transition-colors hover:bg-white/5 hover:text-white" href="#">
+                                    <span class="material-symbols-outlined text-xl">collections_bookmark</span>
+                                    <p class="text-xs font-medium leading-normal">Collections</p>
+                                </a>
+                                <button class="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-gray-600 cursor-not-allowed opacity-50" title="Coming Soon">
+                                    <span class="material-symbols-outlined text-xl">checklist</span>
+                                    <p class="text-xs font-medium leading-normal">Checklist</p>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -198,13 +180,17 @@
                     <p class="text-[9px] text-gray-500 text-center leading-relaxed font-medium">
                         This project is not affiliated with, endorsed by, or approved by Roblox Corporation.
                     </p>
-                    <div class="flex justify-center gap-3 mt-2 pt-2 border-t border-white/5">
-                        <a href="privacy.html" class="text-[10px] text-gray-400 hover:text-[#BE00FF] transition-colors font-bold">Privacy Policy</a>
+                    <div class="flex justify-center items-center gap-3 mt-2 pt-2 border-t border-white/5">
+                        <a href="privacy.html" class="text-[10px] text-gray-400 hover:text-[#BE00FF] transition-colors font-bold">Privacy</a>
                         <span class="text-[10px] text-gray-600">|</span>
                         <a href="terms.html" class="text-[10px] text-gray-400 hover:text-[#BE00FF] transition-colors font-bold">Terms</a>
+                        <span class="text-[10px] text-gray-600">|</span>
+                        <a href="https://discord.gg/GDMjAytHPS" target="_blank" class="text-gray-400 hover:text-[#5865F2] transition-colors" title="Join Discord">
+                            <svg class="h-3 w-3" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M524.5 133.8C524.3 133.5 524.1 133.2 523.7 133.1C485.6 115.6 445.3 103.1 404 96C403.6 95.9 403.2 96 402.9 96.1C402.6 96.2 402.3 96.5 402.1 96.9C396.6 106.8 391.6 117.1 387.2 127.5C342.6 120.7 297.3 120.7 252.8 127.5C248.3 117 243.3 106.8 237.7 96.9C237.5 96.6 237.2 96.3 236.9 96.1C236.6 95.9 236.2 95.9 235.8 95.9C194.5 103 154.2 115.5 116.1 133C115.8 133.1 115.5 133.4 115.3 133.7C39.1 247.5 18.2 358.6 28.4 468.2C28.4 468.5 28.5 468.7 28.6 469C28.7 469.3 28.9 469.4 29.1 469.6C73.5 502.5 123.1 527.6 175.9 543.8C176.3 543.9 176.7 543.9 177 543.8C177.3 543.7 177.7 543.4 177.9 543.1C189.2 527.7 199.3 511.3 207.9 494.3C208 494.1 208.1 493.8 208.1 493.5C208.1 493.2 208.1 493 208 492.7C207.9 492.4 207.8 492.2 207.6 492.1C207.4 492 207.2 491.8 206.9 491.7C191.1 485.6 175.7 478.3 161 469.8C160.7 469.6 160.5 469.4 160.3 469.2C160.1 469 160 468.6 160 468.3C160 468 160 467.7 160.2 467.4C160.4 467.1 160.5 466.9 160.8 466.7C163.9 464.4 167 462 169.9 459.6C170.2 459.4 170.5 459.2 170.8 459.2C171.1 459.2 171.5 459.2 171.8 459.3C268 503.2 372.2 503.2 467.3 459.3C467.6 459.2 468 459.1 468.3 459.1C468.6 459.1 469 459.3 469.2 459.5C472.1 461.9 475.2 464.4 478.3 466.7C478.5 466.9 478.7 467.1 478.9 467.4C479.1 467.7 479.1 468 479.1 468.3C479.1 468.6 479 468.9 478.8 469.2C478.6 469.5 478.4 469.7 478.2 469.8C463.5 478.4 448.2 485.7 432.3 491.6C432.1 491.7 431.8 491.8 431.6 492C431.4 492.2 431.3 492.4 431.2 492.7C431.1 493 431.1 493.2 431.1 493.5C431.1 493.8 431.2 494 431.3 494.3C440.1 511.3 450.1 527.6 461.3 543.1C461.5 543.4 461.9 543.7 462.2 543.8C462.5 543.9 463 543.9 463.3 543.8C516.2 527.6 565.9 502.5 610.4 469.6C610.6 469.4 610.8 469.2 610.9 469C611 468.8 611.1 468.5 611.1 468.2C623.4 341.4 590.6 231.3 524.2 133.7zM222.5 401.5C193.5 401.5 169.7 374.9 169.7 342.3C169.7 309.7 193.1 283.1 222.5 283.1C252.2 283.1 275.8 309.9 275.3 342.3C275.3 375 251.9 401.5 222.5 401.5zM417.9 401.5C388.9 401.5 365.1 374.9 365.1 342.3C365.1 309.7 388.5 283.1 417.9 283.1C447.6 283.1 471.2 309.9 470.7 342.3C470.7 375 447.5 401.5 417.9 401.5z"/></svg>
+                        </a>
                     </div>
                     <p class="text-[9px] text-gray-600 text-center mt-1.5 font-mono">
-                        &copy; 2025 EToH Progression
+                        &copy; 2025 EToH Progression. All rights reserved.
                     </p>
                 </div>
             </aside>
@@ -383,6 +369,10 @@
                             <div class="p-8 text-center text-gray-500 text-sm">Loading library data...</div>
                         </div>
                     </div>
+
+                    <div id="profile-view" class="flex-grow w-full h-full overflow-y-auto hidden"></div>
+
+                    <div id="collections-view" class="flex-grow w-full h-full overflow-y-auto hidden"></div>
                 </div>
             </section>
 
@@ -758,6 +748,6 @@
     <div id="tower-modal-backdrop" class="modal-backdrop hidden"><div id="tower-modal-panel" class="glass-panel modal-panel"><div class="flex justify-between items-center border-b border-white/10 pb-2 mb-4"><h2 id="modal-tower-name" class="text-xl font-bold"></h2><button id="modal-close-button" class="text-gray-400 hover:text-white transition-colors"><span class="material-symbols-outlined">close</span></button></div><div class="space-y-3 text-sm"><div class="flex justify-between items-center"><span class="text-gray-400">Difficulty:</span><span id="modal-difficulty"></span></div><div class="flex justify-between items-center"><span class="text-gray-400">Length:</span><span id="modal-length"></span></div><div class="flex justify-between items-center"><span class="text-gray-400">Floors:</span><span id="modal-floors"></span></div><div class="flex justify-between items-center"><span class="text-gray-400">Creator(s):</span><div id="modal-creator" class="flex flex-wrap justify-end items-center gap-2"></div></div><div class="flex justify-between items-center"><span class="text-gray-400">Warnings:</span><div id="modal-warnings" class="flex flex-wrap justify-end items-center gap-2"></div></div><div class="flex justify-between items-center"><span class="text-gray-400">Area:</span><span id="modal-area"></span></div><div class="flex justify-between items-center"><span class="text-gray-400">Date Completed:</span><span id="modal-date"></span></div></div></div></div>
     <div id="profile-modal-backdrop" class="modal-backdrop hidden"><div id="profile-modal-panel" class="glass-panel modal-panel max-w-2xl w-full p-6 relative overflow-hidden"><button id="profile-close-button" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors z-20"><span class="material-symbols-outlined">close</span></button><div class="flex flex-col md:flex-row gap-6 pt-2"><div class="flex-shrink-0 flex flex-col items-center"><div class="w-40 h-40 rounded-lg bg-black/40 border border-white/10 overflow-hidden shadow-2xl relative"><img id="profile-avatar-full" src="" alt="Avatar" class="w-full h-full object-cover object-top hidden"><div id="profile-avatar-loader" class="absolute inset-0 flex items-center justify-center text-gray-600"><span class="material-symbols-outlined animate-spin">sync</span></div></div><div class="mt-3 text-center"><h2 id="profile-display-name" class="text-xl font-bold text-white leading-tight"></h2><p id="profile-username" class="text-sm text-gray-400 font-mono"></p></div><div id="profile-rank-badge" class="mt-3 px-3 py-1 rounded-full border text-xs font-bold bg-black/40">Rank</div></div><div class="flex-grow flex flex-col gap-4"><h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider border-b border-white/10 pb-1">Career Statistics</h3><div class="grid grid-cols-2 gap-3"><div class="bg-black/20 rounded p-3 border border-white/5"><p class="text-xs text-gray-500 uppercase">Total Completions</p><p id="profile-total-count" class="text-lg font-bold text-white">0</p></div><div class="bg-black/20 rounded p-3 border border-white/5"><p class="text-xs text-gray-500 uppercase">Completion %</p><p id="profile-completion-pct" class="text-lg font-bold text-white">0%</p></div><div class="bg-black/20 rounded p-3 border border-white/5 col-span-2"><p class="text-xs text-gray-500 uppercase">Hardest Completion</p><p id="profile-hardest-name" class="text-sm font-bold truncate">None</p><p id="profile-hardest-diff" class="text-xs text-gray-400">N/A</p></div><div class="bg-black/20 rounded p-3 border border-white/5"><p class="text-xs text-gray-500 uppercase">Total Difficulty</p><p id="profile-total-diff" class="text-lg font-bold text-white">0.00</p></div><div class="bg-black/20 rounded p-3 border border-white/5"><p class="text-xs text-gray-500 uppercase">Avg Difficulty</p><p id="profile-avg-diff" class="text-lg font-bold text-white">0.00</p></div></div><div class="grid grid-cols-3 gap-2 text-center mt-1"><div class="bg-black/20 rounded p-2 border border-white/5"><span class="material-symbols-outlined text-gray-500 text-lg block">location_city</span><span id="profile-count-towers" class="text-xs font-bold">0</span><span class="text-[10px] text-gray-500 block">Towers</span></div><div class="bg-black/20 rounded p-2 border border-white/5"><span class="material-symbols-outlined text-gray-500 text-lg block">fort</span><span id="profile-count-citadels" class="text-xs font-bold">0</span><span class="text-[10px] text-gray-500 block">Citadels</span></div><div class="bg-black/20 rounded p-2 border border-white/5"><span class="material-symbols-outlined text-gray-500 text-lg block">church</span><span id="profile-count-steeples" class="text-xs font-bold">0</span><span class="text-[10px] text-gray-500 block">Steeples</span></div></div></div></div></div></div>
 
-    <script type="module" src="./js/main.js?v=1.7.7"></script>
+    <script type="module" src="./js/main.js?v=1.8.0"></script>
 </body>
 </html>

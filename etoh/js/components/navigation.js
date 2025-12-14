@@ -3,7 +3,9 @@ import { renderLibrary } from './library.js';
 import { startHiLoGame } from './game_hilo.js';
 import { initRoulette } from './roulette.js';
 import { startLadderGame } from './game_ladder.js';
+import { renderProfilePage } from './profile_page.js';
 import { store } from '../state.js';
+import { renderCollectionsPage } from './collections.js';
 
 let currentView = 'chart';
 
@@ -12,16 +14,21 @@ export function initNavigation() {
     const gamesNavLinksContainer = document.getElementById('games-nav-links');
     const miscNavLinksContainer = document.getElementById('misc-nav-links');
     const limitedNavLinksContainer = document.getElementById('limited-nav-links');
+    const careerNavLinksContainer = document.getElementById('career-nav-links');
 
     const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
     const mobileFilterToggle = document.getElementById('mobile-filter-toggle');
-    
     const mobileCloseFilters = document.getElementById('mobile-close-filters');
     const mobileCloseChartFilters = document.getElementById('mobile-close-chart-filters');
     const mobileCloseRouletteFilters = document.getElementById('mobile-close-roulette-filters');
     const mobileCloseLadderSettings = document.getElementById('mobile-close-ladder-settings');
     const mobileBackdrop = document.getElementById('mobile-backdrop');
-    
+
+    const btnDiscovery = document.getElementById('nav-btn-discovery');
+    const btnCareer = document.getElementById('nav-btn-career');
+    const groupDiscovery = document.getElementById('nav-group-discovery');
+    const groupCareer = document.getElementById('nav-group-career');
+
     const handleNavClick = (e) => {
         const l = e.target.closest('a');
         if (l && l.dataset.view) {
@@ -35,6 +42,39 @@ export function initNavigation() {
     if (gamesNavLinksContainer) gamesNavLinksContainer.addEventListener('click', handleNavClick);
     if (miscNavLinksContainer) miscNavLinksContainer.addEventListener('click', handleNavClick);
     if (limitedNavLinksContainer) limitedNavLinksContainer.addEventListener('click', handleNavClick);
+    if (careerNavLinksContainer) careerNavLinksContainer.addEventListener('click', handleNavClick);
+
+    const activeStyle = ['bg-[#BE00FF]/20', 'border-[#BE00FF]/50', 'text-white'];
+    const inactiveStyle = ['bg-transparent', 'border-transparent', 'text-gray-500', 'hover:text-white', 'hover:bg-white/5'];
+
+    function setTab(tab) {
+        if (tab === 'discovery') {
+            groupDiscovery.classList.remove('hidden');
+            groupCareer.classList.add('hidden');
+            
+            btnDiscovery.classList.add(...activeStyle);
+            btnDiscovery.classList.remove(...inactiveStyle);
+            
+            btnCareer.classList.remove(...activeStyle);
+            btnCareer.classList.add(...inactiveStyle);
+        } else {
+            groupDiscovery.classList.add('hidden');
+            groupCareer.classList.remove('hidden');
+            
+            btnCareer.classList.add(...activeStyle);
+            btnCareer.classList.remove(...inactiveStyle);
+            
+            btnDiscovery.classList.remove(...activeStyle);
+            btnDiscovery.classList.add(...inactiveStyle);
+        }
+    }
+
+    if (btnDiscovery && btnCareer) {
+        btnDiscovery.addEventListener('click', () => setTab('discovery'));
+        btnCareer.addEventListener('click', () => {
+            setTab('career');
+        });
+    }
 
     if (mobileMenuToggle) {
         mobileMenuToggle.addEventListener('click', () => toggleSidebar(document.getElementById('left-sidebar'), true));
@@ -50,11 +90,11 @@ export function initNavigation() {
             
             let activeRightSidebar = null;
 
-            if (currentView === 'games' && gameStats) activeRightSidebar = gameStats;
-            else if (currentView === 'library' && libFilters) activeRightSidebar = libFilters;
-            else if (currentView === 'chart' && chartFilters) activeRightSidebar = chartFilters;
-            else if (currentView === 'roulette' && rouletteFilters) activeRightSidebar = rouletteFilters;
-            else if (currentView === 'ladder' && ladderSettings) activeRightSidebar = ladderSettings;
+            if (!document.getElementById('games-view').classList.contains('hidden') && gameStats) activeRightSidebar = gameStats;
+            else if (!document.getElementById('library-view').classList.contains('hidden') && libFilters) activeRightSidebar = libFilters;
+            else if (!document.getElementById('chart-view').classList.contains('hidden') && chartFilters) activeRightSidebar = chartFilters;
+            else if (!document.getElementById('roulette-view').classList.contains('hidden') && rouletteFilters) activeRightSidebar = rouletteFilters;
+            else if (!document.getElementById('ladder-view').classList.contains('hidden') && ladderSettings) activeRightSidebar = ladderSettings;
 
             if (activeRightSidebar) toggleSidebar(activeRightSidebar, true);
         });
@@ -90,12 +130,14 @@ export function switchView(viewName) {
         leaderboard: { title: 'Leaderboard', element: document.getElementById('leaderboard-view') },
         games: { title: '', element: document.getElementById('games-view') },
         roulette: { title: 'Tower Roulette', element: document.getElementById('roulette-view') },
-        ladder: { title: 'The Difficulty Ladder', element: document.getElementById('ladder-view') }
+        ladder: { title: 'The Difficulty Ladder', element: document.getElementById('ladder-view') },
+        profile: { title: 'Player Profile', element: document.getElementById('profile-view') },
+        collections: { title: 'My Collections', element: document.getElementById('collections-view') }
     };
 
     const mainContentTitle = document.getElementById('main-content-title');
     if (mainContentTitle) {
-        if (viewName === 'games' || viewName === 'roulette' || viewName === 'ladder') {
+        if (viewName === 'games' || viewName === 'roulette' || viewName === 'ladder' || viewName === 'profile') {
             mainContentTitle.classList.add('hidden');
         } else {
             if (views[viewName]) {
@@ -149,6 +191,8 @@ export function switchView(viewName) {
     if (viewName === 'games') startHiLoGame();
     if (viewName === 'roulette') initRoulette();
     if (viewName === 'ladder') startLadderGame();
+    if (viewName === 'profile') renderProfilePage();
+    if (viewName === 'collections') renderCollectionsPage();
 
     const mobileFilterToggle = document.getElementById('mobile-filter-toggle');
     if (mobileFilterToggle) {
