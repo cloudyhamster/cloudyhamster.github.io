@@ -9,6 +9,8 @@ let currentCollectionId = null;
 let hasUnsavedChanges = false; 
 let currentSort = 'newest';
 
+window.viewTower = (name) => openModalWithTower(name);
+
 function renderCreateModal() {
     return `
         <div id="create-collection-modal" class="hidden fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -669,8 +671,6 @@ function setupDetailListeners(collection, items, isOwner) {
             renderCollectionsPage();
         } catch(e) { showNotification("Failed to delete.", "error"); }
     };
-    
-    window.viewTower = (name) => openModalWithTower(name);
 
     setupDragDrop();
 }
