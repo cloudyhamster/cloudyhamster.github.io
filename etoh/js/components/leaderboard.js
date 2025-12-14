@@ -2,7 +2,6 @@ import { api } from '../api.js';
 import { store } from '../state.js';
 import { showNotification } from '../utils.js';
 import { RANK_COLORS, DIFFICULTY_PILL_CLASSES } from '../config.js';
-import { openProfileModal } from '../ui/modals.js';
 
 export async function fetchAndRenderLeaderboard() {
     const container = document.getElementById('leaderboard-container');
@@ -62,8 +61,12 @@ export function initLeaderboard() {
         if (playerCell) {
             const username = playerCell.dataset.username;
             if (username) {
-                document.getElementById('searchInput').value = username;
-                document.getElementById('searchButton').click();
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) searchInput.value = username;
+
+                if (window.performSearch) {
+                    window.performSearch(username); 
+                }
             }
         }
     });

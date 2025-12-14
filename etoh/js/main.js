@@ -7,13 +7,26 @@ import { initLibrary } from './components/library.js';
 import { initHiLo } from './components/game_hilo.js';
 import { initLeaderboard } from './components/leaderboard.js';
 import { initProfile } from './components/profile.js';
-import { initNavigation } from './components/navigation.js';
-import { initModals, openProfileModal } from './ui/modals.js';
+import { initNavigation, switchView } from './components/navigation.js';
+import { initModals } from './ui/modals.js';
 import { initWrapped } from './components/wrapped.js';
 import { initRoulette } from './components/roulette.js';
 import { initLadder } from './components/game_ladder.js';
+import { initAuth } from './components/auth.js';
+import { renderProfilePage } from './components/profile_page.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const targetUser = urlParams.get('user');
+
+    if (token) {
+        api.setToken(token);
+        const newUrl = targetUser ? `?user=${targetUser}` : window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+        showNotification('Successfully logged in via Roblox!', 'success');
+    }
+
     initNavigation();
     initChart();
     initHistory();
@@ -25,12 +38,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     initWrapped();
     initRoulette();
     initLadder();
+    initAuth();
 
     try {
         const towers = await api.getMasterTowers();
         store.setAllTowers(towers);
     } catch (e) {
-        console.error("Failed to load master tower data:", e);
+        console.error(e);
     }
 
     const searchInput = document.getElementById('searchInput');
@@ -38,26 +52,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     const searchIcon = document.getElementById('searchIcon');
     const loadingIndicator = document.getElementById('searchLoadingIndicator');
     const forceRefreshCheckbox = document.getElementById('forceRefreshCheckbox');
+    const profileOnlyCheckbox = document.getElementById('profileOnlyCheckbox');
     const statsContainer = document.getElementById('statsContainer');
 
-    const performSearch = async (username) => {
+    window.performSearch = async (username, options = {}) => {
         if (!username) {
             showNotification('Please enter a Roblox Username.', 'error');
             return false;
         }
+
+        const useForceRefresh = options.forceRefresh !== undefined ? options.forceRefresh : forceRefreshCheckbox.checked;
+        const useProfileOnly = options.profileOnly !== undefined ? options.profileOnly : profileOnlyCheckbox.checked;
+
         searchIcon.classList.add('hidden');
         loadingIndicator.classList.remove('hidden');
-        statsContainer.style.display = 'none';
+        if (statsContainer) statsContainer.style.display = 'none';
         
         try {
-            const result = await api.getPlayerData(username, forceRefreshCheckbox.checked);
+            const result = await api.getPlayerData(
+                username, 
+                useForceRefresh,
+                useProfileOnly
+            );
             store.setCurrentUser(result);
-            showNotification(`Successfully loaded stats for ${username}.`, 'success');
             
-            const gamesView = document.getElementById('games-view');
-            if (!gamesView.classList.contains('hidden')) {
-                initGame();
+            const newUrl = `${window.location.pathname}?user=${username}`;
+            window.history.pushState({ path: newUrl }, '', newUrl);
+            
+            if (useProfileOnly) {
+                showNotification(`Loaded profile layout for ${result.display_name}.`, 'success');
+            } else {
+                showNotification(`Loaded stats for ${result.display_name}.`, 'success');
             }
+            
+            switchView('profile');
+            renderProfilePage();
+            
             return true;
         } catch (error) {
             showNotification(error.message, 'error');
@@ -68,8 +98,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    searchButton.addEventListener('click', () => performSearch(searchInput.value.trim()));
+    searchButton.addEventListener('click', () => window.performSearch(searchInput.value.trim()));
     searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') performSearch(searchInput.value.trim());
+        if (e.key === 'Enter') window.performSearch(searchInput.value.trim());
     });
+
+    if (targetUser) {
+        searchInput.value = targetUser;
+        setTimeout(() => window.performSearch(targetUser), 100);
+    }
 });

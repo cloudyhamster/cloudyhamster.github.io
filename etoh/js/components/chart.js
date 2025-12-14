@@ -15,7 +15,7 @@ let fullChartData = {
     datasets: []
 };
 
-const ACTIVE_STYLE = ['bg-[#BE00FF]/20', 'text-[#BE00FF]', 'border-[#BE00FF]/50'];
+const ACTIVE_STYLE = ['bg-[#BE00FF]/20', 'text-[#BE00FF]', 'border-[#BE00FF]/50', 'hover:bg-[#BE00FF]/20'];
 const INACTIVE_STYLE = ['bg-white/5', 'text-gray-300', 'border-white/10', 'hover:bg-white/10'];
 const DROPDOWN_ITEM_BASE = ['text-left', 'px-3', 'py-2', 'text-xs', 'font-bold', 'rounded', 'border', 'cursor-pointer', 'transition-colors', 'select-none'];
 

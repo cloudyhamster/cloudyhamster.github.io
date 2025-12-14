@@ -1,31 +1,85 @@
 import { store } from '../state.js';
 import { DIFFICULTY_PILL_CLASSES, AREA_PILL_CLASSES, AREA_DISPLAY_NAMES, DIFFICULTY_COLORS, NON_CANON_TOWERS } from '../config.js';
-import { titleCase, getTowerType } from '../utils.js';
+import { titleCase } from '../utils.js';
+import { switchView } from '../components/navigation.js';
 
 export function initModals() {
     const modalBackdrop = document.getElementById('tower-modal-backdrop');
     const modalCloseButton = document.getElementById('modal-close-button');
-    const profileBackdrop = document.getElementById('profile-modal-backdrop');
-    const profileCloseBtn = document.getElementById('profile-close-button');
     const viewProfileBtn = document.getElementById('view-profile-btn');
 
-    modalCloseButton.addEventListener('click', closeModal);
-    modalBackdrop.addEventListener('click', (e) => {
-        if (e.target === modalBackdrop) closeModal();
-    });
+    if (!document.getElementById('custom-confirm-modal')) {
+        const confirmHtml = `
+            <div id="custom-confirm-modal" class="hidden fixed inset-0 z-[200] flex items-center justify-center p-4">
+                <div class="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity" id="confirm-backdrop"></div>
+                <div class="bg-[#1C1C22] border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl relative transform scale-100 transition-all">
+                    <h3 id="confirm-title" class="text-xl font-bold text-white mb-2">Are you sure?</h3>
+                    <p id="confirm-message" class="text-sm text-gray-400 mb-6 leading-relaxed">This action cannot be undone.</p>
+                    <div class="flex gap-3">
+                        <button id="confirm-cancel" class="flex-1 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-white hover:bg-white/5 transition-colors">Cancel</button>
+                        <button id="confirm-ok" class="flex-1 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-red-500 hover:bg-red-600 text-white shadow-lg transition-colors">Delete</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', confirmHtml);
+    }
 
-    profileCloseBtn.addEventListener('click', () => profileBackdrop.classList.add('hidden'));
-    profileBackdrop.addEventListener('click', (e) => {
-        if (e.target === profileBackdrop) profileBackdrop.classList.add('hidden');
-    });
+    if (modalCloseButton) {
+        modalCloseButton.addEventListener('click', closeModal);
+    }
+    
+    if (modalBackdrop) {
+        modalBackdrop.addEventListener('click', (e) => {
+            if (e.target === modalBackdrop) closeModal();
+        });
+    }
 
-    viewProfileBtn.addEventListener('click', openProfileModal);
+    if (viewProfileBtn) {
+        viewProfileBtn.addEventListener('click', () => {
+            switchView('profile');
+        });
+    }
 
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            if (!modalBackdrop.classList.contains('hidden')) closeModal();
-            if (!profileBackdrop.classList.contains('hidden')) profileBackdrop.classList.add('hidden');
+            if (modalBackdrop && !modalBackdrop.classList.contains('hidden')) closeModal();
+            const confirmModal = document.getElementById('custom-confirm-modal');
+            if (confirmModal && !confirmModal.classList.contains('hidden')) {
+                confirmModal.classList.add('hidden');
+            }
         }
+    });
+}
+
+export function showConfirmModal(title, message, confirmText = "Delete", confirmColor = "bg-red-500") {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('custom-confirm-modal');
+        const titleEl = document.getElementById('confirm-title');
+        const msgEl = document.getElementById('confirm-message');
+        const okBtn = document.getElementById('confirm-ok');
+        const cancelBtn = document.getElementById('confirm-cancel');
+        const backdrop = document.getElementById('confirm-backdrop');
+
+        titleEl.textContent = title;
+        msgEl.textContent = message;
+        okBtn.textContent = confirmText;
+        
+        okBtn.className = `flex-1 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider text-white shadow-lg transition-colors ${confirmColor} hover:brightness-110`;
+
+        const close = (result) => {
+            modal.classList.add('hidden');
+            okBtn.onclick = null;
+            cancelBtn.onclick = null;
+            backdrop.onclick = null;
+            resolve(result);
+        };
+
+        okBtn.onclick = () => close(true);
+        cancelBtn.onclick = () => close(false);
+        backdrop.onclick = () => close(false);
+
+        modal.classList.remove('hidden');
     });
 }
 
@@ -90,87 +144,6 @@ export function openModalWithTower(towerName) {
 }
 
 export function closeModal() {
-    document.getElementById('tower-modal-backdrop').classList.add('hidden');
-}
-
-export function openProfileModal() {
-    const user = store.currentUser;
-    if (!user) return;
-
-    const profileBackdrop = document.getElementById('profile-modal-backdrop');
-    const profileDisplayName = document.getElementById('profile-display-name');
-    const profileUsername = document.getElementById('profile-username');
-    const profileAvatarFull = document.getElementById('profile-avatar-full');
-    const profileAvatarLoader = document.getElementById('profile-avatar-loader');
-    const profileTotalCount = document.getElementById('profile-total-count');
-    const profileCompletionPct = document.getElementById('profile-completion-pct');
-    const profileHardestName = document.getElementById('profile-hardest-name');
-    const profileHardestDiff = document.getElementById('profile-hardest-diff');
-    const profileTotalDiff = document.getElementById('profile-total-diff');
-    const profileAvgDiff = document.getElementById('profile-avg-diff');
-    const profileCountTowers = document.getElementById('profile-count-towers');
-    const profileCountCitadels = document.getElementById('profile-count-citadels');
-    const profileCountSteeples = document.getElementById('profile-count-steeples');
-    const profileRankBadge = document.getElementById('profile-rank-badge');
-
-    profileDisplayName.textContent = user.display_name;
-    profileUsername.textContent = `@${user.user_name}`;
-
-    profileAvatarFull.classList.add('hidden');
-    profileAvatarLoader.classList.remove('hidden');
-    profileAvatarFull.src = user.avatar_full_url || user.avatar_url;
-    profileAvatarFull.onload = () => {
-        profileAvatarLoader.classList.add('hidden');
-        profileAvatarFull.classList.remove('hidden');
-    };
-
-    const canonBeaten = user.beaten_towers.filter(t => !NON_CANON_TOWERS.has(t.name));
-    const canonTotal = store.allTowers.filter(t => !NON_CANON_TOWERS.has(t.name)).length;
-    const totalCount = canonBeaten.length;
-    const percentage = canonTotal > 0 ? ((totalCount / canonTotal) * 100).toFixed(1) : "0.0";
-
-    canonBeaten.sort((a, b) => b.number_difficulty - a.number_difficulty);
-    const hardest = canonBeaten.length > 0 ? canonBeaten[0] : null;
-
-    let sumDiff = 0, towers = 0, citadels = 0, steeples = 0;
-
-    canonBeaten.forEach(t => {
-        sumDiff += (t.number_difficulty || 0);
-        const type = getTowerType(t.name);
-        if (type === 'Tower') towers++;
-        else if (type === 'Citadel') citadels++;
-        else if (type === 'Steeple') steeples++;
-    });
-
-    const avgDiff = totalCount > 0 ? (sumDiff / totalCount).toFixed(2) : "0.00";
-
-    profileTotalCount.textContent = `${totalCount} / ${canonTotal}`;
-    profileCompletionPct.textContent = `${percentage}%`;
-
-    if (hardest) {
-        profileHardestName.textContent = hardest.name;
-        profileHardestDiff.textContent = `${hardest.difficulty} [${hardest.number_difficulty.toFixed(2)}]`;
-        const hex = DIFFICULTY_COLORS[hardest.difficulty] || '#808080';
-        profileRankBadge.textContent = hardest.difficulty.toUpperCase();
-        profileRankBadge.style.borderColor = hex;
-        profileRankBadge.style.color = hex;
-        profileRankBadge.style.backgroundColor = `${hex}20`;
-        profileHardestName.style.color = hex;
-    } else {
-        profileHardestName.textContent = "N/A";
-        profileHardestName.style.color = "#9CA3AF";
-        profileHardestDiff.textContent = "-";
-        profileRankBadge.textContent = "NOOB";
-        profileRankBadge.style.borderColor = "#808080";
-        profileRankBadge.style.color = "#808080";
-        profileRankBadge.style.backgroundColor = "transparent";
-    }
-
-    profileTotalDiff.textContent = sumDiff.toFixed(2);
-    profileAvgDiff.textContent = avgDiff;
-    profileCountTowers.textContent = towers;
-    profileCountCitadels.textContent = citadels;
-    profileCountSteeples.textContent = steeples;
-
-    profileBackdrop.classList.remove('hidden');
+    const backdrop = document.getElementById('tower-modal-backdrop');
+    if (backdrop) backdrop.classList.add('hidden');
 }

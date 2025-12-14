@@ -10,7 +10,8 @@ class StateManager {
                 wins: 0,
                 totalGuesses: 0,
                 bestGame: null
-            }
+            },
+            authUser: null
         };
         this.listeners = [];
     }
@@ -20,6 +21,7 @@ class StateManager {
     get beatenTowers() { return this.state.currentUser ? this.state.currentUser.beaten_towers : []; }
     get leaderboard() { return this.state.leaderboard; }
     get sessionStats() { return this.state.sessionStats; }
+    get authUser() { return this.state.authUser; }
     
     setAllTowers(towers) {
         this.state.allTowers = towers;
@@ -39,6 +41,11 @@ class StateManager {
     updateSessionStats(stats) {
         this.state.sessionStats = { ...this.state.sessionStats, ...stats };
         this.notify('statsUpdated', this.state.sessionStats);
+    }
+
+    setAuthUser(user) {
+        this.state.authUser = user;
+        this.notify('authChanged', user);
     }
 
     subscribe(event, callback) {
