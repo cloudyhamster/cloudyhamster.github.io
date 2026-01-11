@@ -9,7 +9,6 @@ import { initLeaderboard } from './components/leaderboard.js';
 import { initProfile } from './components/profile.js';
 import { initNavigation, switchView } from './components/navigation.js';
 import { initModals } from './ui/modals.js';
-import { initWrapped } from './components/wrapped.js';
 import { initRoulette } from './components/roulette.js';
 import { initLadder } from './components/game_ladder.js';
 import { initAuth } from './components/auth.js';
@@ -35,7 +34,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     initLeaderboard();
     initProfile();
     initModals();
-    initWrapped();
     initRoulette();
     initLadder();
     initAuth();

@@ -11,8 +11,10 @@ let currentSort = 'newest';
 
 window.viewTower = (name) => openModalWithTower(name);
 
-function renderCreateModal() {
-    return `
+function ensureCreateModalExists() {
+    if (document.getElementById('create-collection-modal')) return;
+
+    const modalHtml = `
         <div id="create-collection-modal" class="hidden fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
             <div class="bg-[#181818] border border-white/10 w-full max-w-2xl rounded-xl shadow-2xl p-0 overflow-hidden relative animate-[popIn_0.2s_ease-out]">
                 <button id="close-create-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white z-10">
@@ -29,7 +31,9 @@ function renderCreateModal() {
                             
                             <div class="relative mt-3">
                                 <button id="icon-trigger" class="flex items-center gap-2 bg-black/60 border border-white/20 text-xs text-white rounded px-3 py-1.5 hover:bg-black/80 hover:border-white/40 transition-all">
-                                    <span id="icon-label-text">Music</span>
+                                    <span id="icon-label-text" class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-sm">queue_music</span> Music
+                                    </span>
                                     <span class="material-symbols-outlined text-[10px]">expand_more</span>
                                 </button>
                                 
@@ -76,6 +80,8 @@ function renderCreateModal() {
             </div>
         </div>
     `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    bindCreateModalEvents();
 }
 
 function bindCreateModalEvents() {
@@ -94,9 +100,9 @@ function bindCreateModalEvents() {
     const iconPreview = document.getElementById('create-icon-preview');
 
     if(picker && preview) {
-        picker.addEventListener('input', (e) => {
+        picker.oninput = (e) => {
             preview.style.background = `linear-gradient(to bottom right, ${e.target.value}, #000000)`;
-        });
+        };
     }
 
     if (iconTrigger && iconMenu) {
@@ -110,16 +116,17 @@ function bindCreateModalEvents() {
                 e.stopPropagation();
                 const val = opt.dataset.value;
                 if(iconInput) iconInput.value = val;
-                if(iconLabel) iconLabel.textContent = opt.textContent.trim();
+                if(iconLabel) iconLabel.innerHTML = opt.innerHTML; 
                 if(iconPreview) iconPreview.textContent = val;
                 iconMenu.classList.add('hidden');
             };
         });
 
-        const closeIconMenu = (e) => {
+        document.removeEventListener('click', window._closeColIconMenu);
+        window._closeColIconMenu = (e) => {
             if (!iconTrigger.contains(e.target)) iconMenu.classList.add('hidden');
         };
-        document.addEventListener('click', closeIconMenu);
+        document.addEventListener('click', window._closeColIconMenu);
     }
 
     const submitBtn = document.getElementById('submit-create-collection');
@@ -159,6 +166,7 @@ function bindCreateModalEvents() {
                 }
             } catch (e) {
                 showNotification("Failed to save.", "error");
+            } finally {
                 submitBtn.textContent = "Save";
                 submitBtn.disabled = false;
             }
@@ -169,6 +177,8 @@ function bindCreateModalEvents() {
 export async function renderCollectionsPage() {
     const container = document.getElementById('collections-view');
     const user = store.authUser;
+
+    ensureCreateModalExists();
 
     if (activeTab === 'detail' && hasUnsavedChanges) {
         await saveCurrentOrder();
@@ -223,11 +233,9 @@ export async function renderCollectionsPage() {
                 </div>
             </div>
         </div>
-        ${renderCreateModal()}
     `;
 
     setupGridListeners();
-    bindCreateModalEvents(); 
     loadGridContent();
 }
 
@@ -284,7 +292,7 @@ function setupGridListeners() {
             const iconLabel = document.getElementById('icon-label-text');
             if(iconPreview) iconPreview.textContent = 'queue_music';
             if(iconInput) iconInput.value = 'queue_music';
-            if(iconLabel) iconLabel.textContent = 'Music';
+            if(iconLabel) iconLabel.innerHTML = '<span class="material-symbols-outlined text-sm">queue_music</span> Music';
 
             document.getElementById('create-collection-modal').classList.remove('hidden');
         };
@@ -343,6 +351,7 @@ async function loadGridContent() {
 }
 
 async function renderDetailView(container, user) {
+    ensureCreateModalExists();
     container.innerHTML = `<div class="w-full h-full flex items-center justify-center"><span class="material-symbols-outlined animate-spin text-4xl text-gray-600">sync</span></div>`;
 
     try {
@@ -351,7 +360,6 @@ async function renderDetailView(container, user) {
         const items = res.items;
 
         const isOwner = user && String(user.sub) === String(c.owner_id);
-
         const beatenSet = new Set(store.beatenTowers.map(t => t.name));
         let beatenCount = 0;
         items.forEach(i => { if (beatenSet.has(i.tower_name)) beatenCount++; });
@@ -364,19 +372,13 @@ async function renderDetailView(container, user) {
             items.forEach((item, idx) => {
                 const isBeaten = beatenSet.has(item.tower_name);
                 const tData = store.allTowers.find(t => t.name === item.tower_name);
-                
                 const diffName = tData ? tData.difficulty : 'N/A';
                 const diffVal = tData ? tData.number_difficulty.toFixed(2) : '0.00';
                 const creators = tData ? (Array.isArray(tData.creators) ? tData.creators.join(', ') : tData.creators) : '';
-                
-                const diffColor = (tData && DIFFICULTY_COLORS[diffName]) ? DIFFICULTY_COLORS[diffName] : '#9CA3AF';
                 const diffPillClass = DIFFICULTY_PILL_CLASSES[diffName] || 'border-gray-500/50 text-gray-400 bg-gray-500/10';
-                
                 const statusIcon = isBeaten ? 'check_circle' : 'radio_button_unchecked';
                 const statusColor = isBeaten ? 'text-emerald-400' : 'text-gray-600';
-                
                 const opacityClass = isBeaten ? 'opacity-75 hover:opacity-100' : '';
-                
                 const dragHandle = isOwner ? `
                     <div class="w-6 flex justify-center text-gray-500 cursor-grab hover:text-white" title="Drag to reorder">
                         <span class="material-symbols-outlined text-xl">drag_indicator</span>
@@ -386,17 +388,13 @@ async function renderDetailView(container, user) {
                 itemsHtml += `
                     <div class="collection-item flex items-center gap-4 py-3 px-4 border-b border-white/5 hover:bg-white/5 transition-colors group ${opacityClass}" 
                          data-id="${item.id}" draggable="${isOwner}">
-                        
                         ${dragHandle}
-                        
                         <span class="material-symbols-outlined text-lg ${statusColor} flex-shrink-0">${statusIcon}</span>
-                        
                         <div class="flex-1 cursor-pointer min-w-0 flex flex-col justify-center gap-1" onclick="window.viewTower('${item.tower_name}')">
                             <div class="flex items-baseline gap-2">
                                 <h4 class="text-white font-bold text-sm tracking-wide truncate transition-colors">${item.tower_name}</h4>
                                 <span class="text-xs text-gray-400 truncate hidden sm:inline-block transition-colors">by ${creators}</span>
                             </div>
-                            
                             <div class="flex items-center gap-2">
                                 <span class="text-[10px] px-2 py-0.5 rounded border font-bold uppercase tracking-wider ${diffPillClass}">
                                     ${diffName}
@@ -406,7 +404,6 @@ async function renderDetailView(container, user) {
                                 </span>
                             </div>
                         </div>
-                        
                         ${isOwner ? `
                             <button onclick="window.deleteCollectionItem(event, ${item.id})" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-600 hover:text-red-500 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100">
                                 <span class="material-symbols-outlined text-lg">delete</span>
@@ -465,7 +462,7 @@ async function renderDetailView(container, user) {
                                 <span class="text-gray-200 text-xs">${c.owner_name}</span>
                             </div>
                             <span class="text-gray-400 text-xs">${items.length} Towers</span>
-                            <span class="text-gray-600 text-xs">•</span>
+                            <span class="text-gray-600 text-xs">ò</span>
                             <span class="text-xs text-gray-300">${progressPct}% Complete</span>
                         </div>
 
@@ -495,12 +492,37 @@ async function renderDetailView(container, user) {
                     ${itemsHtml}
                 </div>
             </div>
-            
-            ${renderCreateModal()}
         `;
 
         setupDetailListeners(c, items, isOwner);
-        bindCreateModalEvents();
+
+        if (isOwner) {
+            document.getElementById('btn-edit-collection').onclick = () => {
+                const modal = document.getElementById('create-collection-modal');
+                document.getElementById('create-modal-title').textContent = "Edit Playlist";
+                document.getElementById('create-name').value = c.name;
+                document.getElementById('create-desc').value = c.description || '';
+                document.getElementById('create-color-picker').value = c.theme_color;
+                
+                const iconEl = document.getElementById('create-icon-value');
+                const iconLabel = document.getElementById('icon-label-text');
+                if(iconEl) iconEl.value = c.icon;
+                if(iconLabel) {
+                    const map = {
+                        'queue_music': 'Music', 'star': 'Star', 'bolt': 'Bolt', 'timer': 'Timer',
+                        'emoji_events': 'Trophy', 'skull': 'Skull', 'landscape': 'Mountain', 'favorite': 'Heart'
+                    };
+                    const label = map[c.icon] || 'Icon';
+                    iconLabel.innerHTML = `<span class="material-symbols-outlined text-sm">${c.icon}</span> ${label}`;
+                }
+                
+                document.getElementById('create-public').checked = c.is_public;
+                document.getElementById('edit-collection-id').value = c.id;
+                document.getElementById('create-cover-preview').style.background = `linear-gradient(to bottom right, ${c.theme_color}, #000)`;
+                
+                modal.classList.remove('hidden');
+            };
+        }
 
     } catch (e) {
         console.error(e);
