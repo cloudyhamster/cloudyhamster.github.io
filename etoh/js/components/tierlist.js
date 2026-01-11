@@ -23,6 +23,68 @@ const DEFAULT_TIERS = [
     { label: 'F', color: '#7fffff' }
 ];
 
+window.handleTlDragStart = (e, id, name) => {
+        window.isDragging = true;
+        draggedItemData = { id, name };
+        e.dataTransfer.setData('text/plain', id);
+        e.dataTransfer.effectAllowed = 'move';
+        
+        setTimeout(() => {
+            const el = document.getElementById(`item-${id}`);
+            if (el) el.classList.add('opacity-0');
+        }, 0);
+    };
+    
+    window.handleTlDragEnd = (e) => {
+        window.isDragging = false;
+        if (draggedItemData && draggedItemData.id) {
+            const el = document.getElementById(`item-${draggedItemData.id}`);
+            if (el) el.classList.remove('opacity-0');
+        }
+        
+        if (placeholderEl && placeholderEl.parentNode) {
+            placeholderEl.parentNode.removeChild(placeholderEl);
+        }
+        placeholderEl = null;
+        currentDropTarget = null;
+        draggedItemData = null;
+    };
+
+    window.handleTlDragEnter = (e, dropZone) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (currentDropTarget === dropZone) return;
+        currentDropTarget = dropZone;
+
+        if (!placeholderEl) {
+            placeholderEl = document.createElement('div');
+            placeholderEl.className = 'tier-placeholder';
+        }
+
+        dropZone.appendChild(placeholderEl);
+    };
+
+    window.handleTlDrop = (e, targetTierId) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        window.handleTlDragEnd(e);
+
+        const itemId = e.dataTransfer.getData('text/plain');
+        const oldIndex = localItems.findIndex(i => String(i.id) === String(itemId));
+        if (oldIndex === -1) return;
+
+        const item = localItems[oldIndex];
+        
+        if (item._tierId !== targetTierId) {
+            item._tierId = targetTierId; 
+            localItems.splice(oldIndex, 1);
+            localItems.push(item);
+            refreshBoard();
+        }
+    };
+
 function getAcronym(name) {
     if (!name) return '';
     return name.split(' ').map(w => w[0]).join('');
@@ -410,51 +472,57 @@ async function renderDetailView(container, user, preloadedMeta = null) {
                 
                 localTiers.forEach(t => { if (!t._id) t._id = `tier-${Date.now()}-${Math.random()}`; });
 
-                localItems = res.items.map(i => ({
-                    ...i,
-                    tier_label: 'Unranked',
-                    _tierId: 'unranked'
-                }));
+                localItems = res.items.map(i => {
+                    if (i.tier_label === 'Unranked') return { ...i, _tierId: 'unranked' };
+                    const matchingTier = localTiers.find(t => t.label === i.tier_label);
+                    return { ...i, _tierId: matchingTier ? matchingTier._id : 'unranked' };
+                });
             }
         }
-        
-        const isOwner = user && String(user.sub) === String(tl.owner_id);
-        const renderItems = (itemsList) => itemsList.map((item, index) => {
-             const towerData = store.allTowers.find(t => t.name === item.tower_name);
-             const imgUrl = `https://tr.rbxcdn.com/${towerData?.icon_url?.split('/')[3] || ''}/150/150/Image/Png/noFilter`;
-             const itemId = item.id || `temp-${index}-${Date.now()}`;
-             const acronym = getAcronym(item.tower_name);
-             const diffColor = (towerData && DIFFICULTY_COLORS[towerData.difficulty]) ? DIFFICULTY_COLORS[towerData.difficulty] : '#ffffff';
-             const pillClass = (towerData && DIFFICULTY_PILL_CLASSES[towerData.difficulty]) 
-                 ? DIFFICULTY_PILL_CLASSES[towerData.difficulty] 
-                 : 'border-gray-500/50 text-gray-400 bg-gray-500/10';
 
-             return `
-                 <div class="relative w-24 h-24 group/item cursor-grab active:cursor-grabbing hover:z-20 transition-transform hover:scale-105 flex-shrink-0 bg-[#202020] rounded-lg border border-white/10 overflow-hidden tier-item" 
-                      id="item-${itemId}"
-                      draggable="true" 
-                      ondragstart="window.handleTlDragStart(event, '${itemId}', '${item.tower_name}')"
-                      ondragend="window.handleTlDragEnd(event)"
-                      onclick="if(!window.isDragging) window.viewTower('${item.tower_name}')"
-                      title="${item.tower_name}">
-                     <img src="${imgUrl}" class="w-full h-full object-cover pointer-events-none" onerror="this.src='icon.jpg'">
-                     <div class="absolute bottom-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none border-t border-b-0 border-x-0 backdrop-blur-md ${pillClass} rounded-none">
-                         <span class="text-sm font-black font-mono tracking-wide truncate px-1 drop-shadow-md">
-                             ${acronym}
-                         </span>
-                     </div>
-                     ${isOwner ? `
-                         <button onclick="window.deleteTierItem(event, '${itemId}')" class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity hover:scale-110 z-30 cursor-pointer">
-                             <span class="material-symbols-outlined text-[12px] font-bold">close</span>
-                         </button>
-                     ` : ''}
-                 </div>
-             `;
+        const isOwner = user && String(user.sub) === String(tl.owner_id);
+
+        const renderItems = (itemsList) => itemsList.map((item, index) => {
+            const towerData = store.allTowers.find(t => t.name === item.tower_name);
+            const imgUrl = `https://tr.rbxcdn.com/${towerData?.icon_url?.split('/')[3] || ''}/150/150/Image/Png/noFilter`;
+            const itemId = item.id || `temp-${index}-${Date.now()}`;
+            
+            const acronym = getAcronym(item.tower_name);
+            const diffColor = (towerData && DIFFICULTY_COLORS[towerData.difficulty]) ? DIFFICULTY_COLORS[towerData.difficulty] : '#ffffff';
+            const pillClass = (towerData && DIFFICULTY_PILL_CLASSES[towerData.difficulty]) 
+                ? DIFFICULTY_PILL_CLASSES[towerData.difficulty] 
+                : 'border-gray-500/50 text-gray-400 bg-gray-500/10';
+
+            return `
+                <div class="relative w-24 h-24 group/item cursor-grab active:cursor-grabbing hover:z-20 transition-transform hover:scale-105 flex-shrink-0 bg-[#202020] rounded-lg border border-white/10 overflow-hidden tier-item" 
+                     id="item-${itemId}"
+                     draggable="true" 
+                     ondragstart="window.handleTlDragStart(event, '${itemId}', '${item.tower_name}')"
+                     ondragend="window.handleTlDragEnd(event)"
+                     onclick="if(!window.isDragging) window.viewTower('${item.tower_name}')"
+                     title="${item.tower_name}">
+                    
+                    <img src="${imgUrl}" class="w-full h-full object-cover pointer-events-none" onerror="this.src='icon.jpg'">
+                    
+                    <div class="absolute bottom-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none border-t border-b-0 border-x-0 backdrop-blur-md ${pillClass} rounded-none">
+                        <span class="text-sm font-black font-mono tracking-wide truncate px-1 drop-shadow-md">
+                            ${acronym}
+                        </span>
+                    </div>
+                    
+                    ${isOwner ? `
+                        <button onclick="window.deleteTierItem(event, '${itemId}')" class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity hover:scale-110 z-30 cursor-pointer">
+                            <span class="material-symbols-outlined text-[12px] font-bold">close</span>
+                        </button>
+                    ` : ''}
+                </div>
+            `;
         }).join('');
 
         let boardHtml = '';
         localTiers.forEach((tier, tIdx) => {
             const tierItems = localItems.filter(i => i._tierId === tier._id);
+            
             const controls = isOwner ? `
                 <div class="flex flex-col gap-1 items-center justify-center border-l border-black/20 w-8 bg-black/10 hover:bg-black/20 transition-colors">
                     <button onclick="window.moveTierRow(${tIdx}, -1)" class="text-black/50 hover:text-black transform hover:-translate-y-0.5 transition-transform">▲</button>
@@ -527,9 +595,18 @@ async function renderDetailView(container, user, preloadedMeta = null) {
                             
                             <div class="flex flex-row items-center gap-3 pl-4">
                                 ${isOwner ? `
-                                    <button id="tl-save-btn" class="flex items-center gap-2 px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-full text-xs uppercase tracking-widest shadow-lg transition-all ${hasUnsavedChanges ? 'opacity-100 animate-pulse' : 'hidden'}">
-                                        <span class="material-symbols-outlined text-sm">save</span> Save Changes
-                                    </button>
+                                    <div id="tl-save-container" class="flex items-center gap-3 ${hasUnsavedChanges ? '' : 'hidden'}">
+                                        <label class="flex items-center gap-2 cursor-pointer group" title="If checked, towers stay in their rows. If unchecked, towers reset to pool (Template mode).">
+                                            <div class="relative">
+                                                <input type="checkbox" id="tl-save-placements" class="sr-only peer">
+                                                <div class="w-9 h-5 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                                            </div>
+                                            <span class="text-[10px] font-bold text-gray-400 group-hover:text-white uppercase tracking-wider transition-colors">Save Ranks</span>
+                                        </label>
+                                        <button id="tl-save-btn" class="flex items-center gap-2 px-6 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-full text-xs uppercase tracking-widest shadow-lg transition-all animate-pulse">
+                                            <span class="material-symbols-outlined text-sm">save</span> Save
+                                        </button>
+                                    </div>
                                 ` : ''}
 
                                 <button id="btn-like-tierlist" class="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all group ${tl.is_liked ? 'text-pink-500 border-pink-500/50 bg-pink-500/10' : 'text-gray-400'}">
@@ -564,16 +641,18 @@ async function renderDetailView(container, user, preloadedMeta = null) {
                     ` : ''}
                 </div>
 
-                ${isOwner ? `
+                ${(isOwner || unrankedItems.length > 0) ? `
                     <div class="flex flex-col gap-3">
                         <div class="flex justify-between items-center px-1">
                             <span class="text-sm font-bold text-gray-400 uppercase tracking-wider">Unranked Pool</span>
                             
-                            <div class="relative w-64 group">
-                                <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-500 text-sm group-focus-within:text-[#BE00FF] transition-colors">search</span>
-                                <input id="add-tl-tower-input" type="text" placeholder="Add to pool..." class="w-full bg-[#181818] border border-white/10 rounded-full pl-10 pr-4 py-2 text-xs text-white focus:border-[#BE00FF] focus:outline-none transition-all">
-                                <div id="add-tl-suggestions" class="absolute bottom-full left-0 right-0 mb-2 bg-[#1C1C22] border border-white/10 rounded-xl shadow-2xl hidden z-50 max-h-60 overflow-y-auto custom-scrollbar p-1"></div>
-                            </div>
+                            ${isOwner ? `
+                                <div class="relative w-64 group">
+                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-500 text-sm group-focus-within:text-[#BE00FF] transition-colors">search</span>
+                                    <input id="add-tl-tower-input" type="text" placeholder="Add to pool..." class="w-full bg-[#181818] border border-white/10 rounded-full pl-10 pr-4 py-2 text-xs text-white focus:border-[#BE00FF] focus:outline-none transition-all">
+                                    <div id="add-tl-suggestions" class="absolute bottom-full left-0 right-0 mb-2 bg-[#1C1C22] border border-white/10 rounded-xl shadow-2xl hidden z-50 max-h-60 overflow-y-auto custom-scrollbar p-1"></div>
+                                </div>
+                            ` : ''}
                         </div>
                         <div class="min-h-[140px] bg-[#121212] border border-white/10 rounded-xl p-4 flex flex-wrap gap-2 transition-colors tier-drop-zone"
                              data-tier-id="unranked"
@@ -606,15 +685,10 @@ async function renderDetailView(container, user, preloadedMeta = null) {
 
 function updateLocalState(isDirty = true) {
     hasUnsavedChanges = isDirty;
-    const saveBtn = document.getElementById('tl-save-btn');
-    if (saveBtn) {
-        if (isDirty) {
-            saveBtn.classList.remove('hidden');
-            saveBtn.classList.add('opacity-100', 'animate-pulse');
-        } else {
-            saveBtn.classList.add('hidden');
-            saveBtn.classList.remove('opacity-100', 'animate-pulse');
-        }
+    const container = document.getElementById('tl-save-container');
+    if (container) {
+        if (isDirty) container.classList.remove('hidden');
+        else container.classList.add('hidden');
     }
 }
 
@@ -630,7 +704,7 @@ function setupDetailListeners(tierlist, items, isOwner) {
     window.currentTlMeta = tierlist;
 
     document.getElementById('tl-back-to-browse').onclick = async () => { 
-        if (hasUnsavedChanges) {
+        if (isOwner && hasUnsavedChanges) {
             const confirm = await showConfirmModal("Unsaved Changes", "You have unsaved changes. Leave anyway?", "Leave", "bg-red-500");
             if (!confirm) return;
         }
@@ -671,24 +745,39 @@ function setupDetailListeners(tierlist, items, isOwner) {
             saveBtn.textContent = "Saving...";
             saveBtn.disabled = true;
             try {
+                const shouldSaveRankings = document.getElementById('tl-save-placements').checked;
+                
+                const itemsToSave = localItems.map(i => {
+                    let label = 'Unranked';
+                    if (shouldSaveRankings && i._tierId !== 'unranked') {
+                        const tier = localTiers.find(t => t._id === i._tierId);
+                        if (tier) label = tier.label;
+                    }
+                    return { ...i, tier_label: label };
+                });
+                
                 await api.post('/api/tierlists/save_items', {
                     tierlist_id: tierlist.id,
-                    items: localItems, 
+                    items: itemsToSave,
                     tiers_config: localTiers
                 });
-                showNotification("Template saved! Items reset to pool.", "success");
-                
-                localItems = localItems.map(i => ({ ...i, _tierId: 'unranked' }));
+
+                if (shouldSaveRankings) {
+                    showNotification("List and rankings saved!", "success");
+                } else {
+                    showNotification("Template saved! Items reset to pool.", "success");
+                    localItems = itemsToSave.map(i => ({ ...i, _tierId: 'unranked' }));
+                }
                 
                 hasUnsavedChanges = false;
-                saveBtn.classList.add('hidden');
-                saveBtn.textContent = "Save Changes";
+                document.getElementById('tl-save-container').classList.add('hidden');
+                saveBtn.textContent = "Save";
                 saveBtn.disabled = false;
-                
-                refreshBoard(false); 
+                refreshBoard(false);
             } catch (e) {
+                console.error(e);
                 showNotification("Save failed.", "error");
-                saveBtn.textContent = "Save Changes";
+                saveBtn.textContent = "Save";
                 saveBtn.disabled = false;
             }
         };
@@ -804,67 +893,5 @@ function setupDetailListeners(tierlist, items, isOwner) {
         e.stopPropagation();
         localItems = localItems.filter(i => String(i.id) !== String(itemId));
         refreshBoard();
-    };
-
-    window.handleTlDragStart = (e, id, name) => {
-        window.isDragging = true;
-        draggedItemData = { id, name };
-        e.dataTransfer.setData('text/plain', id);
-        e.dataTransfer.effectAllowed = 'move';
-        
-        setTimeout(() => {
-            const el = document.getElementById(`item-${id}`);
-            if (el) el.classList.add('opacity-0');
-        }, 0);
-    };
-    
-    window.handleTlDragEnd = (e) => {
-        window.isDragging = false;
-        if (draggedItemData && draggedItemData.id) {
-            const el = document.getElementById(`item-${draggedItemData.id}`);
-            if (el) el.classList.remove('opacity-0');
-        }
-        
-        if (placeholderEl && placeholderEl.parentNode) {
-            placeholderEl.parentNode.removeChild(placeholderEl);
-        }
-        placeholderEl = null;
-        currentDropTarget = null;
-        draggedItemData = null;
-    };
-
-    window.handleTlDragEnter = (e, dropZone) => {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        if (currentDropTarget === dropZone) return;
-        currentDropTarget = dropZone;
-
-        if (!placeholderEl) {
-            placeholderEl = document.createElement('div');
-            placeholderEl.className = 'tier-placeholder';
-        }
-
-        dropZone.appendChild(placeholderEl);
-    };
-
-    window.handleTlDrop = (e, targetTierId) => {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        window.handleTlDragEnd(e);
-
-        const itemId = e.dataTransfer.getData('text/plain');
-        const oldIndex = localItems.findIndex(i => String(i.id) === String(itemId));
-        if (oldIndex === -1) return;
-
-        const item = localItems[oldIndex];
-        
-        if (item._tierId !== targetTierId) {
-            item._tierId = targetTierId; 
-            localItems.splice(oldIndex, 1);
-            localItems.push(item);
-            refreshBoard();
-        }
     };
 }
