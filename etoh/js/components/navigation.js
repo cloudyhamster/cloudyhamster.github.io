@@ -132,12 +132,13 @@ export function switchView(viewName) {
         roulette: { title: 'Tower Roulette', element: document.getElementById('roulette-view') },
         ladder: { title: 'The Difficulty Ladder', element: document.getElementById('ladder-view') },
         profile: { title: 'Player Profile', element: document.getElementById('profile-view') },
-        collections: { title: 'My Collections', element: document.getElementById('collections-view') }
+        collections: { title: 'My Collections', element: document.getElementById('collections-view') },
+        tierlist: { title: 'Tier List Maker', element: document.getElementById('tierlist-view') }
     };
 
     const mainContentTitle = document.getElementById('main-content-title');
     if (mainContentTitle) {
-        if (viewName === 'games' || viewName === 'roulette' || viewName === 'ladder' || viewName === 'profile') {
+        if (['games', 'roulette', 'ladder', 'profile', 'tierlist'].includes(viewName)) {
             mainContentTitle.classList.add('hidden');
         } else {
             if (views[viewName]) {
@@ -147,36 +148,32 @@ export function switchView(viewName) {
         }
     }
 
-    const gameStatsSidebar = document.getElementById('game-stats-sidebar');
-    const libraryFiltersSidebar = document.getElementById('library-filters-sidebar');
-    const chartFiltersSidebar = document.getElementById('chart-filters-sidebar');
-    const rouletteFiltersSidebar = document.getElementById('roulette-filters-sidebar');
-    const ladderSettingsSidebar = document.getElementById('ladder-settings-sidebar');
+    const sidebars = [
+        'game-stats-sidebar', 'library-filters-sidebar', 'chart-filters-sidebar', 
+        'roulette-filters-sidebar', 'ladder-settings-sidebar'
+    ];
+    sidebars.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) {
+            el.classList.add('hidden');
+            el.classList.remove('flex');
+        }
+    });
 
-    const hideSidebar = (sidebar) => {
-        if (!sidebar) return;
-        sidebar.classList.add('hidden');
-        sidebar.classList.remove('flex');
-        if (sidebar.classList.contains('translate-x-0')) toggleSidebar(sidebar, false);
-    };
+    if (viewName === 'games') document.getElementById('game-stats-sidebar')?.classList.remove('hidden');
+    else if (viewName === 'library') document.getElementById('library-filters-sidebar')?.classList.remove('hidden');
+    else if (viewName === 'chart') document.getElementById('chart-filters-sidebar')?.classList.remove('hidden');
+    else if (viewName === 'roulette') document.getElementById('roulette-filters-sidebar')?.classList.remove('hidden');
+    else if (viewName === 'ladder') document.getElementById('ladder-settings-sidebar')?.classList.remove('hidden');
 
-    const showSidebar = (sidebar) => {
-        if (!sidebar) return;
-        sidebar.classList.remove('hidden');
-        sidebar.classList.add('flex');
-    };
-
-    hideSidebar(gameStatsSidebar);
-    hideSidebar(libraryFiltersSidebar);
-    hideSidebar(chartFiltersSidebar);
-    hideSidebar(rouletteFiltersSidebar);
-    hideSidebar(ladderSettingsSidebar);
-
-    if (viewName === 'games') showSidebar(gameStatsSidebar);
-    else if (viewName === 'library') showSidebar(libraryFiltersSidebar);
-    else if (viewName === 'chart') showSidebar(chartFiltersSidebar);
-    else if (viewName === 'roulette') showSidebar(rouletteFiltersSidebar);
-    else if (viewName === 'ladder') showSidebar(ladderSettingsSidebar);
+    const mobileFilterToggle = document.getElementById('mobile-filter-toggle');
+    if (mobileFilterToggle) {
+        if (['games', 'library', 'chart', 'roulette', 'ladder'].includes(viewName)) {
+            mobileFilterToggle.classList.remove('hidden');
+        } else {
+            mobileFilterToggle.classList.add('hidden');
+        }
+    }
 
     Object.values(views).forEach(view => {
         if (view.element) view.element.classList.add('hidden');
@@ -186,22 +183,15 @@ export function switchView(viewName) {
         views[viewName].element.classList.remove('hidden');
     }
 
-    if (viewName === 'leaderboard' && !store.leaderboard) fetchAndRenderLeaderboard();
+    if (viewName === 'leaderboard') fetchAndRenderLeaderboard();
+    
     if (viewName === 'library') renderLibrary();
     if (viewName === 'games') startHiLoGame();
     if (viewName === 'roulette') initRoulette();
     if (viewName === 'ladder') startLadderGame();
     if (viewName === 'profile') renderProfilePage();
     if (viewName === 'collections') renderCollectionsPage();
-
-    const mobileFilterToggle = document.getElementById('mobile-filter-toggle');
-    if (mobileFilterToggle) {
-        if (viewName === 'games' || viewName === 'library' || viewName === 'chart' || viewName === 'roulette' || viewName === 'ladder') {
-            mobileFilterToggle.classList.remove('hidden');
-        } else {
-            mobileFilterToggle.classList.add('hidden');
-        }
-    }
+    if (viewName === 'tierlist') import('./tierlist.js').then(m => m.initTierList());
 
     updateNavStyles(viewName);
 }
@@ -210,9 +200,7 @@ function updateNavStyles(viewName) {
     const activeClasses = ['bg-[#BE00FF]/20', 'border', 'border-[#BE00FF]/50', 'text-[#BE00FF]'];
     const inactiveClasses = ['text-gray-300', 'transition-colors', 'hover:bg-white/5', 'hover:text-white'];
     
-    const allLinks = document.querySelectorAll('a[data-view]');
-
-    allLinks.forEach(link => {
+    document.querySelectorAll('a[data-view]').forEach(link => {
         if (link.dataset.view === viewName) {
             link.classList.remove(...inactiveClasses);
             link.classList.add(...activeClasses);
@@ -228,13 +216,14 @@ function toggleSidebar(sidebar, show) {
     if (!sidebar) return;
 
     if (show) {
-        sidebar.classList.remove('-translate-x-full', 'translate-x-full');
-        sidebar.classList.add('translate-x-0');
+        sidebar.classList.remove('-translate-x-full', 'translate-x-full', 'hidden');
+        sidebar.classList.add('translate-x-0', 'flex');
         if (mobileBackdrop) mobileBackdrop.classList.remove('hidden');
     } else {
         if (sidebar.id === 'left-sidebar') sidebar.classList.add('-translate-x-full');
         else sidebar.classList.add('translate-x-full');
         sidebar.classList.remove('translate-x-0');
+        
         if (mobileBackdrop) mobileBackdrop.classList.add('hidden');
     }
 }

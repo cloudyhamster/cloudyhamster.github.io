@@ -647,12 +647,14 @@ export function renderProfilePage(preserveLocalState = false) {
     }
 
     const canonBeaten = user.beaten_towers.filter(t => !NON_CANON_TOWERS.has(t.name));
-    const sortedBeaten = canonBeaten.sort((a, b) => b.number_difficulty - a.number_difficulty);
+
+    const sortedBeaten = canonBeaten.sort((a, b) => (b.number_difficulty || 0) - (a.number_difficulty || 0));
+    
     const hardest = sortedBeaten[0];
     const top5 = sortedBeaten.slice(0, 5);
     
     let totalDiff = 0;
-    canonBeaten.forEach(t => totalDiff += t.number_difficulty);
+    canonBeaten.forEach(t => totalDiff += (t.number_difficulty || 0));
     const avgDiff = canonBeaten.length ? (totalDiff / canonBeaten.length).toFixed(2) : "0.00";
     const allCanonCount = store.allTowers.filter(t => !NON_CANON_TOWERS.has(t.name)).length;
 
