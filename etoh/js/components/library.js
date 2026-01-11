@@ -100,7 +100,9 @@ export function renderLibrary() {
         } else {
             if (!libSelectedDiffs.has(t.difficulty)) return false;
         }
-        if (!libSelectedAreas.has(t.area)) return false;
+        const areaCheck = t.area || "Unknown";
+        if (!libSelectedAreas.has(areaCheck)) return false;
+        
         if (libSelectedTypes.size > 0 && !libSelectedTypes.has(getTowerType(t.name))) return false;
 
         const rawLen = t.length || '<20 minutes';
@@ -143,7 +145,7 @@ export function renderLibrary() {
         const diffClass = DIFFICULTY_PILL_CLASSES[tower.difficulty] || DIFFICULTY_PILL_CLASSES.nil;
         const diffContent = `${tower.modifier||''} ${tower.difficulty||''} [${(tower.number_difficulty||0).toFixed(2)}]`.trim();
 
-        rowsHtml += `<tr class="tower-row ${isCompleted?'status-outline-completed':'status-outline-incomplete'}" style="--difficulty-rgb: ${completionRgb}; --area-rgb: ${diffRgb}; padding-left: 12px;" data-tower-name="${tower.name}"><td class="py-1 px-1 text-xs text-gray-600 font-mono w-6 text-center flex-shrink-0">${index + 1}</td><td class="py-1 px-3 text-left ${isCompleted?'text-gray-200':'text-gray-500'} flex-1 truncate">${tower.name}</td><td class="py-1 px-3 text-right flex-shrink-0"><div class="flex justify-end items-center gap-2 flex-wrap"><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 ${isCompleted?'text-gray-300 bg-gray-500/10':'text-gray-600 bg-gray-500/10'}">${dateStr}</span><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${diffClass}">${diffContent}</span><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${areaClass}">${AREA_DISPLAY_NAMES[tower.area]||tower.area}</span></div></td></tr>`;
+        rowsHtml += `<tr class="tower-row ${isCompleted?'status-outline-completed':'status-outline-incomplete'}" style="--difficulty-rgb: ${completionRgb}; --area-rgb: ${diffRgb}; padding-left: 12px;" data-tower-name="${tower.name}"><td class="py-1 px-1 text-xs text-gray-600 font-mono w-6 text-center flex-shrink-0">${index + 1}</td><td class="py-1 px-3 text-left ${isCompleted?'text-gray-200':'text-gray-500'} flex-1 truncate">${tower.name}</td><td class="py-1 px-3 text-right flex-shrink-0"><div class="flex justify-end items-center gap-2 flex-wrap"><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border border-gray-500/50 ${isCompleted?'text-gray-300 bg-gray-500/10':'text-gray-600 bg-gray-500/10'}">${dateStr}</span><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${diffClass}">${diffContent}</span><span class="inline-block py-0.5 px-2.5 rounded-full text-xs font-medium border ${areaClass}">${AREA_DISPLAY_NAMES[tower.area]||tower.area || 'Unknown'}</span></div></td></tr>`;
     });
     libraryContainer.innerHTML = `<table class="w-full text-sm"><tbody>${rowsHtml}</tbody></table>`;
 }
@@ -206,7 +208,7 @@ function initLibraryComponents() {
         });
     });
 
-    const areas = Array.from(new Set(allTowersData.map(t => t.area).filter(Boolean)));
+    const areas = Array.from(new Set(allTowersData.map(t => t.area || "Unknown")));
     libSelectedAreas = new Set(areas);
     const hierarchyMap = {
         "Ring 1": ["Forgotten Ridge"], "Ring 2": ["Garden Of Eesh%C3%B6L"], "Ring 4": ["Silent Abyss"],
@@ -272,11 +274,16 @@ function initLibraryComponents() {
         diffListContainer.appendChild(label);
     });
 
-    const lengths = ['<20 minutes', '20+ minutes', '30+ minutes', '45+ minutes', '60+ minutes', '90+ minutes'];
-    libSelectedLengths = new Set(lengths);
+    const dynamicLengths = Array.from(new Set(allTowersData.map(t => {
+        const rawLen = t.length || '<20 minutes';
+        return rawLen.replace(' long', '').trim();
+    }))).sort();
+    
+    libSelectedLengths = new Set(dynamicLengths);
     const lengthListContainer = document.getElementById('length-list-container');
     lengthListContainer.innerHTML = '';
-    lengths.forEach(len => {
+    
+    dynamicLengths.forEach(len => {
         const label = document.createElement('label');
         label.className = 'dropdown-check-item text-xs text-gray-200';
         label.style.color = '#FFA500';
@@ -284,7 +291,7 @@ function initLibraryComponents() {
         label.querySelector('input').addEventListener('change', (e) => {
             if (e.target.checked) libSelectedLengths.add(len);
             else libSelectedLengths.delete(len);
-            updateLengthButtonText(lengths.length);
+            updateLengthButtonText(dynamicLengths.length);
             renderLibrary();
         });
         lengthListContainer.appendChild(label);
@@ -292,6 +299,11 @@ function initLibraryComponents() {
 
     const creators = Array.from(new Set(allTowersData.flatMap(t => Array.isArray(t.creators) ? t.creators.flatMap(c => c.split(',')) : []).map(c => c.trim()).filter(Boolean))).sort();
     libSelectedCreators = new Set(creators);
+    if (allTowersData.some(t => !t.creators || t.creators.length === 0)) {
+        creators.push("Unknown");
+        libSelectedCreators.add("Unknown");
+    }
+
     const creatorListContainer = document.getElementById('creator-list-container');
     const creatorSearchInput = document.getElementById('creator-search-input');
     
@@ -375,7 +387,7 @@ function initLibraryComponents() {
     
     updateAreaButtonText(areas.length);
     updateDiffButtonText(difficulties.length);
-    updateLengthButtonText(lengths.length);
+    updateLengthButtonText(dynamicLengths.length);
     updateCreatorButtonText(creators.length);
 }
 
