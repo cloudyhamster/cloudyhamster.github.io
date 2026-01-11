@@ -6,6 +6,7 @@ import { startLadderGame } from './game_ladder.js';
 import { renderProfilePage } from './profile_page.js';
 import { store } from '../state.js';
 import { renderCollectionsPage } from './collections.js';
+import { initTierList } from './tierlist.js';
 
 let currentView = 'chart';
 
@@ -191,7 +192,7 @@ export function switchView(viewName) {
     if (viewName === 'ladder') startLadderGame();
     if (viewName === 'profile') renderProfilePage();
     if (viewName === 'collections') renderCollectionsPage();
-    if (viewName === 'tierlist') import('./tierlist.js').then(m => m.initTierList());
+    if (viewName === 'tierlist') initTierList();
 
     updateNavStyles(viewName);
 }
