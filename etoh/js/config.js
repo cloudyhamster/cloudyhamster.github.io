@@ -2,10 +2,18 @@ export const API_BASE_URL = 'https://etoh-thing-w1v8.onrender.com';
 // export const API_BASE_URL = 'http://127.0.0.1:5000';
 
 export const NON_CANON_TOWERS = new Set([
-    "Tower Not Found", "Not Even A Tower", "This Is Probably A Tower",
-    "Maybe A Tower", "Totally A Tower", "Will Be A Tower", "Likely A Tower",
-    "Fortunately Not A Tower", "Far From A Surprising Tower", "Somewhat A Tower",
-    "Possibly A Tower", "Not Even A Flower"
+    "Tower Not Found", 
+    "Not Even A Tower", 
+    "This Is Probably A Tower",
+    "Maybe A Tower", 
+    "Totally A Tower", 
+    "Will Be A Tower", 
+    "Likely A Tower",
+    "Fortunately Not A Tower", 
+    "Far From A Surprising Tower", 
+    "Somewhat A Tower",
+    "Possibly A Tower", 
+    "Not Even A Flower"
 ]);
 
 export const DIFFICULTY_COLORS = {
