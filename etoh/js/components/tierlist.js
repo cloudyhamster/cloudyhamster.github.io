@@ -392,7 +392,6 @@ async function loadGridContent() {
 
 async function renderDetailView(container, user, preloadedMeta = null) {
     if(!preloadedMeta) container.innerHTML = `<div class="w-full h-full flex items-center justify-center"><span class="material-symbols-outlined animate-spin text-4xl text-gray-600">sync</span></div>`;
-    ensureCreateModalExists();
 
     try {
         let tl;
@@ -411,48 +410,51 @@ async function renderDetailView(container, user, preloadedMeta = null) {
                 
                 localTiers.forEach(t => { if (!t._id) t._id = `tier-${Date.now()}-${Math.random()}`; });
 
-                localItems = res.items.map(i => {
-                    if (i.tier_label === 'Unranked') return { ...i, _tierId: 'unranked' };
-                    const matchingTier = localTiers.find(t => t.label === i.tier_label);
-                    return { ...i, _tierId: matchingTier ? matchingTier._id : 'unranked' };
-                });
+                localItems = res.items.map(i => ({
+                    ...i,
+                    tier_label: 'Unranked',
+                    _tierId: 'unranked'
+                }));
             }
         }
-
+        
         const isOwner = user && String(user.sub) === String(tl.owner_id);
-
         const renderItems = (itemsList) => itemsList.map((item, index) => {
-            const towerData = store.allTowers.find(t => t.name === item.tower_name);
-            const imgUrl = `https://tr.rbxcdn.com/${towerData?.icon_url?.split('/')[3] || ''}/150/150/Image/Png/noFilter`;
-            const itemId = item.id || `temp-${index}-${Date.now()}`;
-            
-            const acronym = getAcronym(item.tower_name);
-            
-            const pillClass = (towerData && DIFFICULTY_PILL_CLASSES[towerData.difficulty]) ? DIFFICULTY_PILL_CLASSES[towerData.difficulty] : 'border-gray-500/50 text-gray-400 bg-gray-500/10';
+             const towerData = store.allTowers.find(t => t.name === item.tower_name);
+             const imgUrl = `https://tr.rbxcdn.com/${towerData?.icon_url?.split('/')[3] || ''}/150/150/Image/Png/noFilter`;
+             const itemId = item.id || `temp-${index}-${Date.now()}`;
+             const acronym = getAcronym(item.tower_name);
+             const diffColor = (towerData && DIFFICULTY_COLORS[towerData.difficulty]) ? DIFFICULTY_COLORS[towerData.difficulty] : '#ffffff';
+             const pillClass = (towerData && DIFFICULTY_PILL_CLASSES[towerData.difficulty]) 
+                 ? DIFFICULTY_PILL_CLASSES[towerData.difficulty] 
+                 : 'border-gray-500/50 text-gray-400 bg-gray-500/10';
 
-            return `
-                <div class="relative w-24 h-24 group/item cursor-grab active:cursor-grabbing hover:z-20 transition-transform hover:scale-105 flex-shrink-0 bg-[#202020] rounded-lg border border-white/10 overflow-hidden tier-item" id="item-${itemId}" draggable="true" ondragstart="window.handleTlDragStart(event, '${itemId}', '${item.tower_name}')" ondragend="window.handleTlDragEnd(event)" onclick="if(!window.isDragging) window.viewTower('${item.tower_name}')" title="${item.tower_name}">
-                    <img src="${imgUrl}" class="w-full h-full object-cover pointer-events-none" onerror="this.src='icon.jpg'">
-                    
-                    <div class="absolute bottom-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none border-t border-b-0 border-x-0 backdrop-blur-md ${pillClass} rounded-none">
-                        <span class="text-sm font-black font-mono tracking-wide truncate px-1 drop-shadow-md">
-                            ${acronym}
-                        </span>
-                    </div>
-                    
-                    ${isOwner ? `
-                        <button onclick="window.deleteTierItem(event, '${itemId}')" class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity hover:scale-110 z-30 cursor-pointer">
-                            <span class="material-symbols-outlined text-[10px] font-bold">close</span>
-                        </button>
-                    ` : ''}
-                </div>
-            `;
+             return `
+                 <div class="relative w-24 h-24 group/item cursor-grab active:cursor-grabbing hover:z-20 transition-transform hover:scale-105 flex-shrink-0 bg-[#202020] rounded-lg border border-white/10 overflow-hidden tier-item" 
+                      id="item-${itemId}"
+                      draggable="true" 
+                      ondragstart="window.handleTlDragStart(event, '${itemId}', '${item.tower_name}')"
+                      ondragend="window.handleTlDragEnd(event)"
+                      onclick="if(!window.isDragging) window.viewTower('${item.tower_name}')"
+                      title="${item.tower_name}">
+                     <img src="${imgUrl}" class="w-full h-full object-cover pointer-events-none" onerror="this.src='icon.jpg'">
+                     <div class="absolute bottom-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none border-t border-b-0 border-x-0 backdrop-blur-md ${pillClass} rounded-none">
+                         <span class="text-sm font-black font-mono tracking-wide truncate px-1 drop-shadow-md">
+                             ${acronym}
+                         </span>
+                     </div>
+                     ${isOwner ? `
+                         <button onclick="window.deleteTierItem(event, '${itemId}')" class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover/item:opacity-100 transition-opacity hover:scale-110 z-30 cursor-pointer">
+                             <span class="material-symbols-outlined text-[12px] font-bold">close</span>
+                         </button>
+                     ` : ''}
+                 </div>
+             `;
         }).join('');
 
         let boardHtml = '';
         localTiers.forEach((tier, tIdx) => {
             const tierItems = localItems.filter(i => i._tierId === tier._id);
-            
             const controls = isOwner ? `
                 <div class="flex flex-col gap-1 items-center justify-center border-l border-black/20 w-8 bg-black/10 hover:bg-black/20 transition-colors">
                     <button onclick="window.moveTierRow(${tIdx}, -1)" class="text-black/50 hover:text-black transform hover:-translate-y-0.5 transition-transform">▲</button>
@@ -595,34 +597,6 @@ async function renderDetailView(container, user, preloadedMeta = null) {
             bindCreateModalEvents();
             window.createModalBound = true;
         }
-        
-        if(isOwner) {
-            document.getElementById('btn-edit-tierlist').onclick = () => {
-                bindCreateModalEvents();
-                
-                const modal = document.getElementById('create-tierlist-modal');
-                document.getElementById('create-tl-modal-title').textContent = "Edit Tier List";
-                document.getElementById('create-tl-name').value = tl.name;
-                document.getElementById('create-tl-desc').value = tl.description || '';
-                document.getElementById('create-tl-color-picker').value = tl.theme_color;
-                
-                const iconEl = document.getElementById('create-tl-icon-value');
-                const iconLabel = document.getElementById('tl-icon-label-text');
-                if(iconEl) iconEl.value = tl.icon;
-                if(iconLabel) {
-                    const map = {
-                        'view_list': 'List', 'star': 'Star', 'trophy': 'Trophy', 'sports_esports': 'Game'
-                    };
-                    const label = map[tl.icon] || 'List';
-                    iconLabel.innerHTML = `<span class="material-symbols-outlined text-sm">${tl.icon}</span> ${label}`;
-                }
-                
-                document.getElementById('create-tl-public').checked = tl.is_public;
-                document.getElementById('edit-tierlist-id').value = tl.id;
-                document.getElementById('create-tl-cover-preview').style.background = `linear-gradient(to bottom right, ${tl.theme_color}, #000)`;
-                modal.classList.remove('hidden');
-            };
-        }
 
     } catch (e) {
         console.error(e);
@@ -697,30 +671,21 @@ function setupDetailListeners(tierlist, items, isOwner) {
             saveBtn.textContent = "Saving...";
             saveBtn.disabled = true;
             try {
-                const itemsToSave = localItems.map(i => {
-                    if (i._tierId === 'unranked') return { ...i, tier_label: 'Unranked' };
-                    const tier = localTiers.find(t => t._id === i._tierId);
-                    return {
-                        ...i,
-                        tier_label: tier ? tier.label : 'Unranked'
-                    };
-                });
-                
                 await api.post('/api/tierlists/save_items', {
                     tierlist_id: tierlist.id,
-                    items: itemsToSave,
+                    items: localItems, 
                     tiers_config: localTiers
                 });
-                showNotification("Changes saved successfully!", "success");
+                showNotification("Template saved! Items reset to pool.", "success");
                 
-                localItems = itemsToSave.map(i => ({ ...i, _tierId: 'unranked' }));
+                localItems = localItems.map(i => ({ ...i, _tierId: 'unranked' }));
                 
                 hasUnsavedChanges = false;
                 saveBtn.classList.add('hidden');
                 saveBtn.textContent = "Save Changes";
                 saveBtn.disabled = false;
                 
-                refreshBoard(false);
+                refreshBoard(false); 
             } catch (e) {
                 showNotification("Save failed.", "error");
                 saveBtn.textContent = "Save Changes";
@@ -738,6 +703,20 @@ function setupDetailListeners(tierlist, items, isOwner) {
             activeTab = 'my';
             renderTierListsPage();
         } catch(e) { showNotification("Delete failed.", "error"); }
+    };
+
+    document.getElementById('btn-edit-tierlist').onclick = () => {
+        const modal = document.getElementById('create-tierlist-modal');
+        document.getElementById('create-tl-modal-title').textContent = "Edit Tier List";
+        document.getElementById('create-tl-name').value = tierlist.name;
+        document.getElementById('create-tl-desc').value = tierlist.description || '';
+        document.getElementById('create-tl-color-picker').value = tierlist.theme_color;
+        const iconEl = document.getElementById('create-tl-icon-value');
+        if(iconEl) iconEl.value = tierlist.icon;
+        document.getElementById('create-tl-public').checked = tierlist.is_public;
+        document.getElementById('edit-tierlist-id').value = tierlist.id;
+        document.getElementById('create-tl-cover-preview').style.background = `linear-gradient(to bottom right, ${tierlist.theme_color}, #000)`;
+        modal.classList.remove('hidden');
     };
 
     const input = document.getElementById('add-tl-tower-input');
