@@ -12,7 +12,6 @@ export function initProfile() {
 
     store.subscribe('userChanged', (userData) => {
         updateStats();
-        
         const trigger = document.getElementById('profile-trigger-container');
         if (trigger) {
             trigger.classList.remove('hidden');
@@ -26,9 +25,14 @@ export function initProfile() {
 
 function calculateAndRenderStats(beatenTowers, allTowers) {
     if (!beatenTowers || !allTowers) return;
+    const masterNames = new Set(allTowers.map(t => t.name));
 
     const uniqueBeaten = Array.from(new Map(beatenTowers.map(t => [t.name, t])).values());
-    const canonCompletions = uniqueBeaten.filter(tower => !NON_CANON_TOWERS.has(tower.name));
+    
+    const canonCompletions = uniqueBeaten.filter(tower => 
+        !NON_CANON_TOWERS.has(tower.name) && masterNames.has(tower.name)
+    );
+    
     const totalCanonTowers = allTowers.filter(tower => !NON_CANON_TOWERS.has(tower.name));
     
     const totalBeaten = canonCompletions.length;
@@ -56,7 +60,7 @@ function calculateAndRenderStats(beatenTowers, allTowers) {
     if (hardestNameEl) hardestNameEl.textContent = hardestTowerName;
     if (hardestDiffEl) {
         hardestDiffEl.textContent = hardestDifficultyStr;
-        hardestDiffEl.style.color = '#ffffff';
+        hardestDiffEl.style.color = '#ffffff'; 
     }
     if (container) container.style.display = 'grid';
 }
