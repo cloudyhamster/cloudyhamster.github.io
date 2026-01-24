@@ -136,6 +136,7 @@ function initFilters() {
         "Ring 5": ["Lost River"], 
         "Ring 6": ["Ashen Towerworks"], 
         "Ring 8": ["The Starlit Archives"],
+        "Zone 1:": ["Steelspire Horizon"],
         "Zone 2": ["Arcane Area"], 
         "Zone 3": ["Paradise Atoll"]
     };
