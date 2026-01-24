@@ -17,10 +17,17 @@ export const NON_CANON_TOWERS = new Set([
 ]);
 
 export const DIFFICULTY_COLORS = {
-    "Easy": "#76F447", "Medium": "#FFFF00", "Hard": "#FE7C00",
-    "Difficult": "#FF3232", "Challenging": "#A00000", "Intense": "#19222D",
-    "Remorseless": "#C900C8", "Insane": "#0000FF", "Extreme": "#0287FF",
-    "Terrifying": "#00FFFF", "Catastrophic": "#FFFFFF",
+    "Easy": "#76F447", 
+    "Medium": "#FFFF00", 
+    "Hard": "#FE7C00",
+    "Difficult": "#FF3232", 
+    "Challenging": "#A00000", 
+    "Intense": "#19222D",
+    "Remorseless": "#C900C8", 
+    "Insane": "#0000FF", 
+    "Extreme": "#0287FF",
+    "Terrifying": "#00FFFF", 
+    "Catastrophic": "#FFFFFF",
 };
 
 export const DIFFICULTY_PILL_CLASSES = {
@@ -38,16 +45,36 @@ export const DIFFICULTY_PILL_CLASSES = {
 };
 
 export const AREA_COLORS = {
-    'Ring 0': '#ef4444', 'Ring 1': '#dc2626', 'Forgotten Ridge': '#dc2626',
-    'Ring 2': '#b91c1c', 'Garden Of Eesh%C3%B6L': '#b91c1c', 'Ring 3': '#991b1b',
-    'Ring 4': '#881337', 'Silent Abyss': '#881337', 'Ring 5': '#881337',
-    'Lost River': '#881337', 'Ring 6': '#7f1d1d', 'Ashen Towerworks': '#7f1d1d',
-    'Ring 7': '#7f1d1d', 'Ring 8': '#831843', 'The Starlit Archives': '#831843',
-    'Ring 9': '#831843', 'Zone 1': '#3b82f6', 'Zone 2': '#2563eb',
-    'Arcane Area': '#2563eb', 'Zone 3': '#1d4ed8', 'Paradise Atoll': '#1d4ed8',
-    'Zone 4': '#0ea5e9', 'Zone 5': '#0284c7', 'Zone 6': '#0369a1',
-    'Zone 7': '#06b6d4', 'Zone 8': '#0891b2', 'Zone 9': '#0e7490',
-    'Zone 10': '#14b8a6', 'Default': '#6b7280'
+    'Ring 0': '#ef4444', 
+    'Ring 1': '#dc2626', 
+    'Forgotten Ridge': '#dc2626',
+    'Ring 2': '#b91c1c', 
+    'Garden Of Eesh%C3%B6L': '#b91c1c', 
+    'Ring 3': '#991b1b',
+    'Ring 4': '#881337', 
+    'Silent Abyss': '#881337', 
+    'Ring 5': '#881337',
+    'Lost River': '#881337', 
+    'Ring 6': '#7f1d1d', 
+    'Ashen Towerworks': '#7f1d1d',
+    'Ring 7': '#7f1d1d', 
+    'Ring 8': '#831843', 
+    'The Starlit Archives': '#831843',
+    'Ring 9': '#831843', 
+    'Zone 1': '#3b82f6',
+    'Steelspire Horizon': '#3b82f6',
+    'Zone 2': '#2563eb',
+    'Arcane Area': '#2563eb', 
+    'Zone 3': '#1d4ed8', 
+    'Paradise Atoll': '#1d4ed8',
+    'Zone 4': '#0ea5e9', 
+    'Zone 5': '#0284c7', 
+    'Zone 6': '#0369a1',
+    'Zone 7': '#06b6d4', 
+    'Zone 8': '#0891b2', 
+    'Zone 9': '#0e7490',
+    'Zone 10': '#14b8a6', 
+    'Default': '#6b7280'
 };
 
 export const AREA_PILL_CLASSES = {
@@ -68,6 +95,7 @@ export const AREA_PILL_CLASSES = {
     'The Starlit Archives': 'border-pink-400/50 text-pink-300 bg-pink-400/10',
     'Ring 9': 'border-pink-500/50 text-pink-400 bg-pink-500/10',
     'Zone 1': 'border-blue-400/50 text-blue-300 bg-blue-400/10',
+    'Steelspire Horizon': 'border-blue-400/50 text-blue-300 bg-blue-400/10',
     'Zone 2': 'border-blue-500/50 text-blue-400 bg-blue-500/10',
     'Arcane Area': 'border-blue-500/50 text-blue-400 bg-blue-500/10',
     'Zone 3': 'border-blue-600/50 text-blue-500 bg-blue-600/10',
@@ -83,8 +111,10 @@ export const AREA_PILL_CLASSES = {
 };
 
 export const RANK_COLORS = {
-    "gold": "255, 215, 0", "silver": "192, 192, 192",
-    "bronze": "205, 127, 50", "top10": "190, 0, 255"
+    "gold": "255, 215, 0", 
+    "silver": "192, 192, 192",
+    "bronze": "205, 127, 50", 
+    "top10": "190, 0, 255"
 };
 
 export const AREA_DISPLAY_NAMES = {

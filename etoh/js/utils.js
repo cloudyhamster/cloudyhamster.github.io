@@ -49,6 +49,7 @@ export const getAreaInfo = (areaName) => {
         "The Starlit Archives": { r: 0, i: 8, isSub: true },
         "Arcane Area": { r: 1, i: 2, isSub: true },
         "Paradise Atoll": { r: 1, i: 3, isSub: true },
+        "Steelspire Horizon": { r: 2, i: 1, isSub: true }
     };
     if (subrealms[areaName]) return subrealms[areaName];
     if (areaName.startsWith("Ring")) return { r: 0, i: parseInt(areaName.split(' ')[1]), isSub: false };
