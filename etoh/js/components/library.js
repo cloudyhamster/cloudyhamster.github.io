@@ -211,9 +211,15 @@ function initLibraryComponents() {
     const areas = Array.from(new Set(allTowersData.map(t => t.area || "Unknown")));
     libSelectedAreas = new Set(areas);
     const hierarchyMap = {
-        "Ring 1": ["Forgotten Ridge"], "Ring 2": ["Garden Of Eesh%C3%B6L"], "Ring 4": ["Silent Abyss"],
-        "Ring 5": ["Lost River"], "Ring 6": ["Ashen Towerworks"], "Ring 8": ["The Starlit Archives"],
-        "Zone 2": ["Arcane Area"], "Zone 3": ["Paradise Atoll"]
+        "Ring 1": ["Forgotten Ridge"], 
+        "Ring 2": ["Garden Of Eesh%C3%B6L"], 
+        "Ring 4": ["Silent Abyss"],
+        "Ring 5": ["Lost River"], 
+        "Ring 6": ["Ashen Towerworks"], 
+        "Ring 8": ["The Starlit Archives"],
+        "Zone 1": ["Steelspire Horizon"],
+        "Zone 2": ["Arcane Area"], 
+        "Zone 3": ["Paradise Atoll"]
     };
 
     let sortedAreaList = [];

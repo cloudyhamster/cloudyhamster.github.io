@@ -4,9 +4,17 @@ import { interpolateColor, hexToRgb } from '../utils.js';
 import { openModalWithTower } from '../ui/modals.js';
 
 const DIFFICULTY_VALUES = {
-    "Easy": 1, "Medium": 2, "Hard": 3, "Difficult": 4, "Challenging": 5,
-    "Intense": 6, "Remorseless": 7, "Insane": 8, "Extreme": 9,
-    "Terrifying": 10, "Catastrophic": 11
+    "Easy": 1, 
+    "Medium": 2, 
+    "Hard": 3, 
+    "Difficult": 4, 
+    "Challenging": 5,
+    "Intense": 6, 
+    "Remorseless": 7, 
+    "Insane": 8, 
+    "Extreme": 9,
+    "Terrifying": 10, 
+    "Catastrophic": 11
 };
 
 export function initHistory() {
@@ -105,6 +113,7 @@ function renderAreaTable(allTowers, beatenTowers, unlockedAreas) {
     ];
     const zoneAreas = [
         { key: 'Zone 1', name: 'Zone 1: Sea' },
+        { key: 'Steelspire Horizon', name: 'Steelspire Horizon' },
         { key: 'Zone 2', name: 'Zone 2: Surface' },
         { key: 'Arcane Area', name: 'Arcane Area' },
         { key: 'Zone 3', name: 'Zone 3: Sky' },
